@@ -2,6 +2,10 @@
 window_w = 800
 window_h = 600
 
+# Стандартные размеры спрайта на экране
+sprite_w = 32
+sprite_h = 32
+
 # Требуемый FPS
 targetFPS = 60
 

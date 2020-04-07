@@ -11,12 +11,13 @@ def main():
     pygame.init()
 
     window_surface = pygame.display.set_mode((window_w, window_h))  # Основная поверхность
-    pygame.display.set_caption("My game")
+    pygame.display.set_caption("TANK! TANK! TANK!")
     clock = pygame.time.Clock()
 
     game_running = True  # Флаг продолжения игры
 
-    world = World(window_surface)
+    world = World(window_surface, (10, 10))
+    world.setup_world()
     last_moved_direction = None
 
     while game_running:
