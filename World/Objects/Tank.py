@@ -1,12 +1,13 @@
 import logging
 
-import pygame
+from Consts import PLAYER_DEFAULT_HP, TANK_DEFAULT_SPEED_PER_SECOND, sprite_w, EPSILON, sprite_h, \
+    PLAYER_DEFAULT_DELAY_BEFORE_FIRE
+from Files import get_script_dir
+from World.Objects.Actable import Actable
+from World.Objects.Collisionable import Collisionable, remove_if_exists_in
 
-from Consts import PLAYER_DEFAULT_HP, TANK_DEFAULT_SPEED_PER_SECOND, sprite_w, EPSILON, sprite_h
-from World.Objects.Collisionable import Collisionable
 
-
-class Tank(Collisionable):
+class Tank(Collisionable, Actable):
     """
     Класс танков - двигающихся объектов, взаимодействующих с миром
     """
@@ -15,6 +16,9 @@ class Tank(Collisionable):
     current_hp = None
     speed = TANK_DEFAULT_SPEED_PER_SECOND
     last_direction = None  # В какую сторону сейчас движется танк
+
+    delay_before_fire = PLAYER_DEFAULT_DELAY_BEFORE_FIRE
+    current_delay_before_fire = 0
 
     def __init__(self, world):
         super().__init__(world)
@@ -26,6 +30,42 @@ class Tank(Collisionable):
         else:
             logging.error("There was an attempt to set wrong speed for tank: {}".format(speed))
 
+    def set_current_delay_before_fire_to_zero(self):
+        self.current_delay_before_fire = self.delay_before_fire
+
+    def setup_in_world(self, x, y):
+        """
+        Полностью настраивает игрока, занося его в нужные массивы и применяя правильные настройки.
+        :param x: Местоположение на сетке экрана
+        :param y: Местоположение на сетке экрана
+        :return:
+        """
+        self.set_pos(x * sprite_w, y * sprite_h)
+        self.set_size(sprite_w, sprite_h)
+        self.set_image(get_script_dir() + "\\assets\\textures\\tank.png")
+        self.set_is_soild(True)
+        self.last_direction = "UP"
+
+        self.parent_world.all_tanks.append(self)
+        self.parent_world.collisionable_objects.append(self)
+        self.parent_world.actable_object.append(self)
+
+    def decrease_hp(self):
+        pass
+
+    def act(self):
+        if self.current_delay_before_fire > 0:
+            self.current_delay_before_fire -= 1
+
+    def destroy(self):
+        """
+        Данный метод удаляет танк из нужных массивов
+        :return:
+        """
+        remove_if_exists_in(self, self.parent_world.all_tanks)
+        remove_if_exists_in(self, self.parent_world.collisionable_objects)
+        remove_if_exists_in(self, self.parent_world.actable_object)
+
     def move_to_direction(self, direction):
         # Возможнные направления для движения:
         # direction_dict = {
@@ -35,7 +75,6 @@ class Tank(Collisionable):
         #     "LEFT":     [-self.speed,   0]
         # }
         directions = ["UP", "RIGHT", "DOWN", "LEFT"]
-        # TODO: Подумать, на что можно заменить данный словарь
 
         if direction in directions:
 
@@ -74,10 +113,3 @@ class Tank(Collisionable):
             # Если близки к нижней границе
             self.set_pos(self.float_x, self.float_y + y_diff)
             pass
-
-    # def stop_moving(self):
-    #     """
-    #     Сбрасывает флаг движения
-    #     :return:
-    #     """
-    #     self.currently_moving_to = None

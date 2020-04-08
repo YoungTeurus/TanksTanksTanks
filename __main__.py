@@ -58,7 +58,11 @@ def main():
         elif last_moved_direction == "LEFT":
             last_moved_direction = None
 
+        if keyboard_pressed[pygame.K_SPACE]:
+            world.create_bullet(world.player)
+
         world.draw()
+        world.act()
 
         pygame.display.update()
 

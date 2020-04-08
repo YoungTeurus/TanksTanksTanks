@@ -17,6 +17,13 @@ class WorldObject(Drawable):
         """
         super().draw(self.parent_world.parent_surface)
 
+    def destroy(self):
+        """
+        Функция, которая должна удалять объект из всех массивов, в которые он был добавлен при создании
+        :return:
+        """
+        pass
+
     def __str__(self):
         return "{0} {1} {2} {3} {4} {5}".format(
             "WorldObject", self.object_rect.x, self.object_rect.y,
