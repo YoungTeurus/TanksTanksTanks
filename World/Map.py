@@ -12,11 +12,8 @@ class Map:
 
     parent_world = None
 
-    text_map = [
-    ]
-    object_map = [
-
-    ]
+    text_map = []  # Здесь хранится карта в виде числовоых значения
+    # object_map = []
     size_w = None
     size_h = None
 
@@ -33,9 +30,9 @@ class Map:
                     # Вычисление ширины мира
                     # Подразумевается, что мир одинаково широк во всех местах
                     if self.size_w is None:
-                        self.size_w = current_line.split(" ").__len__()
+                        self.size_w = current_line.replace("  ", " ").split(" ").__len__()
 
-                    for symbol in current_line.replace("\n", "").split(" "):
+                    for symbol in current_line.replace("  ", " ").replace("\n", "").split(" "):
                         temp_list.append(symbol)
 
                     self.text_map.append(temp_list)

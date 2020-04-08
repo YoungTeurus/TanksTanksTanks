@@ -16,8 +16,7 @@ class Bullet(Collisionable, Actable):
         super().__init__(world)
         self.parent_tank = parent_tank
         self.on_collision = bullet_collision
-        self.set_is_soild(False)  # Пуля - твёрдая
-        # TODO: сделать пулю твёрдой, чтобы они могли врезаться друг в друга
+        self.set_is_soild(True)  # Пуля - твёрдая
 
     def create(self):
         """
@@ -77,6 +76,9 @@ def bullet_collision(bullet, obj):
         if isinstance(obj, Tank):
             # Если столкнулись с танком:
             bullet.destroy()
+        if isinstance(obj, Bullet):
+            bullet.destroy()
+            obj.destroy()
         if isinstance(obj, WorldTile):
             # Если столкнулись с тайлом мира
             obj.get_hit(bullet.bullet_direction)
