@@ -35,7 +35,11 @@ class Collisionable(Movable):
         :param dy: Перемещение по оси y
         :return:
         """
-        previous_rect = pygame.Rect.copy(self.object_rect)  # Запоминаем предыдущее положение
+
+        # Запоминаем предыдущее положение
+        previous_x = self.float_x
+        previous_y = self.float_y
+        # previous_rect = pygame.Rect.copy(self.object_rect)
 
         super().move(dx, dy)
 
@@ -50,21 +54,26 @@ class Collisionable(Movable):
                     # Если x больше y, значит пересекает горизонтальную грань
                     if distance_vector.x > 0:
                         # Если x больше 0, значит пересекает ЛЕВУЮ грань
-                        previous_rect.x = obj.object_rect.x - previous_rect.width
+                        # previous_rect.x = obj.object_rect.x - previous_rect.width
+                        previous_x = obj.float_x - self.object_rect.width
                     else:
                         # Иначе - ПРАВУЮ
-                        previous_rect.x = obj.object_rect.x + obj.object_rect.width
+                        # previous_rect.x = obj.object_rect.x + obj.object_rect.width
+                        previous_x = obj.float_x + obj.object_rect.width
                 else:
                     # Если y больше x, значит пересекает вертикальную грань
                     if distance_vector.y > 0:
                         # Если y больше 0, значит пересекает ВЕРХНЮЮ грань
-                        previous_rect.y = obj.object_rect.y - previous_rect.height
+                        # previous_rect.y = obj.object_rect.y - previous_rect.height
+                        previous_y = obj.object_rect.y - self.object_rect.height
                     else:
                         # Иначе - НИЖНЮЮ
-                        previous_rect.y = obj.object_rect.y + obj.object_rect.height
+                        # previous_rect.y = obj.object_rect.y + obj.object_rect.height
+                        previous_y = obj.float_y + obj.object_rect.height
 
             # Если с чем-то столкнулись, возвращаем прежнее положение
-            self.object_rect = previous_rect
+            self.set_pos(previous_x, previous_y)
+            # self.object_rect = previous_rect
 
 
 class Vector2:

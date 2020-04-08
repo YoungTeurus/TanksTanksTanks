@@ -1,5 +1,5 @@
 import pygame.sprite
-from pygame import Rect
+from pygame import Rect, Vector2
 
 from Files import get_script_dir
 
@@ -8,7 +8,8 @@ class Drawable(pygame.sprite.Sprite):
     """
     Класс для объектов, которые будут иметь отрсовываемую текстуру
     """
-
+    float_x = 0
+    float_y = 0
     object_rect = None  # Прямоугольник, хранящий позицию и размеры спрайта объекта
     image = None  # Отображаемая картинка
 
@@ -20,7 +21,10 @@ class Drawable(pygame.sprite.Sprite):
         self.object_rect.size = (width, height)
 
     def set_pos(self, x, y):
-        self.object_rect.x, self.object_rect.y = x, y
+        self.float_x = x
+        self.float_y = y
+        self.object_rect.x = int(self.float_x)
+        self.object_rect.y = int(self.float_y)
 
     def set_image(self, path_to_image):
         self.image = pygame.image.load(path_to_image)
@@ -39,6 +43,7 @@ class Drawable(pygame.sprite.Sprite):
             self.object_rect.width, self.object_rect.height,
             "img_id"
         )
+
 
 if __name__ == "__main__":
     a = Drawable()

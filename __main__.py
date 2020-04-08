@@ -30,6 +30,8 @@ def main():
                 game_running = False
         keyboard_pressed = pygame.key.get_pressed()
 
+        # print("tank x:{} y: {}".format(world.player.object_rect.x, world.player.object_rect.y))
+
         # Движение игрока
         if keyboard_pressed[pygame.K_RIGHT]:
             if last_moved_direction is None or last_moved_direction == "RIGHT":

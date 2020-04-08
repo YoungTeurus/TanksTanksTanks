@@ -10,5 +10,6 @@ class Movable(RotatableWorldObject):
         super().__init__(world)
 
     def move(self, dx, dy):
-        self.object_rect.x += dx
-        self.object_rect.y += dy
+        self.set_pos(self.float_x+dx, self.float_y+dy)
+        # self.object_rect.x += dx
+        # self.object_rect.y += dy
