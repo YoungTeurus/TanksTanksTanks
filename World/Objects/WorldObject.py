@@ -6,8 +6,8 @@ class WorldObject(Drawable):
     parent_world = None  # Родительский мир, в котором будут отрисовываться объекты
 
     def __init__(self, world):
-        super().__init__()
         self.parent_world = world
+        super().__init__(self.parent_world.parent_imageloader)
 
     def draw(self, surface=None):
         """

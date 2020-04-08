@@ -2,8 +2,8 @@ import pygame
 import logging
 
 from Consts import window_w, window_h, targetFPS, BLACK, TANK_DEFAULT_SPEED_PER_SECOND
+from Files import ImageLoader
 from World.World import World
-
 
 
 def main():
@@ -13,10 +13,11 @@ def main():
     window_surface = pygame.display.set_mode((window_w, window_h))  # Основная поверхность
     pygame.display.set_caption("TANK! TANK! TANK!")
     clock = pygame.time.Clock()
+    imageloader = ImageLoader()
 
     game_running = True  # Флаг продолжения игры
 
-    world = World(window_surface, (10, 10))
+    world = World(window_surface, imageloader)
     world.setup_world()
     last_moved_direction = None
 

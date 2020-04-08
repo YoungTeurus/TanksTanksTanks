@@ -6,9 +6,13 @@ class Camera:
     Класс, инкапсулирующий rect для улучшения логики
     """
     visible_rect = None
+    parent_world = None
 
-    def __init__(self):
-        self.visible_rect = Rect(0, 0, 0, 0)
+    def __init__(self, parent_world):
+        self.parent_world = parent_world
+        self.visible_rect = Rect(0, 0,
+                                 self.parent_world.parent_surface.width,
+                                 self.parent_world.parent_surface.height)
 
     def setSize(self, width, height):
         self.visible_rect.size = (width, height)

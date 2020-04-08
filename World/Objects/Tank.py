@@ -42,7 +42,7 @@ class Tank(Collisionable, Actable):
         """
         self.set_pos(x * sprite_w, y * sprite_h)
         self.set_size(sprite_w, sprite_h)
-        self.set_image(get_script_dir() + "\\assets\\textures\\tank.png")
+        self.set_image("tank.png")
         self.set_is_soild(True)
         self.last_direction = "UP"
 

@@ -24,9 +24,7 @@ class Bullet(Collisionable, Actable):
         Данный метод помещает пулю в нужные массивы, даёт ей направление движения
         :return:
         """
-        self.set_pos(self.parent_tank.float_x + self.parent_tank.object_rect.width / 2,
-                     self.parent_tank.float_y + self.parent_tank.object_rect.height / 2)
-        self.set_image(get_script_dir() + "\\assets\\textures\\bullet.png")
+        self.set_image("bullet.png")
 
         self.bullet_direction = self.parent_tank.last_direction
         self.set_angle(self.bullet_direction)  # Установка поворота спрайта
@@ -34,17 +32,17 @@ class Bullet(Collisionable, Actable):
 
         # Поправка координат для того, чтобы пуля вылетала из ствола
         if self.bullet_direction == "UP":
-            self.set_pos(self.parent_tank.float_x + self.parent_tank.object_rect.width / 2,
+            self.set_pos(self.parent_tank.float_x + self.parent_tank.object_rect.width / 2 - self.object_rect.width / 2,
                          self.parent_tank.float_y)
         if self.bullet_direction == "DOWN":
-            self.set_pos(self.parent_tank.float_x + self.parent_tank.object_rect.width / 2,
+            self.set_pos(self.parent_tank.float_x + self.parent_tank.object_rect.width / 2 - self.object_rect.width / 2,
                          self.parent_tank.float_y + self.parent_tank.object_rect.height)
         if self.bullet_direction == "LEFT":
             self.set_pos(self.parent_tank.float_x,
-                         self.parent_tank.float_y + self.parent_tank.object_rect.height / 2)
+                         self.parent_tank.float_y + self.parent_tank.object_rect.height / 2 - self.object_rect.width / 2)
         if self.bullet_direction == "RIGHT":
             self.set_pos(self.parent_tank.float_x + self.parent_tank.object_rect.width,
-                         self.parent_tank.float_y + self.parent_tank.object_rect.height / 2)
+                         self.parent_tank.float_y + self.parent_tank.object_rect.height / 2 - self.object_rect.width / 2)
 
         self.parent_world.collisionable_objects.append(self)
         self.parent_world.actable_object.append(self)
@@ -78,9 +76,10 @@ def bullet_collision(bullet, obj):
     if obj.is_solid:  # Если объект твёрдый
         if isinstance(obj, Tank):
             # Если столкнулись с танком:
-            pass
+            bullet.destroy()
         if isinstance(obj, WorldTile):
             # Если столкнулись с тайлом мира
-            obj.get_hit()
-        bullet.destroy()
+            obj.get_hit(bullet.bullet_direction)
+            if not obj.is_passable_for_bullets:
+                bullet.destroy()
         bullet.parent_tank.set_current_delay_before_fire_to_zero()

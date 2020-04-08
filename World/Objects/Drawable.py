@@ -12,10 +12,12 @@ class Drawable(pygame.sprite.Sprite):
     float_y = 0
     object_rect = None  # Прямоугольник, хранящий позицию и размеры спрайта объекта
     image = None  # Отображаемая картинка
+    parent_imageloader = None  # Загрузчик картинок
 
-    def __init__(self):
+    def __init__(self, imageloader):
         pygame.sprite.Sprite.__init__(self)
         self.object_rect = Rect(0, 0, 0, 0)
+        self.parent_imageloader = imageloader
 
     def set_size(self, width, height):
         self.object_rect.size = (width, height)
@@ -26,8 +28,9 @@ class Drawable(pygame.sprite.Sprite):
         self.object_rect.x = int(self.float_x)
         self.object_rect.y = int(self.float_y)
 
-    def set_image(self, path_to_image):
-        self.image = pygame.image.load(path_to_image)
+    def set_image(self, image_name):
+        # self.image = pygame.image.load(path_to_image).convert_alpha()
+        self.image = self.parent_imageloader.get_image_by_name(image_name)
 
     def draw(self, surface):
         if self.image is not None:
