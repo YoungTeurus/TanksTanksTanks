@@ -1,14 +1,8 @@
-import logging
-
-from Consts import sprite_w, sprite_h
-from Files import get_script_dir
 from World.Camera import Camera
 from World.Map import Map
 from World.Objects.Bullet import Bullet
 import random
-from World.Objects.Collisionable import Collisionable
 from World.Objects.Tank import Tank
-from World.Objects.WorldTile import WorldTile
 
 
 class World:
@@ -25,14 +19,14 @@ class World:
     collisionable_objects = []  # Все объекты, с которыми нужно проверять столкновение
     actable_object = []  # Все объекты, для которых нужно вызывать Act() каждый раз
 
-    parent_imageloader = None
+    parent_tileset = None
 
     world_map = None
 
-    def __init__(self, parent_surface, imageloader):
+    def __init__(self, parent_surface, tileset):
         self.parent_surface = parent_surface
+        self.parent_tileset = tileset
         # self.size = size
-        self.parent_imageloader = imageloader
 
         self.world_map = Map(self)
         self.camera = Camera(self)

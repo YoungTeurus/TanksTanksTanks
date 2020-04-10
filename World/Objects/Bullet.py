@@ -1,5 +1,4 @@
 from Consts import TANK_DEFAULT_SPEED_PER_SECOND, sprite_w, sprite_h
-from Files import get_script_dir
 from World.Objects.Tank import Tank
 from World.Objects.Actable import Actable
 from World.Objects.Collisionable import Collisionable, remove_if_exists_in
@@ -23,7 +22,7 @@ class Bullet(Collisionable, Actable):
         Данный метод помещает пулю в нужные массивы, даёт ей направление движения
         :return:
         """
-        self.set_image("bullet.png")
+        self.set_image("BULLET")
 
         self.bullet_direction = self.parent_tank.last_direction
         self.set_angle(self.bullet_direction)  # Установка поворота спрайта

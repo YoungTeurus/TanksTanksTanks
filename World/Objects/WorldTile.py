@@ -1,19 +1,18 @@
 import logging
 
-from Consts import sprite_w, sprite_h
-from Files import get_script_dir
+from Consts import sprite_w, sprite_h, WATER_DEFAULT_DELAY_BETWEEN_FRAMES
 from World.Objects.Collisionable import Collisionable, remove_if_exists_in
 
 # название_текстуры is_solid is_passable_for_bullets is_destroyable
 ID = {
-    0: [None,                       False, True,   False],
-    1: ["bricks.png",               True,  False,  True ],
-    2: ["strong_bricks.png",        True,  False,  False],
-    3: ["water.png",                True,  True,   False],
-    4: ["bush.png",                 False, True,   False],
-    5: ["base.png",                 True,  False,  False],
-    6: [None,                       False, True,   False],
-    7: [None,                       False, True,   False]
+    0: [None,         False, True,   False],
+    1: ["BRICK",      True,  False,  True ],
+    2: ["GRAY_BRICK", True,  False,  False],
+    3: ["WATER",      True,  True,   False],
+    4: ["BUSH",       False, True,   False],
+    5: ["BASE",       True,  False,  False],
+    6: [None,         False, True,   False],
+    7: [None,         False, True,   False]
 }
 
 """
@@ -124,7 +123,9 @@ class WorldTile(Collisionable):
                     super().set_pos(self.float_x,                  self.float_y + sprite_h / 2)
                 if modificator_tile_id == 8:
                     self.set_size(self.object_rect.width - sprite_w / 2,    self.object_rect.height)
-
+            if main_tile_id == 3:  # Если это вода
+                self.image.add_timer(WATER_DEFAULT_DELAY_BETWEEN_FRAMES)  # Задержка между кадрами
+                self.set_animated()
             if main_tile_id == 5:  # Если это база игрока
                 pass
             if main_tile_id == 6:  # Если это место спавна игрока

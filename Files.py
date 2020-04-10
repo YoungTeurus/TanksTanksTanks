@@ -25,6 +25,7 @@ class ImageLoader:
 
 
 # Возвращает путь до папки скрипта
+# НЕ ПЕРЕМЕЩАТЬ ДАННЫЙ КОД ИЗ КОРНЕВОЙ ПАПКИ!
 def get_script_dir(follow_symlinks=True):
     if getattr(sys, 'frozen', False):  # py2exe, PyInstaller, cx_Freeze
         path = os.path.abspath(sys.executable)

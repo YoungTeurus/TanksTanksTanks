@@ -1,8 +1,7 @@
 import logging
 
 from Consts import PLAYER_DEFAULT_HP, TANK_DEFAULT_SPEED_PER_SECOND, sprite_w, EPSILON, sprite_h, \
-    PLAYER_DEFAULT_DELAY_BEFORE_FIRE
-from Files import get_script_dir
+    PLAYER_DEFAULT_DELAY_BEFORE_FIRE, TANK_DEFAULT_DELAY_BETWEEN_FRAMES
 from World.Objects.Actable import Actable
 from World.Objects.Collisionable import Collisionable, remove_if_exists_in
 
@@ -45,7 +44,8 @@ class Tank(Collisionable, Actable):
         """
         self.set_pos(x * sprite_w, y * sprite_h)
         self.set_size(sprite_w, sprite_h)
-        self.set_image("tank.png")
+        self.set_image("PLAYER_TANK")
+        self.image.add_timer(TANK_DEFAULT_DELAY_BETWEEN_FRAMES)
         self.set_is_soild(True)
         self.last_direction = "UP"
 
@@ -97,6 +97,7 @@ class Tank(Collisionable, Actable):
 
             self.currently_moving_to = direction
             self.set_angle(direction)
+            self.image.next()
         else:
             logging.error("There was an attempt to move tank to on wrong direction: {}".format(direction))
 

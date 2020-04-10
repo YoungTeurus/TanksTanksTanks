@@ -4,6 +4,7 @@ import pygame
 
 from Consts import targetFPS, DARK_GREY, BLACK
 from Files import ImageLoader
+from Images.Tileset import Tileset
 from World.World import World
 
 
@@ -27,10 +28,11 @@ class Game:
         pygame.display.set_caption("TANK! TANK! TANK!")
         self.clock = pygame.time.Clock()
         self.imageloader = ImageLoader()
+        self.tileset = Tileset(64, 64, self.imageloader.get_image_by_name("tileset.png"))
 
         self.game_running = True  # Флаг продолжения игры
 
-        self.world = World(self.game_surface, self.imageloader)
+        self.world = World(self.game_surface, self.tileset)
         self.world.setup_world()
         self.last_moved_direction = None
 

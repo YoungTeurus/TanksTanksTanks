@@ -37,18 +37,19 @@ class RotatableWorldObject(WorldObject):
         :return:
         """
         if self.image is not None:
-            surface_to_draw = self.image
+            surface_to_draw = self.image.get_current()
             rect_to_draw = Rect.copy(self.object_rect)  # TODO: подумать, можно ли избежать здесь ненужного копирования
             if self.image.get_size() != self.object_rect.size:
                 # Если размер изображения не совпадает с размером объекта
-                surface_to_draw = transform.scale(self.image, (self.object_rect.width, self.object_rect.height))
+                surface_to_draw = transform.scale(self.image.get_current(), (self.object_rect.width, self.object_rect.height))
             if self.current_angle != "UP":
                 surface_to_draw = transform.rotate(surface_to_draw, ANGLE[self.current_angle])
             if camera is not None:
                 rect_to_draw.x += camera.get_coords()[0]
                 rect_to_draw.y += camera.get_coords()[1]
             self.parent_world.parent_surface.blit(surface_to_draw, rect_to_draw)
-            pass
+            if self.need_to_animate:
+                self.image.next()
 
     def __str__(self):
         return "{0} {1} {2} {3} {4} {5} {6}".format(
