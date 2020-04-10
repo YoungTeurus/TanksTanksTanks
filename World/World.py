@@ -1,8 +1,11 @@
+import logging
+
 from Consts import sprite_w, sprite_h
 from Files import get_script_dir
 from World.Camera import Camera
 from World.Map import Map
 from World.Objects.Bullet import Bullet
+import random
 from World.Objects.Collisionable import Collisionable
 from World.Objects.Tank import Tank
 from World.Objects.WorldTile import WorldTile
@@ -21,8 +24,6 @@ class World:
     all_tiles = []  # Все тайлы, которые необходимо отрисовывать
     collisionable_objects = []  # Все объекты, с которыми нужно проверять столкновение
     actable_object = []  # Все объекты, для которых нужно вызывать Act() каждый раз
-    player_spawn_points = []  # Все места спавна игрока(-ов)
-    enemy_spawn_points = []  # Все места спавна врагов
 
     parent_imageloader = None
 
@@ -34,14 +35,28 @@ class World:
         self.parent_imageloader = imageloader
 
         self.world_map = Map(self)
-        self.world_map.load_by_id(0)
-
         self.camera = Camera(self)
+        self.player = Tank(self)
 
     def setup_world(self):
-        self.player = Tank(self)
-        self.player.setup_in_world(5, 13)
+        self.load_map(0)
+        self.spawn_player()
         self.center_camera_on_player()
+
+    def load_map(self, map_id):
+        self.world_map.load_by_id(map_id)
+        self.world_map.check()
+
+    def spawn_player(self, player_id=0):
+        """
+        Спавнит игрока под айди id на одной из точек спавна
+        :param player_id: Айди игрока (для мультиплеера)
+        :return:
+        """
+        place_to_spawn = random.choice(self.world_map.player_spawn_places)
+        (place_to_spawn_x, place_to_spawn_y) = place_to_spawn.get_world_pos()
+        self.player.setup_in_world(place_to_spawn_x, place_to_spawn_y)
+
 
     def draw(self):
         # Сперва отрисовываем танки и пули

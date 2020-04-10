@@ -13,6 +13,8 @@ class Map:
     parent_world = None
 
     text_map = []  # Здесь хранится карта в виде числовоых значения
+    player_spawn_places = []
+    enemy_spawn_places = []
     # object_map = []
     size_w = None
     size_h = None
@@ -57,7 +59,20 @@ class Map:
 
     def load_by_id(self, map_id):
         if map_id in MAPS:
+            # Очистка перед загрузкой
+            self.text_map.clear()
+            self.player_spawn_places.clear()
+            self.enemy_spawn_places.clear()
+            self.size_w = None
+            self.size_h = None
+
             self.load_from_file(MAPS[map_id])
             self.create_object_map()
         else:
             logging.error("There was an attempt to load a world by id but it does not exist: {}".format(map_id))
+
+    def check(self):
+        if len(self.player_spawn_places) <= 0:
+            logging.error("There is no available spawn places for players!")
+        if len(self.enemy_spawn_places) <= 0:
+            logging.warning("There is no available spawn places for enemies!")

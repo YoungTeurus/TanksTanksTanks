@@ -1,3 +1,5 @@
+import logging
+
 import pygame
 
 from Consts import targetFPS, DARK_GREY, BLACK
@@ -7,7 +9,7 @@ from World.World import World
 
 class Game:
     def __init__(self, window_surface):
-
+        logging.basicConfig(filename="log.log", level=logging.INFO, filemode="w")
         self.window_surface = window_surface  # Основная поверхность
 
         minimal_dimention = min(self.window_surface.get_width(),

@@ -1,5 +1,6 @@
 import pygame
 
+from Consts import sprite_w, sprite_h
 from World.Objects.Drawable import Drawable
 from pygame import Rect
 
@@ -31,6 +32,9 @@ class WorldObject(Drawable):
                 rect_to_draw.y += camera.get_coords()[1]
             self.parent_world.parent_surface.blit(surface_to_draw, rect_to_draw)
 
+    def get_world_pos(self):
+        return (self.object_rect.x / sprite_w,
+                self.object_rect.y / sprite_h)
 
     def destroy(self):
         """

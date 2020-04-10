@@ -1,10 +1,7 @@
 import pygame
-import logging
 
-from Consts import window_w, window_h, targetFPS, BLACK, TANK_DEFAULT_SPEED_PER_SECOND, GREY, DARK_GREY
-from Files import ImageLoader
+from Consts import window_w, window_h
 from Game import Game
-from World.World import World
 
 
 def main():
@@ -18,5 +15,4 @@ def main():
 
 
 if __name__ == "__main__":
-    logging.basicConfig(filename="log.log", level=logging.INFO, filemode="w")
     main()

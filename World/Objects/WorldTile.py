@@ -124,8 +124,13 @@ class WorldTile(Collisionable):
                     super().set_pos(self.float_x,                  self.float_y + sprite_h / 2)
                 if modificator_tile_id == 8:
                     self.set_size(self.object_rect.width - sprite_w / 2,    self.object_rect.height)
-            # self.hits_to_destroy = ID[main_tile_id][4]
-            # self.current_hitpoints = self.hits_to_destroy
+
+            if main_tile_id == 5:  # Если это база игрока
+                pass
+            if main_tile_id == 6:  # Если это место спавна игрока
+                self.parent_world.world_map.player_spawn_places.append(self)  # Заносим тайл в места для спавна игрока
+            if main_tile_id == 7:  # Если это место спавна врага
+                self.parent_world.world_map.enemy_spawn_places.append(self)  # Заносим тайл в места для спавна врагов
 
         else:
             logging.error("There was an attempt to set wrong tile_id for tile: {}".format(tile_id))
