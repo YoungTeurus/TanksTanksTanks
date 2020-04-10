@@ -48,54 +48,6 @@ class Collisionable(Movable):
 
         return return_array
 
-    def smart_move(self, dx, dy):
-        """
-        Перемещение, непозволяющее "въехать" в другие collisionable объекты
-        :param dx: Перемещение по оси x
-        :param dy: Перемещение по оси y
-        :return:
-        """
-
-        # Запоминаем предыдущее положение
-        previous_x = self.float_x
-        previous_y = self.float_y
-        # previous_rect = pygame.Rect.copy(self.object_rect)
-
-        super().move(dx, dy)
-
-        if (collided_objects := self.check_collisions(self.parent_world.collisionable_objects)).__len__() > 0:
-            for obj in collided_objects:
-                distance_vector = Vector2
-                distance_vector.x = obj.object_rect.x + (obj.object_rect.width / 2) \
-                                    - (self.object_rect.x + (self.object_rect.width / 2))
-                distance_vector.y = obj.object_rect.y + (obj.object_rect.height / 2) \
-                                    - (self.object_rect.y + (self.object_rect.height / 2))
-                if abs(distance_vector.x) > abs(distance_vector.y):
-                    # Если x больше y, значит пересекает горизонтальную грань
-                    if distance_vector.x > 0:
-                        # Если x больше 0, значит пересекает ЛЕВУЮ грань
-                        previous_x = obj.float_x - self.object_rect.width
-                    else:
-                        # Иначе - ПРАВУЮ
-                        previous_x = obj.float_x + obj.object_rect.width
-                else:
-                    # Если y больше x, значит пересекает вертикальную грань
-                    if distance_vector.y > 0:
-                        # Если y больше 0, значит пересекает ВЕРХНЮЮ грань
-                        previous_y = obj.object_rect.y - self.object_rect.height
-                    else:
-                        # Иначе - НИЖНЮЮ
-                        previous_y = obj.float_y + obj.object_rect.height
-
-            # Если с чем-то столкнулись, возвращаем прежнее положение
-            self.set_pos(previous_x, previous_y)
-
-
-class Vector2:
-    def __init__(self, x=0, y=0):
-        self.x = x
-        self.y = y
-
 
 def remove_if_exists_in(obj, array):
     """

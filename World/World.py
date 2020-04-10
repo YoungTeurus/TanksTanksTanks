@@ -1,8 +1,9 @@
+from Consts import DEFAULT_DELAY_BETWEEN_ENEMY_SPAWN, MAX_ENEMIES_ON_ONE_MOMENT, DEFAULT_ENEMIES_ON_LEVEL
 from World.Camera import Camera
 from World.Map import Map
-from World.Objects.Bullet import Bullet
 import random
-from World.Objects.Tank import Tank
+from World.Objects.Tank import Tank, Player, Enemy, Bullet
+from World.Timer import Timer
 
 
 class World:
@@ -12,6 +13,7 @@ class World:
     camera = None  # Камера
     player = None  # Игрок
     parent_surface = None  # Та поверхность, на которой будет происходить отрисовка всего мира
+    parent_tileset = None
 
     all_tanks = []  # Все танки, которые необходимо отрисовывать
     all_bullets = []  # Все пули, которые необходимо отрисовывать
@@ -19,18 +21,23 @@ class World:
     collisionable_objects = []  # Все объекты, с которыми нужно проверять столкновение
     actable_object = []  # Все объекты, для которых нужно вызывать Act() каждый раз
 
-    parent_tileset = None
+    enemy_spawn_timer = None  # Таймер для спавна нового врага
+    current_amount_of_enemies = None  # Количество врагов на поле в данный момент
+    enemies_remains = None  # Сколько врагов осталось уничтожить
 
     world_map = None
 
     def __init__(self, parent_surface, tileset):
         self.parent_surface = parent_surface
         self.parent_tileset = tileset
+        self.enemy_spawn_timer = Timer(DEFAULT_DELAY_BETWEEN_ENEMY_SPAWN)
+        self.current_amount_of_enemies = 0
+        self.enemies_remains = DEFAULT_ENEMIES_ON_LEVEL
         # self.size = size
 
         self.world_map = Map(self)
         self.camera = Camera(self)
-        self.player = Tank(self)
+        self.player = Player(self)
 
     def setup_world(self):
         self.load_map(0)
@@ -66,11 +73,31 @@ class World:
         for obj in self.actable_object:
             obj.act()
 
+        # Спавн врага
+        if self.enemies_remains > 0:
+            if self.enemy_spawn_timer.is_ready():
+                self.enemy_spawn_timer.reset()
+                self.create_enemy()
+                self.enemies_remains -= 1
+            else:
+                self.enemy_spawn_timer.tick()
+
+    def create_enemy(self):
+        if self.current_amount_of_enemies < MAX_ENEMIES_ON_ONE_MOMENT:
+            try:
+                place_to_spawn = random.choice(self.world_map.enemy_spawn_places)
+                (place_to_spawn_x, place_to_spawn_y) = place_to_spawn.get_world_pos()
+                enemy = Enemy(self)
+                enemy.setup_in_world(place_to_spawn_x, place_to_spawn_y)
+            except IndexError:
+                return
+
+
     def create_bullet(self, tank):
-        if tank.current_delay_before_fire <= 0:
+        if tank.fire_timer.is_ready():
             bullet = Bullet(self, tank)
             bullet.create()
-            tank.set_current_delay_before_fire_to_full()
+            tank.fire_timer.reset()
 
     def move_camera(self, dx, dy):
         self.camera.move(dx, dy)

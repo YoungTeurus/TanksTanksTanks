@@ -1,6 +1,7 @@
 import pygame
 
 from Consts import image_w, image_h, TILES
+from World.Timer import Timer
 
 
 class AnimatedImage:
@@ -30,7 +31,7 @@ class AnimatedImage:
         self.frames.append(image_surface)
 
     def add_timer(self, delay):
-        self.timer = AnimationTimer(delay)
+        self.timer = Timer(delay)
 
     def next(self):
         if self.frozen:
@@ -51,20 +52,3 @@ class AnimatedImage:
 
     def get_size(self):
         return image_w, image_h
-
-
-class AnimationTimer:
-    current_delay = 0
-    max_delay = 0
-
-    def __init__(self, max_delay):
-        self.current_delay = self.max_delay = max_delay
-
-    def tick(self):
-        self.current_delay = max(0, self.current_delay - 1)
-
-    def is_ready(self):
-        return self.current_delay <= 0
-
-    def reset(self):
-        self.current_delay = self.max_delay
