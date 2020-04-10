@@ -1,4 +1,7 @@
+import pygame
+
 from World.Objects.Drawable import Drawable
+from pygame import Rect
 
 
 class WorldObject(Drawable):
@@ -9,13 +12,25 @@ class WorldObject(Drawable):
         self.parent_world = world
         super().__init__(self.parent_world.parent_imageloader)
 
-    def draw(self, surface=None):
+    def draw_in_world(self, camera=None):
         """
         Отрисовка объекта в мире.
-        :param surface: В данном случае не используется
+        :param camera: Камера, относительно которой нужно отрисовывать объект
         :return:
         """
-        super().draw(self.parent_world.parent_surface)
+
+        # Внимание! Меняя что-то здесь, не забывай поменять данную функцию в RotatableWorldObject!
+        if self.image is not None:
+            surface_to_draw = self.image
+            rect_to_draw = Rect.copy(self.object_rect)  # TODO: подумать, можно ли избежать здесь ненужного копирования
+            if self.image.get_size() != self.object_rect.size:
+                # Если размер изображения не совпадает с размером объекта
+                surface_to_draw = pygame.transform.scale(self.image, (self.object_rect.width, self.object_rect.height))
+            if camera is not None:
+                rect_to_draw.x += camera.get_coords()[0]
+                rect_to_draw.y += camera.get_coords()[1]
+            self.parent_world.parent_surface.blit(surface_to_draw, rect_to_draw)
+
 
     def destroy(self):
         """

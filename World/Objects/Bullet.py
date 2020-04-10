@@ -84,4 +84,4 @@ def bullet_collision(bullet, obj):
             obj.get_hit(bullet.bullet_direction)
             if not obj.is_passable_for_bullets:
                 bullet.destroy()
-        bullet.parent_tank.set_current_delay_before_fire_to_zero()
+                bullet.parent_tank.set_current_delay_before_fire_to(min(bullet.parent_tank.current_delay_before_fire, 10))

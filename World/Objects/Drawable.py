@@ -29,7 +29,6 @@ class Drawable(pygame.sprite.Sprite):
         self.object_rect.y = int(self.float_y)
 
     def set_image(self, image_name):
-        # self.image = pygame.image.load(path_to_image).convert_alpha()
         self.image = self.parent_imageloader.get_image_by_name(image_name)
 
     def draw(self, surface):

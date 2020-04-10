@@ -30,8 +30,11 @@ class Tank(Collisionable, Actable):
         else:
             logging.error("There was an attempt to set wrong speed for tank: {}".format(speed))
 
-    def set_current_delay_before_fire_to_zero(self):
+    def set_current_delay_before_fire_to_full(self):
         self.current_delay_before_fire = self.delay_before_fire
+
+    def set_current_delay_before_fire_to(self, value):
+        self.current_delay_before_fire = value
 
     def setup_in_world(self, x, y):
         """

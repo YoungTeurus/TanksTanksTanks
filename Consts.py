@@ -11,12 +11,14 @@ targetFPS = 60
 
 # Некоторые основные цвета
 BLACK = (0, 0, 0)
+DARK_GREY = (64, 64, 64)
+GREY = (192, 192, 192)
 WHITE = (255, 255, 255)
 
 # Некоторые константные значения в игре
 PLAYER_DEFAULT_HP = 2
 TANK_DEFAULT_SPEED_PER_SECOND = 5 * (sprite_w/64)
-PLAYER_DEFAULT_DELAY_BEFORE_FIRE = 30
+PLAYER_DEFAULT_DELAY_BEFORE_FIRE = 90
 
 # Переменная "приближения" - на сколько процентов координата танка должна отличаться от целого значения ширины
 # тайла, чтобы произошла поправка

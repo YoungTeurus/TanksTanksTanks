@@ -1,6 +1,7 @@
 import logging
 
 from pygame import transform
+from pygame.rect import Rect
 
 from World.Objects.WorldObject import WorldObject
 
@@ -29,20 +30,24 @@ class RotatableWorldObject(WorldObject):
         else:
             logging.error("There was an attempt to rotate object on wrong angle: {}".format(angle))
 
-    def draw(self, surface=None):
+    def draw_in_world(self, camera=None):
         """
         Отрисовка объекта в мире.
-        :param surface: В данном случае не используется
+        :param camera: Камера, относительно которой нужно отрисовывать объект
         :return:
         """
         if self.image is not None:
             surface_to_draw = self.image
-            if self.image.get_size() != self.object_rect.size:  # Если размер изображения не совпадает с размером объекта
+            rect_to_draw = Rect.copy(self.object_rect)  # TODO: подумать, можно ли избежать здесь ненужного копирования
+            if self.image.get_size() != self.object_rect.size:
+                # Если размер изображения не совпадает с размером объекта
                 surface_to_draw = transform.scale(self.image, (self.object_rect.width, self.object_rect.height))
             if self.current_angle != "UP":
                 surface_to_draw = transform.rotate(surface_to_draw, ANGLE[self.current_angle])
-
-            self.parent_world.parent_surface.blit(surface_to_draw, self.object_rect)
+            if camera is not None:
+                rect_to_draw.x += camera.get_coords()[0]
+                rect_to_draw.y += camera.get_coords()[1]
+            self.parent_world.parent_surface.blit(surface_to_draw, rect_to_draw)
             pass
 
     def __str__(self):
