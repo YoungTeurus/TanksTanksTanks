@@ -16,9 +16,11 @@ class Map:
     player_spawn_places = []
     enemy_spawn_places = []
     player_bases = []  # Базы игрока
-    # object_map = []
+
     size_w = None
     size_h = None
+
+    object_map = []  # Двумерный массив для хранения всех тайлов карты (для синхронизации)
 
     def __init__(self, world):
         self.parent_world = world
@@ -49,10 +51,13 @@ class Map:
             tile_x = 0
             tile_y = 0
             for row in self.text_map:
+                object_row = []
                 for tile in row:
                     temp_tile = WorldTile(self.parent_world)
                     temp_tile.set_tile(int(tile), tile_x, tile_y)
+                    object_row.append(temp_tile)
                     tile_x += 1
+                self.object_map.append(object_row)
                 tile_y += 1
                 tile_x = 0
         else:

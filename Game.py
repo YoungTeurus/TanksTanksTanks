@@ -32,8 +32,10 @@ class Game:
 
         self.game_running = True  # Флаг продолжения игры
 
-        self.world = World(self.game_surface, self.tileset)
+        self.world = World(self.game_surface, self.tileset, True)
         self.world.setup_world()
+        self.world.set_ready_for_server()
+
         self.last_moved_direction = None
 
     def main_cycle(self):
@@ -80,6 +82,9 @@ class Game:
 
             self.world.draw()
             self.world.act()
+            if (changes := self.world.get_changes()).__len__() > 0:
+                print(changes)
+            self.world.clear_changes()
 
             if not self.world.check_if_player_is_alive():
                 self.game_over(0)

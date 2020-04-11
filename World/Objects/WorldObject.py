@@ -8,10 +8,17 @@ from pygame import Rect
 class WorldObject(Drawable):
 
     parent_world = None  # Родительский мир, в котором будут отрисовываться объекты
+    world_id = None  # Айди объекта для мультиплеера
 
     def __init__(self, world):
         self.parent_world = world
         super().__init__(self.parent_world.parent_tileset)
+        if self.parent_world.is_server:
+            self.world_id = self.parent_world.get_last_id()
+            self.parent_world.objects_id_dict[self.world_id] = self
+
+    def set_world_id(self, world_id):
+        self.world_id = world_id
 
     def draw_in_world(self, camera=None):
         """
@@ -43,11 +50,12 @@ class WorldObject(Drawable):
         Функция, которая должна удалять объект из всех массивов, в которые он был добавлен при создании
         :return:
         """
-        pass
+        if self.parent_world.is_server:
+            self.parent_world.objects_id_dict.pop(self.world_id)
 
     def __str__(self):
-        return "{0} {1} {2} {3} {4} {5}".format(
+        return "{0} {1} {2} {3} {4} {5} {6}".format(
             "WorldObject", self.object_rect.x, self.object_rect.y,
             self.object_rect.width, self.object_rect.height,
-            "img_id"
+            self.image_name, self.world_id
         )

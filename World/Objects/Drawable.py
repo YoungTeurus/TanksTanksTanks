@@ -14,6 +14,7 @@ class Drawable(pygame.sprite.Sprite):
     float_y = 0
     object_rect = None  # Прямоугольник, хранящий позицию и размеры спрайта объекта
     image = None  # Отображаемая картинка
+    image_name = None  # Название отображаемой картинки
     # animated_image = None
     # parent_imageloader = None  # Загрузчик картинок
     parent_tileset = None  # Тайлсет для картинок
@@ -22,7 +23,6 @@ class Drawable(pygame.sprite.Sprite):
     def __init__(self, tileset):
         pygame.sprite.Sprite.__init__(self)
         self.object_rect = Rect(0, 0, 0, 0)
-        # self.parent_imageloader = imageloader
         self.parent_tileset = tileset
 
     def set_animated(self):
@@ -42,6 +42,7 @@ class Drawable(pygame.sprite.Sprite):
             self.image = AnimatedImage()
             for pair_of_tile_coord in TILES[image_name]:
                 self.image.add_frame(self.parent_tileset.get_image(pair_of_tile_coord[0], pair_of_tile_coord[1]))
+            self.image_name = image_name
         # self.image = self.parent_imageloader.get_image_by_name(image_name)
 
     # def set_test_animation(self, tileset):
@@ -63,7 +64,7 @@ class Drawable(pygame.sprite.Sprite):
         return "{0} {1} {2} {3} {4} {5}".format(
             "Drawable", self.object_rect.x, self.object_rect.y,
             self.object_rect.width, self.object_rect.height,
-            "img_id"
+            self.image_name
         )
 
 

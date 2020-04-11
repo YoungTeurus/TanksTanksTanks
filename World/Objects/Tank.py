@@ -59,6 +59,9 @@ class Tank(Collisionable, Actable):
         self.parent_world.collisionable_objects.append(self)
         self.parent_world.actable_object.append(self)
 
+        if self.parent_world.need_to_log_changes:  # Для сервера
+            self.parent_world.changes.append("create {}". format(self.__str__()))
+
     def decrease_hp(self, dmg):
         self.current_hp -= dmg
         if self.current_hp <= 0:
@@ -76,6 +79,8 @@ class Tank(Collisionable, Actable):
         remove_if_exists_in(self, self.parent_world.collisionable_objects)
         remove_if_exists_in(self, self.parent_world.actable_object)
         self.is_destroyed = True
+        if self.parent_world.need_to_log_changes:  # Для сервера
+            self.parent_world.changes.append("destroy {}". format(self.__str__()))
 
     def move_to_direction(self, direction):
         if direction in DIRECTIONS:
@@ -96,8 +101,11 @@ class Tank(Collisionable, Actable):
             self.last_direction = direction
 
             # self.currently_moving_to = direction
-            self.set_angle(direction)
+            self.set_angle(self.last_direction)
             self.image.next()
+
+            if self.parent_world.need_to_log_changes:  # Для сервера
+                self.parent_world.changes.append("move {}".format(self.__str__()))
         else:
             logging.error("There was an attempt to move tank to on wrong direction: {}".format(direction))
 
@@ -125,6 +133,33 @@ class Tank(Collisionable, Actable):
         :param dy: Перемещение по оси y
         :return:
         """
+        def process_collsions(_collided_objects, _previous_x, _previous_y):
+            if _collided_objects.__len__() > 0:
+                for g_obj in _collided_objects:
+                    distance_vector = Vector2
+                    distance_vector.x = g_obj.object_rect.x + (g_obj.object_rect.width / 2) \
+                                        - (self.object_rect.x + (self.object_rect.width / 2))
+                    distance_vector.y = g_obj.object_rect.y + (g_obj.object_rect.height / 2) \
+                                        - (self.object_rect.y + (self.object_rect.height / 2))
+                    if abs(distance_vector.x) > abs(distance_vector.y):
+                        # Если x больше y, значит пересекает горизонтальную грань
+                        if distance_vector.x > 0:
+                            # Если x больше 0, значит пересекает ЛЕВУЮ грань
+                            _previous_x = g_obj.float_x - self.object_rect.width
+                        else:
+                            # Иначе - ПРАВУЮ
+                            _previous_x = g_obj.float_x + g_obj.object_rect.width
+                    else:
+                        # Если y больше x, значит пересекает вертикальную грань
+                        if distance_vector.y > 0:
+                            # Если y больше 0, значит пересекает ВЕРХНЮЮ грань
+                            _previous_y = g_obj.object_rect.y - self.object_rect.height
+                        else:
+                            # Иначе - НИЖНЮЮ
+                            _previous_y = g_obj.float_y + g_obj.object_rect.height
+
+                # Если с чем-то столкнулись, возвращаем прежнее положение
+                self.set_pos(previous_x, previous_y)
 
         # Запоминаем предыдущее положение
         previous_x = self.float_x
@@ -133,40 +168,25 @@ class Tank(Collisionable, Actable):
 
         super().move(dx, dy)
 
-        collided_objects = self.check_collisions(self.parent_world.collisionable_objects)
-
-        # Костыль:
-        # TODO: Костыль +, мозги -: пересечение танка с пулей со стороны танка
-        for obj in collided_objects:
-            if isinstance(obj, Bullet):
-                collided_objects.remove(obj)
-
-        if collided_objects.__len__() > 0:
+        while (collided_objects := self.check_collisions(self.parent_world.collisionable_objects)).__len__() > 0:
+            # Костыль:
+            # TODO: Костыль +, мозги -: пересечение танка с пулей со стороны танка
             for obj in collided_objects:
-                distance_vector = Vector2
-                distance_vector.x = obj.object_rect.x + (obj.object_rect.width / 2) \
-                                    - (self.object_rect.x + (self.object_rect.width / 2))
-                distance_vector.y = obj.object_rect.y + (obj.object_rect.height / 2) \
-                                    - (self.object_rect.y + (self.object_rect.height / 2))
-                if abs(distance_vector.x) > abs(distance_vector.y):
-                    # Если x больше y, значит пересекает горизонтальную грань
-                    if distance_vector.x > 0:
-                        # Если x больше 0, значит пересекает ЛЕВУЮ грань
-                        previous_x = obj.float_x - self.object_rect.width
-                    else:
-                        # Иначе - ПРАВУЮ
-                        previous_x = obj.float_x + obj.object_rect.width
-                else:
-                    # Если y больше x, значит пересекает вертикальную грань
-                    if distance_vector.y > 0:
-                        # Если y больше 0, значит пересекает ВЕРХНЮЮ грань
-                        previous_y = obj.object_rect.y - self.object_rect.height
-                    else:
-                        # Иначе - НИЖНЮЮ
-                        previous_y = obj.float_y + obj.object_rect.height
+                if isinstance(obj, Bullet):
+                    collided_objects.remove(obj)
 
-            # Если с чем-то столкнулись, возвращаем прежнее положение
-            self.set_pos(previous_x, previous_y)
+            process_collsions(collided_objects, previous_x, previous_y)
+
+        # collided_objects = self.check_collisions(self.parent_world.collisionable_objects)
+
+
+
+    def __str__(self):
+        return "{0} {1} {2} {3} {4} {5} {6} {7}".format(
+            "Tank", self.object_rect.x, self.object_rect.y,
+            self.object_rect.width, self.object_rect.height,
+            self.image_name, self.current_angle, self.world_id
+        )
 
 
 class Vector2:
@@ -272,18 +292,13 @@ class Enemy(Tank):
         generated_number = random.randint(1, 100)
         if generated_number <= base_chance:
             self.state = self.state + 1 % 3
-            if self.state == 0:
-                print("I'm going to just wander around!")
             if self.state == 1:
                 self.chosen_player_to_hunt = random.choice(self.parent_world.players)
-                print("I'm going to hunt the player!")
             if self.state == 2:
                 try:
                     self.chosen_base_to_hunt = random.choice(self.parent_world.world_map.player_bases)
-                    print("I'm going to hunt the base!")
                 except IndexError: # Если нельзя выбрать базу, сбрасываемся на первое состояние
                     self.state = 0
-                    print("I can't find a base! Gonna walk around!")
 
             self.previous_tries_to_change_state = 0
         else:
@@ -318,8 +333,6 @@ class Enemy(Tank):
                     hunt_tile_x, hunt_tile_y = self.chosen_base_to_hunt.get_world_pos()
 
                 chosen_angle = self.get_optimal_angle_for_tile(hunt_tile_x, hunt_tile_y)
-
-                print("I'v chosen to move {}!".format(chosen_angle))
                 self.set_angle(chosen_angle)
 
                 if self.last_chosen_hunt_direction == chosen_angle:
@@ -363,7 +376,6 @@ class Enemy(Tank):
             return_y = "DOWN"
 
         if self.last_chosen_hunt_direction_in_row > 3:  # Если приказы повторяются
-            print("I'm gonna switch my strategy!")
             # Передаём коориданты по другой оси
             if abs(x_difference) > abs(y_difference):
                 return return_y
@@ -416,6 +428,8 @@ class Bullet(Collisionable, Actable):
         self.parent_world.collisionable_objects.append(self)
         self.parent_world.actable_object.append(self)
         self.parent_world.all_bullets.append(self)
+        if self.parent_world.need_to_log_changes:  # Для сервера
+            self.parent_world.changes.append("create {}". format(self.__str__()))
 
     def destroy(self):
         """
@@ -424,6 +438,8 @@ class Bullet(Collisionable, Actable):
         remove_if_exists_in(self, self.parent_world.collisionable_objects)
         remove_if_exists_in(self, self.parent_world.actable_object)
         remove_if_exists_in(self, self.parent_world.all_bullets)
+        if self.parent_world.need_to_log_changes:  # Для сервера
+            self.parent_world.changes.append("destroy {}". format(self.__str__()))
 
     def act(self):
         self.check_and_process_collisions(self.parent_world.collisionable_objects)  # Проверяем коллижены
@@ -438,6 +454,8 @@ class Bullet(Collisionable, Actable):
             self.move(-self.speed, 0)
         if self.bullet_direction == "RIGHT":
             self.move(self.speed, 0)
+        if self.parent_world.need_to_log_changes:  # Для сервера
+            self.parent_world.changes.append("move {}". format(self.__str__()))
 
 
 def bullet_collision(bullet, obj):

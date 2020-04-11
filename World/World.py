@@ -2,6 +2,8 @@ from Consts import DEFAULT_DELAY_BETWEEN_ENEMY_SPAWN, MAX_ENEMIES_ON_ONE_MOMENT,
 from World.Camera import Camera
 from World.Map import Map
 import random
+
+from World.Objects.RotatableWorldObject import RotatableWorldObject
 from World.Objects.Tank import Tank, Player, Enemy, Bullet
 from World.Timer import Timer
 
@@ -27,7 +29,14 @@ class World:
 
     world_map = None
 
-    def __init__(self, parent_surface, tileset):
+    is_server = None
+    need_to_log_changes = None  # Нужно ли отслеживать изменения. Только в мультиплеере.
+    changes = []  # Различия, произошедшие за текущий такт игры. Содержит команды, которые необходимо выполнить.
+    last_id = None  # Последний свободный id
+
+    objects_id_dict = None  # Словарь ВСЕХ объектов по их ID
+
+    def __init__(self, parent_surface, tileset, is_server):
         self.parent_surface = parent_surface
         self.parent_tileset = tileset
         self.enemy_spawn_timer = Timer(DEFAULT_DELAY_BETWEEN_ENEMY_SPAWN)
@@ -37,11 +46,19 @@ class World:
 
         self.world_map = Map(self)
         self.camera = Camera(self)
+        self.need_to_log_changes = False
+        self.objects_id_dict = dict()
+        self.is_server = is_server
+        self.last_id = 0
 
     def setup_world(self):
         self.load_map(0)
         self.spawn_player()
         self.center_camera_on_player()
+
+    def get_last_id(self):
+        self.last_id += 1
+        return self.last_id - 1
 
     def load_map(self, map_id):
         self.world_map.load_by_id(map_id)
@@ -127,3 +144,39 @@ class World:
 
     def check_if_base_is_alive(self):
         return self.world_map.player_bases.__len__() > 0
+
+    def set_ready_for_server(self):
+        """
+        Указывает миру, что необходимо отслеживать все изменения, происходящие с этого момента.
+        """
+        self.need_to_log_changes = True
+
+    def get_changes(self):
+        return self.changes
+
+    def clear_changes(self):
+        self.changes.clear()
+
+    def process_change(self, change):
+        arguments = change.split(" ")
+        if arguments[0] == "create":
+            if arguments[1] == "RotatableWorldObject":
+                coord_x, coord_y = int(arguments[2]), int(arguments[3])
+                width, height = int(arguments[4]), int(arguments[5])
+                image_name, start_angle = arguments[6], arguments[7]
+                world_id = int(arguments[8])
+                temp_object = RotatableWorldObject(self)
+                temp_object.set_pos(coord_x, coord_y)
+                temp_object.set_size(width, height)
+                temp_object.set_image(image_name)
+                temp_object.set_angle(start_angle)
+                temp_object.set_world_id(world_id)
+
+                self.objects_id_dict[world_id] = temp_object
+                self.all_bullets.append(temp_object)
+        elif arguments[0] == "move":
+            pass
+        elif arguments[0] == "destroy":
+            pass
+        elif arguments[0] == "gethit":
+            pass

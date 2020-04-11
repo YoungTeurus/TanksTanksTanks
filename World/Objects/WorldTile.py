@@ -65,8 +65,12 @@ class WorldTile(Collisionable):
         self.parent_world.all_tiles.append(self)
         if self.is_solid:
             self.parent_world.collisionable_objects.append(self)
+        if self.parent_world.need_to_log_changes:  # Для сервера
+            self.parent_world.changes.append("create {}". format(self.__str__()))
 
     def get_hit(self, direction_of_bullet):
+        if self.parent_world.need_to_log_changes:  # Для сервера
+            self.parent_world.changes.append("gethit {} {}". format(self.__str__(), direction_of_bullet))
         if self.is_destroyable:
             if self.tile_id == 5:  # Если это база
                 self.player_base_hp -= 1
@@ -101,6 +105,8 @@ class WorldTile(Collisionable):
             remove_if_exists_in(self, self.parent_world.collisionable_objects)
         if self.tile_id == 5:  # База игрока
             remove_if_exists_in(self, self.parent_world.world_map.player_bases)
+        if self.parent_world.need_to_log_changes:  # Для сервера
+            self.parent_world.changes.append("destroy {}". format(self.__str__()))
 
     def set_by_id(self, tile_id):
         if (main_tile_id := tile_id % 10) in ID:
@@ -158,3 +164,10 @@ class WorldTile(Collisionable):
         :return:
         """
         super().set_pos(x*sprite_w, y*sprite_h)
+
+    def __str__(self):
+        return "{0} {1} {2} {3} {4} {5} {6}".format(
+            "WorldTile", self.object_rect.x, self.object_rect.y,
+            self.object_rect.width, self.object_rect.height,
+            self.tile_id, self.world_id
+        )
