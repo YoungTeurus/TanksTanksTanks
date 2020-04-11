@@ -1,6 +1,6 @@
 import logging
 
-from Consts import sprite_w, sprite_h, WATER_DEFAULT_DELAY_BETWEEN_FRAMES
+from Consts import sprite_w, sprite_h, WATER_DEFAULT_DELAY_BETWEEN_FRAMES, DEFAULT_PLAYER_BASE_HP
 from World.Objects.Collisionable import Collisionable, remove_if_exists_in
 
 # название_текстуры is_solid is_passable_for_bullets is_destroyable
@@ -10,7 +10,7 @@ ID = {
     2: ["GRAY_BRICK", True,  False,  False],
     3: ["WATER",      True,  True,   False],
     4: ["BUSH",       False, True,   False],
-    5: ["BASE",       True,  False,  False],
+    5: ["BASE",       True,  False,  True ],
     6: [None,         False, True,   False],
     7: [None,         False, True,   False]
 }
@@ -39,6 +39,9 @@ class WorldTile(Collisionable):
 
     is_destroyable = False
     is_passable_for_bullets = False
+    tile_id = None
+
+    player_base_hp = None  # Количество жизней у базы
 
     # hits_to_destroy = 0
     # current_hitpoints = 0
@@ -65,6 +68,13 @@ class WorldTile(Collisionable):
 
     def get_hit(self, direction_of_bullet):
         if self.is_destroyable:
+            if self.tile_id == 5:  # Если это база
+                self.player_base_hp -= 1
+                if self.player_base_hp <= 0:
+                    self.destroy()
+                    return
+                self.image.next()
+                return
             if direction_of_bullet == "UP":
                 # Если ударили снизу
                 self.set_size(self.object_rect.width, self.object_rect.height - sprite_h/4)
@@ -89,9 +99,12 @@ class WorldTile(Collisionable):
         remove_if_exists_in(self, self.parent_world.all_tiles)
         if self.is_solid:
             remove_if_exists_in(self, self.parent_world.collisionable_objects)
+        if self.tile_id == 5:  # База игрока
+            remove_if_exists_in(self, self.parent_world.world_map.player_bases)
 
     def set_by_id(self, tile_id):
         if (main_tile_id := tile_id % 10) in ID:
+            self.tile_id = main_tile_id
             modificator_tile_id = tile_id // 10
             if (img_name := ID[main_tile_id][0]) is not None:  # Если у тайла есть текстура
                 self.set_image(img_name)
@@ -127,7 +140,8 @@ class WorldTile(Collisionable):
                 self.image.add_timer(WATER_DEFAULT_DELAY_BETWEEN_FRAMES)  # Задержка между кадрами
                 self.set_animated()
             if main_tile_id == 5:  # Если это база игрока
-                pass
+                self.player_base_hp = DEFAULT_PLAYER_BASE_HP
+                self.parent_world.world_map.player_bases.append(self)  # Заносим базу в базы игрока
             if main_tile_id == 6:  # Если это место спавна игрока
                 self.parent_world.world_map.player_spawn_places.append(self)  # Заносим тайл в места для спавна игрока
             if main_tile_id == 7:  # Если это место спавна врага

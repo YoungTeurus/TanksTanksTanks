@@ -76,11 +76,25 @@ class Game:
 
             # Стрельба
             if keyboard_pressed[pygame.K_SPACE]:
-                self.world.create_bullet(self.world.player)
+                self.world.create_bullet(self.world.players[0])
 
             self.world.draw()
             self.world.act()
 
+            if not self.world.check_if_player_is_alive():
+                self.game_over(0)
+
+            if not self.world.check_if_base_is_alive():
+                self.game_over(1)
+
             self.window_surface.blit(self.game_surface, self.game_rect)
 
             pygame.display.update()
+
+    def game_over(self, game_over_id):
+        game_overs = [
+            "Game over! Your tank was destroyed!",
+            "Game over! Your base was destroyed!"
+        ]
+        print(game_overs[game_over_id])
+        self.game_running = False

@@ -1,11 +1,16 @@
 import logging
+import random
 
-from Consts import PLAYER_DEFAULT_HP, EPSILON, PLAYER_DEFAULT_DELAY_BEFORE_FIRE, TANK_DEFAULT_DELAY_BETWEEN_FRAMES
+from Consts import TANK_DEFAULT_HP, EPSILON, TANK_DEFAULT_DELAY_BEFORE_FIRE, TANK_DEFAULT_DELAY_BETWEEN_FRAMES, \
+    DEFAULT_DELAY_BETWEEN_ENEMY_TRY_TO_ROTATE, DEFAULT_DELAY_BETWEEN_ENEMY_TRY_TO_SHOOT, \
+    DEFAULT_DELAY_BETWEEN_ENEMY_TRY_TO_CHANGE_STATE
 from World.Timer import Timer
 from Consts import TANK_DEFAULT_SPEED_PER_SECOND, sprite_w, sprite_h
 from World.Objects.Actable import Actable
 from World.Objects.Collisionable import Collisionable, remove_if_exists_in
 from World.Objects.WorldTile import WorldTile
+
+DIRECTIONS = ["UP", "RIGHT", "DOWN", "LEFT"]
 
 
 class Tank(Collisionable, Actable):
@@ -18,6 +23,7 @@ class Tank(Collisionable, Actable):
     damage = None
     speed = TANK_DEFAULT_SPEED_PER_SECOND
     last_direction = None  # В какую сторону сейчас движется танк
+    is_destroyed = None  # Уничтожен ли танк
 
     fire_timer = None
 
@@ -26,10 +32,11 @@ class Tank(Collisionable, Actable):
 
     def __init__(self, world):
         super().__init__(world)
-        self.max_hp = self.current_hp = PLAYER_DEFAULT_HP
+        self.max_hp = self.current_hp = TANK_DEFAULT_HP
         self.damage = 1
+        self.is_destroyed = False
 
-        self.fire_timer = Timer(PLAYER_DEFAULT_DELAY_BEFORE_FIRE)
+        self.fire_timer = Timer(TANK_DEFAULT_DELAY_BEFORE_FIRE)
 
     def set_speed(self, speed):
         if speed >= 0:
@@ -54,7 +61,7 @@ class Tank(Collisionable, Actable):
 
     def decrease_hp(self, dmg):
         self.current_hp -= dmg
-        if (self.current_hp <= 0):
+        if self.current_hp <= 0:
             self.destroy()
 
     def act(self):
@@ -68,34 +75,27 @@ class Tank(Collisionable, Actable):
         remove_if_exists_in(self, self.parent_world.all_tanks)
         remove_if_exists_in(self, self.parent_world.collisionable_objects)
         remove_if_exists_in(self, self.parent_world.actable_object)
+        self.is_destroyed = True
 
     def move_to_direction(self, direction):
-        # Возможнные направления для движения:
-        # direction_dict = {
-        #     "UP":       [0,             -self.speed],
-        #     "RIGHT":    [self.speed,    0],
-        #     "DOWN":     [0,             self.speed],
-        #     "LEFT":     [-self.speed,   0]
-        # }
-        directions = ["UP", "RIGHT", "DOWN", "LEFT"]
+        if direction in DIRECTIONS:
 
-        if direction in directions:
-
-            if (direction != self.last_direction):
+            if direction != self.last_direction:
+                # Если изменили направление движения, выполняем поправку координат
                 self.correct_pos()
 
             if direction == "UP":
-                self.smart_move(0,             -self.speed)
+                self.smart_move(0, -self.speed)
             if direction == "RIGHT":
-                self.smart_move(self.speed,    0)
+                self.smart_move(self.speed, 0)
             if direction == "DOWN":
-                self.smart_move(0,             self.speed)
+                self.smart_move(0, self.speed)
             if direction == "LEFT":
-                self.smart_move(-self.speed,   0)
+                self.smart_move(-self.speed, 0)
 
             self.last_direction = direction
 
-            self.currently_moving_to = direction
+            # self.currently_moving_to = direction
             self.set_angle(direction)
             self.image.next()
         else:
@@ -186,35 +186,64 @@ class Player(Tank):
 
     def destroy(self):
         super().destroy()
+        remove_if_exists_in(self, self.parent_world.players)
 
     def setup_in_world(self, x, y):
         super().setup_in_world(x, y)
         self.set_image("PLAYER_TANK")
         self.image.add_timer(TANK_DEFAULT_DELAY_BETWEEN_FRAMES)
-        self.last_direction = "UP"
+        self.fire_timer.set(0)
+
+        self.parent_world.players.append(self)
+        # self.last_direction = "UP"
+
 
 class Enemy(Tank):
-
-    move_timer = None
+    change_direction_timer = None
     shoot_timer = None
+    change_state_timer = None
+    previous_tries_to_change_state = None  # Количество предыдущих попыток сменить состояние
+
+    chosen_player_to_hunt = None  # Выбранный для охоты танк игрока
+    chosen_base_to_hunt = None  # Выбранная для охоты база игрока
+
+    last_chosen_hunt_direction = None  # Последнее выбранное направление для движения во время охоты
+    last_chosen_hunt_direction_in_row = None  # Сколько раз это направление было выбрано подряд
+
+    state = None  # Текущее состояние врага
+
+    # Возможные состояния: 0 - случайное движение
+    # 1 - охота на игрока
+    # 2 - охота на базу игрока
 
     def __init__(self, world):
         super().__init__(world)
         self.parent_world.current_amount_of_enemies += 1
 
-        self.move_timer = Timer(10)
-        self.shoot_timer = Timer(100)
+        self.change_direction_timer = Timer(DEFAULT_DELAY_BETWEEN_ENEMY_TRY_TO_ROTATE)
+        self.shoot_timer = Timer(DEFAULT_DELAY_BETWEEN_ENEMY_TRY_TO_SHOOT)
+        self.change_state_timer = Timer(DEFAULT_DELAY_BETWEEN_ENEMY_TRY_TO_CHANGE_STATE)
+        self.state = 0
+        self.previous_tries_to_change_state = 0
+        self.last_chosen_hunt_direction_in_row = 0
 
     def act(self):
         super().act()
 
-        self.move_to_direction(self.last_direction)
-        # if self.shoot_timer.is_ready():
-        #     self.parent_world.create_bullet(self)
-        #     self.shoot_timer.reset()
+        self.move_to_direction(self.current_angle)
+        if self.change_direction_timer.is_ready():
+            self.try_to_change_direction()
+            self.change_direction_timer.reset()
+        if self.shoot_timer.is_ready():
+            self.parent_world.create_bullet(self)
+            self.shoot_timer.reset()
+        if self.change_state_timer.is_ready():
+            self.try_to_change_state()
+            self.change_state_timer.reset()
 
-        self.move_timer.tick()
+        self.change_direction_timer.tick()
         self.shoot_timer.tick()
+        self.change_state_timer.tick()
 
     def destroy(self):
         super().destroy()
@@ -224,8 +253,130 @@ class Enemy(Tank):
         super().setup_in_world(x, y)
         self.set_image("ENEMY_TANK_0")
         self.image.add_timer(TANK_DEFAULT_DELAY_BETWEEN_FRAMES)
-        self.last_direction = "DOWN"
+        # self.last_direction = "DOWN"
         self.set_angle("DOWN")
+
+    def try_to_change_state(self):
+        """
+        Меняет состояние врага, переводя его на следующий этап.
+        :return:
+        """
+        base_chance = 4
+        # Проверка текущего состояния
+        # Проверка положения
+        if self.check_pos_on_whole_tile():
+            base_chance += 10  # Увеличиваем шанс изменить состояние
+        base_chance += self.previous_tries_to_change_state * 10  # Каждая предыдущая попытка изменить состояние
+        # увеличивает шанс сменить его.
+        # Собственно изменение состояния
+        generated_number = random.randint(1, 100)
+        if generated_number <= base_chance:
+            self.state = self.state + 1 % 3
+            if self.state == 0:
+                print("I'm going to just wander around!")
+            if self.state == 1:
+                self.chosen_player_to_hunt = random.choice(self.parent_world.players)
+                print("I'm going to hunt the player!")
+            if self.state == 2:
+                try:
+                    self.chosen_base_to_hunt = random.choice(self.parent_world.world_map.player_bases)
+                    print("I'm going to hunt the base!")
+                except IndexError: # Если нельзя выбрать базу, сбрасываемся на первое состояние
+                    self.state = 0
+                    print("I can't find a base! Gonna walk around!")
+
+            self.previous_tries_to_change_state = 0
+        else:
+            self.previous_tries_to_change_state += 1
+
+    def try_to_change_direction(self):
+        base_chance = 4
+        # Проверка на положение (%sprite_w)
+        if self.check_pos_on_whole_tile():
+            base_chance += 20  # Увеличиваем шанс повернуть
+        # Собственно изменение направления
+        generated_number = random.randint(1, 100)
+        if generated_number <= base_chance:
+            if self.state == 0:  # Если танк находится в состоянии "случайное движение"
+                possible_directions = DIRECTIONS.copy()
+                if not generated_number < 25:  # 25% шанс остаться на предыдущем направлении
+                    possible_directions.remove(self.current_angle)
+                chosen_direction = random.choice(possible_directions)
+                self.set_angle(chosen_direction)  # Меняем направление
+
+            else:  # Если танк находится в состоянии "охоты" на что-нибудь
+
+                if generated_number < 10:  # 10% шанс выбрать случайное направление
+                    possible_directions = DIRECTIONS.copy()
+                    possible_directions.remove(self.current_angle)
+                    chosen_direction = random.choice(possible_directions)
+                    self.set_angle(chosen_direction)  # Меняем направление
+                    return
+                if self.state == 1:  # Если охотимся на игрока
+                    hunt_tile_x, hunt_tile_y = self.chosen_player_to_hunt.get_world_pos()
+                else:  # Если охотимся на базу
+                    hunt_tile_x, hunt_tile_y = self.chosen_base_to_hunt.get_world_pos()
+
+                chosen_angle = self.get_optimal_angle_for_tile(hunt_tile_x, hunt_tile_y)
+
+                print("I'v chosen to move {}!".format(chosen_angle))
+                self.set_angle(chosen_angle)
+
+                if self.last_chosen_hunt_direction == chosen_angle:
+                    self.last_chosen_hunt_direction_in_row += 1
+                else:
+                    self.last_chosen_hunt_direction = chosen_angle
+                    self.last_chosen_hunt_direction_in_row = 0
+
+    def check_pos_on_whole_tile(self):
+        """
+        Проверяет положение танка. Если одна из координат кратна целому числу тайлов мира, возвращает True.
+        """
+        if self.object_rect.x % sprite_w == 0:
+            # Проверка кооридинаты x
+            return True
+        if self.object_rect.y % sprite_h == 0:
+            # Проверка кооридинаты y
+            return True
+        return False
+
+    def get_optimal_angle_for_tile(self, tile_x, tile_y):
+        """
+        Возвращает направление, на которое нужно повернуться, чтобы добраться до нужного тайла
+        :return:
+        """
+        return_x = None
+        return_y = None
+        tank_x, tank_y = self.get_world_pos()
+        x_difference = tank_x - tile_x
+        y_difference = tank_y - tile_y
+
+        if x_difference > 0:
+            # Если танк правее базы:
+            return_x = "LEFT"
+        else:
+            # Если танк левее базы:
+            return_x = "RIGHT"
+
+        if y_difference > 0:
+            # Если танк ниже базы:
+            return_y = "UP"
+        else:
+            # Если танк выше базы:
+            return_y = "DOWN"
+
+        if self.last_chosen_hunt_direction_in_row > 3:
+            print("I'm gonna switch my strategy!")
+            # Передаём коориданты по другой оси
+            if abs(x_difference) > abs(y_difference):
+                return return_y
+            else:
+                return return_x
+
+        if abs(x_difference) > abs(y_difference):
+            return return_x
+        else:
+            return return_y
 
 
 class Bullet(Collisionable, Actable):
@@ -290,6 +441,7 @@ class Bullet(Collisionable, Actable):
             self.move(-self.speed, 0)
         if self.bullet_direction == "RIGHT":
             self.move(self.speed, 0)
+
 
 def bullet_collision(bullet, obj):
     if obj is bullet.parent_tank:  # Не реагируем на коллизию с танком, который выстрелил

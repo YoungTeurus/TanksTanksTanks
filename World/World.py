@@ -11,13 +11,13 @@ class World:
     Класс, содеражащий в себе информацию об отображаемой карте и всех объектах на ней.
     """
     camera = None  # Камера
-    player = None  # Игрок
+    players = []  # Игрок
     parent_surface = None  # Та поверхность, на которой будет происходить отрисовка всего мира
     parent_tileset = None
 
     all_tanks = []  # Все танки, которые необходимо отрисовывать
     all_bullets = []  # Все пули, которые необходимо отрисовывать
-    all_tiles = []  # Все тайлы, которые необходимо отрисовывать
+    all_tiles = []  # Все тайлы, которые необходимо отрисовывать (тайлы заносятся сюда в .set_tile() )
     collisionable_objects = []  # Все объекты, с которыми нужно проверять столкновение
     actable_object = []  # Все объекты, для которых нужно вызывать Act() каждый раз
 
@@ -37,7 +37,6 @@ class World:
 
         self.world_map = Map(self)
         self.camera = Camera(self)
-        self.player = Player(self)
 
     def setup_world(self):
         self.load_map(0)
@@ -56,7 +55,8 @@ class World:
         """
         place_to_spawn = random.choice(self.world_map.player_spawn_places)
         (place_to_spawn_x, place_to_spawn_y) = place_to_spawn.get_world_pos()
-        self.player.setup_in_world(place_to_spawn_x, place_to_spawn_y)
+        new_player = Player(self)
+        new_player.setup_in_world(place_to_spawn_x, place_to_spawn_y)
 
 
     def draw(self):
@@ -106,8 +106,14 @@ class World:
         self.camera.set_coords(x, y)
 
     def center_camera_on_player(self):
-        self.camera.smart_center_on(self.player)
+        self.camera.smart_center_on(self.players[0])
 
     def move_player_to(self, direction):
-        self.player.move_to_direction(direction)
-        self.camera.smart_center_on(self.player)
+        self.players[0].move_to_direction(direction)
+        self.camera.smart_center_on(self.players[0])
+
+    def check_if_player_is_alive(self):
+        return not self.players[0].is_destroyed
+
+    def check_if_base_is_alive(self):
+        return self.world_map.player_bases.__len__() > 0
