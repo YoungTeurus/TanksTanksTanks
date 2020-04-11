@@ -345,12 +345,9 @@ class Enemy(Tank):
         Возвращает направление, на которое нужно повернуться, чтобы добраться до нужного тайла
         :return:
         """
-        return_x = None
-        return_y = None
         tank_x, tank_y = self.get_world_pos()
         x_difference = tank_x - tile_x
         y_difference = tank_y - tile_y
-
         if x_difference > 0:
             # Если танк правее базы:
             return_x = "LEFT"
@@ -365,7 +362,7 @@ class Enemy(Tank):
             # Если танк выше базы:
             return_y = "DOWN"
 
-        if self.last_chosen_hunt_direction_in_row > 3:
+        if self.last_chosen_hunt_direction_in_row > 3:  # Если приказы повторяются
             print("I'm gonna switch my strategy!")
             # Передаём коориданты по другой оси
             if abs(x_difference) > abs(y_difference):

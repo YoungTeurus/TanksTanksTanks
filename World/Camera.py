@@ -68,12 +68,9 @@ class Camera:
             if self.can_set_coords_and_dont_see_each_tile(0, None, world_w-1, None):
                 # Можем ли не видеть левую и правую стенку
                 # Если да, то устанавливаем x координату левее правой стенки
-                # new_camera_x = (world_w - 1) * sprite_w - sprite_w
-                # new_camera_x = (world_w - 1) * sprite_w - sprite_w * 3 - surface_width
                 new_camera_x = -(world_w - 1) * sprite_w + surface_width
             else:
                 # Если нет, то устанавливает x координату по середине между стенками
-                # new_camera_x = (world_w/2) * sprite_w
                 new_camera_x = surface_width / 2 - (world_w * sprite_w) / 2
             was_x_corrected = True
         if self.check_if_tile_is_visible(None, 0, new_camera_x, new_camera_y) and not was_y_corrected:

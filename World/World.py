@@ -76,21 +76,31 @@ class World:
         # Спавн врага
         if self.enemies_remains > 0:
             if self.enemy_spawn_timer.is_ready():
-                self.enemy_spawn_timer.reset()
-                self.create_enemy()
-                self.enemies_remains -= 1
+                if self.create_enemy():
+                    # Если получилось заспавнить врага
+                    self.enemies_remains -= 1
+                    self.enemy_spawn_timer.reset()
             else:
                 self.enemy_spawn_timer.tick()
 
     def create_enemy(self):
+        """
+        Спавнит врага на одном из мест спавна для врагов. При этом проверяется максимальное число заспавенных врагов
+        и свободность места для спавна.
+        :return:
+        """
         if self.current_amount_of_enemies < MAX_ENEMIES_ON_ONE_MOMENT:
             try:
                 place_to_spawn = random.choice(self.world_map.enemy_spawn_places)
+                if place_to_spawn.check_collisions(self.collisionable_objects).__len__() > 0:
+                    return False
                 (place_to_spawn_x, place_to_spawn_y) = place_to_spawn.get_world_pos()
                 enemy = Enemy(self)
                 enemy.setup_in_world(place_to_spawn_x, place_to_spawn_y)
+                return True
             except IndexError:
-                return
+                return False
+        return False
 
 
     def create_bullet(self, tank):
