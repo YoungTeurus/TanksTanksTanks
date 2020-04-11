@@ -181,12 +181,12 @@ class Tank(Collisionable, Actable):
 
 
 
-    def __str__(self):
-        return "{0} {1} {2} {3} {4} {5} {6} {7}".format(
-            "Tank", self.object_rect.x, self.object_rect.y,
-            self.object_rect.width, self.object_rect.height,
-            self.image_name, self.current_angle, self.world_id
-        )
+    # def __str__(self):
+        # return "{0} {1} {2} {3} {4} {5} {6} {7}".format(
+        #     "Tank", self.object_rect.x, self.object_rect.y,
+        #     self.object_rect.width, self.object_rect.height,
+        #     self.image_name, self.current_angle, self.world_id
+        # )
 
 
 class Vector2:
