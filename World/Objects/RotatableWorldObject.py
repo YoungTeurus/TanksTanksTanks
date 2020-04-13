@@ -52,8 +52,9 @@ class RotatableWorldObject(WorldObject):
                 self.image.next()
 
     def __str__(self):
-        return "{0} {1} {2} {3} {4} {5} {6} {7}".format(
+        return "{0} {1} {2} {3} {4} {5} {8} {6} {7}".format(
             "RotatableWorldObject", self.object_rect.x, self.object_rect.y,
             self.object_rect.width, self.object_rect.height,
-            self.image_name, self.current_angle, self.world_id
+            self.image_name, self.current_angle, self.world_id,
+            self.image.current_frame
         )

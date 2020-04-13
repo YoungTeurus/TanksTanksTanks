@@ -12,6 +12,8 @@ class Map:
 
     parent_world = None
 
+    map_id = None
+
     text_map = []  # Здесь хранится карта в виде числовоых значения
     player_spawn_places = []
     enemy_spawn_places = []
@@ -64,6 +66,7 @@ class Map:
             logging.error("There was an attempt to create objects for a world by it was not loaded.")
 
     def load_by_id(self, map_id):
+        self.map_id = map_id
         if map_id in MAPS:
             # Очистка перед загрузкой
             self.text_map.clear()

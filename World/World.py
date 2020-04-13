@@ -3,6 +3,8 @@ from World.Camera import Camera
 from World.Map import Map
 import random
 
+from World.Objects.Collisionable import remove_if_exists_in
+from World.Objects.Movable import Movable
 from World.Objects.RotatableWorldObject import RotatableWorldObject
 from World.Objects.Tank import Tank, Player, Enemy, Bullet
 from World.Timer import Timer
@@ -22,6 +24,8 @@ class World:
     all_tiles = []  # Все тайлы, которые необходимо отрисовывать (тайлы заносятся сюда в .set_tile() )
     collisionable_objects = []  # Все объекты, с которыми нужно проверять столкновение
     actable_object = []  # Все объекты, для которых нужно вызывать Act() каждый раз
+
+    all_drawable_client = []  # Все объекты, которые нужно отрисовать на стороне клиента
 
     enemy_spawn_timer = None  # Таймер для спавна нового врага
     current_amount_of_enemies = None  # Количество врагов на поле в данный момент
@@ -53,8 +57,8 @@ class World:
 
     def setup_world(self):
         self.load_map(0)
-        self.spawn_player()
-        self.center_camera_on_player()
+        # self.spawn_player()
+        # self.center_camera_on_player()
 
     def get_last_id(self):
         self.last_id += 1
@@ -82,6 +86,11 @@ class World:
             bullet.draw_in_world(self.camera)
         for tank in self.all_tanks:
             tank.draw_in_world(self.camera)
+
+        # Это только для клиента:
+        for obj in self.all_drawable_client:
+            obj.draw_in_world(self.camera)
+
         # Затем отрисовываем тайлы
         for tile in self.all_tiles:
             tile.draw_in_world(self.camera)
@@ -90,15 +99,8 @@ class World:
         for obj in self.actable_object:
             obj.act()
 
-        # Спавн врага
-        if self.enemies_remains > 0:
-            if self.enemy_spawn_timer.is_ready():
-                if self.create_enemy():
-                    # Если получилось заспавнить врага
-                    self.enemies_remains -= 1
-                    self.enemy_spawn_timer.reset()
-            else:
-                self.enemy_spawn_timer.tick()
+        self.enemy_spawn_timer.tick()
+
 
     def create_enemy(self):
         """
@@ -157,14 +159,20 @@ class World:
     def clear_changes(self):
         self.changes.clear()
 
+    def process_many_changes(self, changes):
+        # num_of_changes = changes.keys().__len__()
+        for change in changes:
+            self.process_change(changes[change])
+            # self.process_change(changes[(i-1).__str__()])
+
     def process_change(self, change):
         arguments = change.split(" ")
         if arguments[0] == "create":
             if arguments[1] == "RotatableWorldObject":
                 coord_x, coord_y = int(arguments[2]), int(arguments[3])
                 width, height = int(arguments[4]), int(arguments[5])
-                image_name, start_angle = arguments[6], arguments[7]
-                world_id = int(arguments[8])
+                image_name, start_angle = arguments[6], arguments[8]
+                world_id = int(arguments[9])
                 temp_object = RotatableWorldObject(self)
                 temp_object.set_pos(coord_x, coord_y)
                 temp_object.set_size(width, height)
@@ -173,10 +181,27 @@ class World:
                 temp_object.set_world_id(world_id)
 
                 self.objects_id_dict[world_id] = temp_object
-                self.all_bullets.append(temp_object)
+                self.all_drawable_client.append(temp_object)
         elif arguments[0] == "move":
-            pass
+            new_x, new_y = int(arguments[2]), int(arguments[3])
+            new_frame, new_angle = int(arguments[7]), arguments[8]
+            world_id = int(arguments[9])
+            self.objects_id_dict[world_id].set_pos(new_x, new_y)
+            self.objects_id_dict[world_id].set_angle(new_angle)
+            self.objects_id_dict[world_id].image.current_frame = new_frame
         elif arguments[0] == "destroy":
-            pass
+            if arguments[1] == "RotatableWorldObject":
+                world_id = int(arguments[9])
+                remove_if_exists_in(self.objects_id_dict[world_id], self.all_drawable_client)
+                self.objects_id_dict[world_id].destroy()
+            elif arguments[1] == "WorldTile":
+                world_id = int(arguments[7])
+                remove_if_exists_in(self.objects_id_dict[world_id], self.all_drawable_client)
+                self.objects_id_dict[world_id].destroy()
         elif arguments[0] == "gethit":
-            pass
+            world_id = int(arguments[7])
+            bullet_direction = arguments[8]
+            self.objects_id_dict[world_id].get_hit(bullet_direction)
+        elif arguments[0] == "camera":
+            camera_x, camera_y = int(arguments[2]), int(arguments[3])
+            self.camera.set_coords(camera_x, camera_y)

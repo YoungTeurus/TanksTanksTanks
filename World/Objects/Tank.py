@@ -59,9 +59,6 @@ class Tank(Collisionable, Actable):
         self.parent_world.collisionable_objects.append(self)
         self.parent_world.actable_object.append(self)
 
-        if self.parent_world.need_to_log_changes:  # Для сервера
-            self.parent_world.changes.append("create {}". format(self.__str__()))
-
     def decrease_hp(self, dmg):
         self.current_hp -= dmg
         if self.current_hp <= 0:
@@ -175,18 +172,11 @@ class Tank(Collisionable, Actable):
                 if isinstance(obj, Bullet):
                     collided_objects.remove(obj)
 
+            if collided_objects.__len__() <= 0:  # Просто убейте меня уже за этот костыль: если после удаления пули
+                # колличество объектов для столкновения стало равным 0, то прекращаем проверять всё - выходим из цикла
+                break
+
             process_collsions(collided_objects, previous_x, previous_y)
-
-        # collided_objects = self.check_collisions(self.parent_world.collisionable_objects)
-
-
-
-    # def __str__(self):
-        # return "{0} {1} {2} {3} {4} {5} {6} {7}".format(
-        #     "Tank", self.object_rect.x, self.object_rect.y,
-        #     self.object_rect.width, self.object_rect.height,
-        #     self.image_name, self.current_angle, self.world_id
-        # )
 
 
 class Vector2:
@@ -213,8 +203,12 @@ class Player(Tank):
         self.set_image("PLAYER_TANK")
         self.image.add_timer(TANK_DEFAULT_DELAY_BETWEEN_FRAMES)
         self.fire_timer.set(0)
+        self.last_direction = "UP"
 
         self.parent_world.players.append(self)
+
+        if self.parent_world.need_to_log_changes:  # Для сервера
+            self.parent_world.changes.append("create {}". format(self.__str__()))
         # self.last_direction = "UP"
 
 
@@ -275,6 +269,10 @@ class Enemy(Tank):
         self.image.add_timer(TANK_DEFAULT_DELAY_BETWEEN_FRAMES)
         # self.last_direction = "DOWN"
         self.set_angle("DOWN")
+        self.last_direction = "DOWN"
+
+        if self.parent_world.need_to_log_changes:  # Для сервера
+            self.parent_world.changes.append("create {}". format(self.__str__()))
 
     def try_to_change_state(self):
         """

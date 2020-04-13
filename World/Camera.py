@@ -21,6 +21,8 @@ class Camera:
 
     def set_coords(self, x, y):
         self.visible_rect.x, self.visible_rect.y = x, y
+        if self.parent_world.need_to_log_changes:  # Для сервера
+            self.parent_world.changes.append("camera {}". format(self.__str__()))
 
     def get_size(self):
         return self.visible_rect.size
@@ -207,3 +209,8 @@ class Camera:
         if y1 is not None and y2 is not None:
             _y1, _y2 = y1, y2 + 1
         return self.can_set_coords_and_dont_see_other_tile(_x1, _y1, _x2, _y2)
+
+    def __str__(self):
+        return "Camera {0} {1}".format(
+            self.visible_rect.x, self.visible_rect.y
+        )
