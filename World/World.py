@@ -186,9 +186,13 @@ class World:
             new_x, new_y = int(arguments[2]), int(arguments[3])
             new_frame, new_angle = int(arguments[7]), arguments[8]
             world_id = int(arguments[9])
-            self.objects_id_dict[world_id].set_pos(new_x, new_y)
-            self.objects_id_dict[world_id].set_angle(new_angle)
-            self.objects_id_dict[world_id].image.current_frame = new_frame
+            try:
+                self.objects_id_dict[world_id].set_pos(new_x, new_y)
+                self.objects_id_dict[world_id].set_angle(new_angle)
+                self.objects_id_dict[world_id].image.current_frame = new_frame
+            except KeyError:
+                # Видимо, этот объект уже уничтожили?
+                pass
         elif arguments[0] == "destroy":
             if arguments[1] == "RotatableWorldObject":
                 world_id = int(arguments[9])
