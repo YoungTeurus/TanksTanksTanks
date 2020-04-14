@@ -157,39 +157,9 @@ class Tank(Collisionable, Actable):
         :param dy: Перемещение по оси y
         :return:
         """
-
-        def process_collsions(_collided_objects, _previous_x, _previous_y):
-            if _collided_objects.__len__() > 0:
-                for g_obj in _collided_objects:
-                    distance_vector = Vector2
-                    distance_vector.x = g_obj.object_rect.x + (g_obj.object_rect.width / 2) \
-                                        - (self.object_rect.x + (self.object_rect.width / 2))
-                    distance_vector.y = g_obj.object_rect.y + (g_obj.object_rect.height / 2) \
-                                        - (self.object_rect.y + (self.object_rect.height / 2))
-                    if abs(distance_vector.x) > abs(distance_vector.y):
-                        # Если x больше y, значит пересекает горизонтальную грань
-                        if distance_vector.x > 0:
-                            # Если x больше 0, значит пересекает ЛЕВУЮ грань
-                            _previous_x = g_obj.float_x - self.object_rect.width
-                        else:
-                            # Иначе - ПРАВУЮ
-                            _previous_x = g_obj.float_x + g_obj.object_rect.width
-                    else:
-                        # Если y больше x, значит пересекает вертикальную грань
-                        if distance_vector.y > 0:
-                            # Если y больше 0, значит пересекает ВЕРХНЮЮ грань
-                            _previous_y = g_obj.object_rect.y - self.object_rect.height
-                        else:
-                            # Иначе - НИЖНЮЮ
-                            _previous_y = g_obj.float_y + g_obj.object_rect.height
-
-                # Если с чем-то столкнулись, возвращаем прежнее положение
-                self.set_pos(_previous_x, _previous_y)
-
         # Запоминаем предыдущее положение
         previous_x = self.float_x
         previous_y = self.float_y
-        # previous_rect = pygame.Rect.copy(self.object_rect)
 
         super().move(dx, dy)
 
@@ -200,11 +170,34 @@ class Tank(Collisionable, Actable):
                 if isinstance(obj, Bullet):
                     collided_objects.remove(obj)
 
-            if collided_objects.__len__() <= 0:  # Просто убейте меня уже за этот костыль: если после удаления пули
-                # колличество объектов для столкновения стало равным 0, то прекращаем проверять всё - выходим из цикла
-                break
+            if collided_objects.__len__() > 0:
+                for g_obj in collided_objects:
+                    distance_vector = Vector2()
+                    distance_vector.x = g_obj.float_x + (g_obj.object_rect.width / 2) \
+                                        - (self.float_x + (self.object_rect.width / 2))
+                    distance_vector.y = g_obj.float_y + (g_obj.object_rect.height / 2) \
+                                        - (self.float_y + (self.object_rect.height / 2))
+                    if abs(distance_vector.x * g_obj.object_rect.height) > abs(distance_vector.y * g_obj.object_rect.width):
+                        # Если x больше y, значит пересекает горизонтальную грань
+                        if distance_vector.x > 0:
+                            # Если x больше 0, значит пересекает ЛЕВУЮ грань
+                            previous_x = g_obj.float_x - self.object_rect.width
+                        else:
+                            # Иначе - ПРАВУЮ
+                            previous_x = g_obj.float_x + g_obj.object_rect.width
+                    else:
+                        # Если y больше x, значит пересекает вертикальную грань
+                        if distance_vector.y > 0:
+                            # Если y больше 0, значит пересекает ВЕРХНЮЮ грань
+                            previous_y = g_obj.float_y - self.object_rect.height
+                        else:
+                            # Иначе - НИЖНЮЮ
+                            previous_y = g_obj.float_y + g_obj.object_rect.height
 
-            process_collsions(collided_objects, previous_x, previous_y)
+                # Если с чем-то столкнулись, возвращаем прежнее положение
+                self.set_pos(previous_x, previous_y)
+            else:
+                break
 
 
 class Vector2:
