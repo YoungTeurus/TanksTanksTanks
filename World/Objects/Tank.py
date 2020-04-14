@@ -3,7 +3,7 @@ import random
 
 from Consts import TANK_DEFAULT_HP, EPSILON, TANK_DEFAULT_DELAY_BEFORE_FIRE, TANK_DEFAULT_DELAY_BETWEEN_FRAMES, \
     DEFAULT_DELAY_BETWEEN_ENEMY_TRY_TO_ROTATE, DEFAULT_DELAY_BETWEEN_ENEMY_TRY_TO_SHOOT, \
-    DEFAULT_DELAY_BETWEEN_ENEMY_TRY_TO_CHANGE_STATE
+    DEFAULT_DELAY_BETWEEN_ENEMY_TRY_TO_CHANGE_STATE, MOVE_STRING, DESTROY_STRING, CREATE_STRING
 from World.Timer import Timer
 from Consts import TANK_DEFAULT_SPEED_PER_SECOND, sprite_w, sprite_h
 from World.Objects.Actable import Actable
@@ -77,7 +77,8 @@ class Tank(Collisionable, Actable):
         remove_if_exists_in(self, self.parent_world.actable_object)
         self.is_destroyed = True
         if self.parent_world.need_to_log_changes:  # Для сервера
-            self.parent_world.changes.append("destroy {}". format(self.__str__()))
+            self.parent_world.changes.append(DESTROY_STRING.format(world_id=self.world_id,
+                                                                   object_type="RotatableWorldObject"))
 
     def move_to_direction(self, direction):
         if direction in DIRECTIONS:
@@ -102,26 +103,52 @@ class Tank(Collisionable, Actable):
             self.image.next()
 
             if self.parent_world.need_to_log_changes:  # Для сервера
-                self.parent_world.changes.append("move {}".format(self.__str__()))
+                self.parent_world.changes.append(MOVE_STRING.format(
+                    world_id=self.world_id,
+                    x=self.object_rect.x,
+                    y=self.object_rect.y,
+                    frame=self.image.current_frame,
+                    angle=self.current_angle
+                ))
         else:
             logging.error("There was an attempt to move tank to on wrong direction: {}".format(direction))
 
     def correct_pos(self):
-        if (x_diff := self.float_x % sprite_w) <= sprite_w * EPSILON:
+        # Поправка на целое число клеток:
+        if self.float_x % sprite_w <= sprite_w * EPSILON:
             # Если близки к левой границе
-            self.set_pos(self.float_x - x_diff, self.float_y)
-        elif (x_diff := sprite_w - (self.float_x % sprite_w)) <= sprite_w * EPSILON:
+            tiles = round(self.float_x / sprite_w)
+            self.set_pos(tiles * sprite_w, self.object_rect.y)
+        elif sprite_w - (self.float_x % sprite_w) <= sprite_w * EPSILON:
             # Если близки к правой границе
-            self.set_pos(self.float_x + x_diff, self.float_y)
-            pass
-        if (y_diff := self.float_y % sprite_h) <= sprite_h * EPSILON:
+            tiles = round(self.float_x / sprite_w)
+            self.set_pos(tiles * sprite_w, self.object_rect.y)
+        if self.float_y % sprite_h <= sprite_h * EPSILON:
             # Если близки к верхней границе
-            self.set_pos(self.float_x, self.float_y - y_diff)
-            pass
-        elif (y_diff := sprite_h - (self.float_y % sprite_h)) <= sprite_h * EPSILON:
+            tiles = round(self.float_y / sprite_h)
+            self.set_pos(self.object_rect.x, tiles * sprite_h)
+        elif sprite_h - (self.float_y % sprite_h) <= sprite_h * EPSILON:
             # Если близки к нижней границе
-            self.set_pos(self.float_x, self.float_y + y_diff)
-            pass
+            tiles = round(self.float_y / sprite_h)
+            self.set_pos(self.object_rect.x, tiles * sprite_h)
+
+        # Поправка на половину клетки:
+        if self.float_x % (sprite_w / 2) <= sprite_w * EPSILON:
+            # Если близки к левой границе
+            tiles = round(self.float_x / (sprite_w / 2))
+            self.set_pos(tiles * (sprite_w / 2), self.object_rect.y)
+        elif (sprite_w / 2) - (self.float_x % (sprite_w / 2)) <= sprite_w * EPSILON:
+            # Если близки к правой границе
+            tiles = round(self.float_x / (sprite_w / 2))
+            self.set_pos(tiles * (sprite_w / 2), self.object_rect.y)
+        if self.float_y % (sprite_h / 2) <= sprite_h * EPSILON:
+            # Если близки к верхней границе
+            tiles = round(self.float_y / (sprite_h / 2))
+            self.set_pos(self.object_rect.x, tiles * (sprite_h / 2))
+        elif (sprite_h / 2) - (self.float_y % (sprite_h / 2)) <= sprite_h * EPSILON:
+            # Если близки к нижней границе
+            tiles = round(self.float_y / (sprite_h / 2))
+            self.set_pos(self.object_rect.x, tiles * (sprite_h / 2))
 
     def smart_move(self, dx, dy):
         """
@@ -130,6 +157,7 @@ class Tank(Collisionable, Actable):
         :param dy: Перемещение по оси y
         :return:
         """
+
         def process_collsions(_collided_objects, _previous_x, _previous_y):
             if _collided_objects.__len__() > 0:
                 for g_obj in _collided_objects:
@@ -156,7 +184,7 @@ class Tank(Collisionable, Actable):
                             _previous_y = g_obj.float_y + g_obj.object_rect.height
 
                 # Если с чем-то столкнулись, возвращаем прежнее положение
-                self.set_pos(previous_x, previous_y)
+                self.set_pos(_previous_x, _previous_y)
 
         # Запоминаем предыдущее положение
         previous_x = self.float_x
@@ -208,7 +236,16 @@ class Player(Tank):
         self.parent_world.players.append(self)
 
         if self.parent_world.need_to_log_changes:  # Для сервера
-            self.parent_world.changes.append("create {}". format(self.__str__()))
+            self.parent_world.changes.append(CREATE_STRING.format(
+                object_type="RotatableWorldObject",
+                x=self.object_rect.x,
+                y=self.object_rect.y,
+                width=self.object_rect.width,
+                height=self.object_rect.height,
+                image_name=self.image_name,
+                start_angle=self.current_angle,
+                world_id=self.world_id
+            ))
         # self.last_direction = "UP"
 
 
@@ -272,7 +309,16 @@ class Enemy(Tank):
         self.last_direction = "DOWN"
 
         if self.parent_world.need_to_log_changes:  # Для сервера
-            self.parent_world.changes.append("create {}". format(self.__str__()))
+            self.parent_world.changes.append(CREATE_STRING.format(
+                object_type="RotatableWorldObject",
+                x=self.object_rect.x,
+                y=self.object_rect.y,
+                width=self.object_rect.width,
+                height=self.object_rect.height,
+                image_name=self.image_name,
+                start_angle=self.current_angle,
+                world_id=self.world_id
+            ))
 
     def try_to_change_state(self):
         """
@@ -291,11 +337,14 @@ class Enemy(Tank):
         if generated_number <= base_chance:
             self.state = self.state + 1 % 3
             if self.state == 1:
-                self.chosen_player_to_hunt = random.choice(self.parent_world.players)
+                try:
+                    self.chosen_player_to_hunt = random.choice(self.parent_world.players)
+                except IndexError:  # Если нельзя выбрать игрока, сбрасываемся на первое состояние
+                    self.state = 0
             if self.state == 2:
                 try:
                     self.chosen_base_to_hunt = random.choice(self.parent_world.world_map.player_bases)
-                except IndexError: # Если нельзя выбрать базу, сбрасываемся на первое состояние
+                except IndexError:  # Если нельзя выбрать базу, сбрасываемся на первое состояние
                     self.state = 0
 
             self.previous_tries_to_change_state = 0
@@ -427,7 +476,16 @@ class Bullet(Collisionable, Actable):
         self.parent_world.actable_object.append(self)
         self.parent_world.all_bullets.append(self)
         if self.parent_world.need_to_log_changes:  # Для сервера
-            self.parent_world.changes.append("create {}". format(self.__str__()))
+            self.parent_world.changes.append(CREATE_STRING.format(
+                object_type="RotatableWorldObject",
+                x=self.object_rect.x,
+                y=self.object_rect.y,
+                width=self.object_rect.width,
+                height=self.object_rect.height,
+                image_name=self.image_name,
+                start_angle=self.current_angle,
+                world_id=self.world_id
+            ))
 
     def destroy(self):
         """
@@ -437,7 +495,8 @@ class Bullet(Collisionable, Actable):
         remove_if_exists_in(self, self.parent_world.actable_object)
         remove_if_exists_in(self, self.parent_world.all_bullets)
         if self.parent_world.need_to_log_changes:  # Для сервера
-            self.parent_world.changes.append("destroy {}". format(self.__str__()))
+            self.parent_world.changes.append(DESTROY_STRING.format(world_id=self.world_id,
+                                                                   object_type="RotatableWorldObject"))
 
     def act(self):
         self.check_and_process_collisions(self.parent_world.collisionable_objects)  # Проверяем коллижены
@@ -453,7 +512,13 @@ class Bullet(Collisionable, Actable):
         if self.bullet_direction == "RIGHT":
             self.move(self.speed, 0)
         if self.parent_world.need_to_log_changes:  # Для сервера
-            self.parent_world.changes.append("move {}". format(self.__str__()))
+            self.parent_world.changes.append(MOVE_STRING.format(
+                world_id=self.world_id,
+                x=self.object_rect.x,
+                y=self.object_rect.y,
+                frame=self.image.current_frame,
+                angle=self.current_angle
+            ))
 
 
 def bullet_collision(bullet, obj):

@@ -44,7 +44,10 @@ class AnimatedImage:
         self.current_frame = (self.current_frame + 1) % self.frames.__len__()
 
     def get_current(self):
-        return self.frames[self.current_frame]
+        try:
+            return self.frames[self.current_frame]
+        except IndexError:  # Если что-то не так с текущим кадром
+            return self.frames[0]
 
     def get_current_and_next(self):
         self.next()

@@ -1,6 +1,7 @@
 import logging
 
-from Consts import sprite_w, sprite_h, WATER_DEFAULT_DELAY_BETWEEN_FRAMES, DEFAULT_PLAYER_BASE_HP
+from Consts import sprite_w, sprite_h, WATER_DEFAULT_DELAY_BETWEEN_FRAMES, DEFAULT_PLAYER_BASE_HP, DESTROY_STRING, \
+    GETHIT_STRING
 from World.Objects.Collisionable import Collisionable, remove_if_exists_in
 
 # название_текстуры is_solid is_passable_for_bullets is_destroyable
@@ -70,7 +71,10 @@ class WorldTile(Collisionable):
 
     def get_hit(self, direction_of_bullet):
         if self.parent_world.need_to_log_changes:  # Для сервера
-            self.parent_world.changes.append("gethit {} {}". format(self.__str__(), direction_of_bullet))
+            self.parent_world.changes.append(GETHIT_STRING.format(
+                world_id=self.world_id,
+                bullet_direction=direction_of_bullet
+            ))
         if self.is_destroyable:
             if self.tile_id == 5:  # Если это база
                 self.player_base_hp -= 1
@@ -106,7 +110,10 @@ class WorldTile(Collisionable):
         if self.tile_id == 5:  # База игрока
             remove_if_exists_in(self, self.parent_world.world_map.player_bases)
         if self.parent_world.need_to_log_changes:  # Для сервера
-            self.parent_world.changes.append("destroy {}". format(self.__str__()))
+            self.parent_world.changes.append(DESTROY_STRING.format(
+                object_type="WorldTile",
+                world_id=self.world_id
+            ))
 
     def set_by_id(self, tile_id):
         if (main_tile_id := tile_id % 10) in ID:

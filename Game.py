@@ -1,154 +1,25 @@
-import json
 import logging
-import socket
 import socketserver
 
 import pygame
 
-from Consts import targetFPS, DARK_GREY, BLACK
+from Consts import targetFPS, DARK_GREY, BLACK, MOVE_RIGHT, SHOOT, MOVE_LEFT, MOVE_DOWN, MOVE_UP
 from Files import ImageLoader
 from Images.Tileset import Tileset
+from Multiplayer.Senders import DataSenderServerSide, DataSenderClientSide
+from Multiplayer.UDPHandlers import MyUDPHandlerClientSide, MyUDPHandlerServerSide
+from World.Timer import Timer
 from World.World import World
 import threading
 
 
-class MyUDPHandlerClientSide(socketserver.BaseRequestHandler):
-    """
-    Данный класс содержит handle, принимающий информацию отслылаемую сервером, то есть распарсивает полученный json и
-    воздейсвтует на игру.
-    """
-    parent_game = None
-
-    def handle(self):
-        data = self.request[0].decode()  # Вытаскиваем data
-        data_dict = json.loads(data)  # Делаем из этого словарь
-        print("{} wrote: ".format(self.client_address[0]), end="")
-        print(data_dict)  # Вывод дебаг-информации
-
-        if data_dict["type"] == "ok":
-            # Если сервер отправил ok
-            self.parent_game.clientside_sender.server = self.client_address[0]  # Запоминаем IP сервера
-            self.parent_game.clientside_sender.connect_to_server()  # Пробуем подключиться к серверу
-        elif data_dict["type"] == "load_world":
-            # Если сервер сказал подгрузить карту
-            self.parent_game.world.load_map(0)  # Грузим карту
-        elif data_dict["type"] == "changes":
-            # Если сервер прислал текущие изменения
-            self.parent_game.world.process_many_changes(data_dict["changes"])
-
-        # self.parent_game.world.process_change(inp)
-
-class MyUDPHandlerServerSide(socketserver.BaseRequestHandler):
-    """
-    Данный класс содержит handle, принимающий информацию отслылаемую сервером, то есть распарсивает полученный json и
-    воздейсвтует на игру.
-    """
-    parent_game = None
-
-    def handle(self):
-        data = self.request[0].decode()  # Вытаскиваем data
-        data_dict = json.loads(data)  # Делаем из этого словарь
-        print("{} wrote: ".format(self.client_address[0]), end="")
-        print(data_dict)  # Вывод дебаг-информации
-
-        if data_dict["type"] == "ask_for_ok":
-            # Если клиент спрашивает об OK-ее
-            self.parent_game.serverside_sender.send_ok(self.client_address[0])  # Отправляем ему OK
-        elif data_dict["type"] == "connect":
-            # Если клиент хочет подключиться
-            if self.client_address[0] not in self.parent_game.serverside_sender.clients:  # Если этого IP ещё не было, заносим его в список клиентов
-                self.parent_game.serverside_sender.clients.append(self.client_address[0])  # Заносим IP-шник отправителю
-            # Говорим клиенту подгрузить такую-то карту
-            self.parent_game.serverside_sender.send_load_world(self.client_address[0],
-                                                               self.parent_game.world.world_map.map_id)
-            # TODO: отправлять карту клиенту
-
-
-class DataSenderServerSide:
-    """
-    Данный класс отправляет клиентам необходимые данные
-    """
-    parent_game = None
-    clients = []
-
-    def __init__(self, parent_game):
-        self.parent_game = parent_game
-
-    def send_ok(self, ip):
-        HOST, PORT = ip, 9999
-        data_dict = dict()
-        data_dict["type"] = "ok"
-        data = json.dumps(data_dict)
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sock.sendto(data.encode(), (HOST, PORT))
-        print("Sent:     {}".format(data))
-
-    def send_load_world(self, ip, world_id):
-        HOST, PORT = ip, 9999
-        data_dict = dict()
-        data_dict["type"] = "load_world"
-        data_dict["world_id"] = world_id
-        data = json.dumps(data_dict)
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sock.sendto(data.encode(), (HOST, PORT))
-        print("Sent:     {}".format(data))
-
-    def send_changes(self):
-        for client_ip in self.clients:
-            HOST, PORT = client_ip, 9999
-            data_dict = dict()
-            data_dict["type"] = "changes"
-            changes = dict()
-            i = 0
-            for change in self.parent_game.world.get_changes():
-                changes[i] = change
-                i += 1
-            data_dict["changes"] = changes
-            data = json.dumps(data_dict)
-            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            sock.sendto(data.encode(), (HOST, PORT))
-            print("Sent:     {}".format(data))
-
-
-class DataSenderClientSide:
-    """
-        Данный класс отправляет серверу необходимые данные
-    """
-    parent_game = None
-    server = None
-
-    def __init__(self, parent_game):
-        self.parent_game = parent_game
-
-    def set_server(self, ip):
-        self.server = ip
-
-    def ask_for_ok(self, ip):
-        HOST, PORT = ip, 9998
-        data_dict = dict()
-        data_dict["type"] = "ask_for_ok"
-        data = json.dumps(data_dict)
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sock.sendto(data.encode(), (HOST, PORT))
-        print("Sent:     {}".format(data))
-
-    def connect_to_server(self):
-        HOST, PORT = self.server, 9998
-        data_dict = dict()
-        data_dict["type"] = "connect"
-        data = json.dumps(data_dict)
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sock.sendto(data.encode(), (HOST, PORT))
-        print("Sent:     {}".format(data))
-
-
 class Game:
-    # clientside_server = None  # Сервера
-    # serverside_server = None
     clientside_sender = None  # Отправители пакетов
     serverside_sender = None
 
     is_server = None
+
+    check_id_timer = None
 
     def __init__(self, window_surface, is_server):
         logging.basicConfig(filename="log.log", level=logging.INFO, filemode="w")
@@ -184,6 +55,7 @@ class Game:
             self.world = World(self.game_surface, self.tileset, True)
             self.clientside_sender = DataSenderClientSide(self)
             self.create_clientside_server()
+            self.check_id_timer = Timer(100)
 
         if self.is_server:
             self.world.setup_world()
@@ -195,8 +67,12 @@ class Game:
 
         if self.is_server:
             # Если мы сервер, то мы ничего не делаем до тех пор, пока не подключится хотя бы 1 клиент
-            while self.serverside_sender.clients.__len__() <= 0:
-                pass
+            # TODO: сделать проверку на количество подключённых игроков
+            while self.serverside_sender.clients.__len__() <= 0 and self.game_running:
+                # Обработка событий:
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        self.game_running = False
             # Как только к нам подключились, спавним игрока и центруем на нём камеру
             self.world.spawn_player()
             self.world.center_camera_on_player()
@@ -244,25 +120,25 @@ class Game:
             if self.is_server:
                 if keyboard_pressed[pygame.K_RIGHT]:
                     if self.last_moved_direction is None or self.last_moved_direction == "RIGHT":
-                        self.world.move_player_to("RIGHT")
+                        self.world.move_player_to(0, "RIGHT")
                         self.last_moved_direction = "RIGHT"
                 elif self.last_moved_direction == "RIGHT":
                     self.last_moved_direction = None
                 if keyboard_pressed[pygame.K_UP]:
                     if self.last_moved_direction is None or self.last_moved_direction == "UP":
-                        self.world.move_player_to("UP")
+                        self.world.move_player_to(0, "UP")
                         self.last_moved_direction = "UP"
                 elif self.last_moved_direction == "UP":
                     self.last_moved_direction = None
                 if keyboard_pressed[pygame.K_DOWN]:
                     if self.last_moved_direction is None or self.last_moved_direction == "DOWN":
-                        self.world.move_player_to("DOWN")
+                        self.world.move_player_to(0, "DOWN")
                         self.last_moved_direction = "DOWN"
                 elif self.last_moved_direction == "DOWN":
                     self.last_moved_direction = None
                 if keyboard_pressed[pygame.K_LEFT]:
                     if self.last_moved_direction is None or self.last_moved_direction == "LEFT":
-                        self.world.move_player_to("LEFT")
+                        self.world.move_player_to(0, "LEFT")
                         self.last_moved_direction = "LEFT"
                 elif self.last_moved_direction == "LEFT":
                     self.last_moved_direction = None
@@ -270,6 +146,35 @@ class Game:
                 # Стрельба
                 if keyboard_pressed[pygame.K_SPACE]:
                     self.world.create_bullet(self.world.players[0])
+            else:
+                if keyboard_pressed[MOVE_RIGHT]:
+                    if self.last_moved_direction is None or self.last_moved_direction == "RIGHT":
+                        self.clientside_sender.send_button("MOVE_RIGHT")
+                        self.last_moved_direction = "RIGHT"
+                elif self.last_moved_direction == "RIGHT":
+                    self.last_moved_direction = None
+                if keyboard_pressed[MOVE_UP]:
+                    if self.last_moved_direction is None or self.last_moved_direction == "UP":
+                        self.clientside_sender.send_button("MOVE_UP")
+                        self.last_moved_direction = "UP"
+                elif self.last_moved_direction == "UP":
+                    self.last_moved_direction = None
+                if keyboard_pressed[MOVE_DOWN]:
+                    if self.last_moved_direction is None or self.last_moved_direction == "DOWN":
+                        self.clientside_sender.send_button("MOVE_DOWN")
+                        self.last_moved_direction = "DOWN"
+                elif self.last_moved_direction == "DOWN":
+                    self.last_moved_direction = None
+                if keyboard_pressed[MOVE_LEFT]:
+                    if self.last_moved_direction is None or self.last_moved_direction == "LEFT":
+                        self.clientside_sender.send_button("MOVE_LEFT")
+                        self.last_moved_direction = "LEFT"
+                elif self.last_moved_direction == "LEFT":
+                    self.last_moved_direction = None
+
+                # Стрельба
+                if keyboard_pressed[SHOOT]:
+                    self.clientside_sender.send_button("SHOOT")
 
             # Тестовая попытка подключиться к серверу:
             if not self.is_server:
@@ -304,6 +209,12 @@ class Game:
             self.window_surface.blit(self.game_surface, self.game_rect)
 
             pygame.display.update()
+
+            if not self.is_server:
+                self.check_id_timer.tick()
+                if self.check_id_timer.is_ready():
+                    if not self.world.check_if_all_world_ids_are_correct():
+                        raise Exception("IDs are not correct!")
 
     def game_over(self, game_over_id):
         game_overs = [

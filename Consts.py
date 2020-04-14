@@ -1,3 +1,5 @@
+import pygame
+
 # Стандартные размеры окна
 window_w = 800
 window_h = 600
@@ -53,3 +55,16 @@ TILES = {
     "BASE": [(1, 2), (0, 3), (1, 3)],
     "BULLET": [(2, 2)]
 }
+
+# Кнопки для управления танком
+MOVE_RIGHT = pygame.K_RIGHT
+MOVE_LEFT = pygame.K_LEFT
+MOVE_UP = pygame.K_UP
+MOVE_DOWN = pygame.K_DOWN
+SHOOT = pygame.K_SPACE
+
+# Сообщения для сервера:
+CREATE_STRING = "create {object_type} {x} {y} {width} {height} {image_name} {start_angle} {world_id}"
+MOVE_STRING = "move {world_id} {x} {y} {frame} {angle}"
+DESTROY_STRING = "destroy {object_type} {world_id}"
+GETHIT_STRING = "gethit {world_id} {bullet_direction}"

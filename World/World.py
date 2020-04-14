@@ -137,9 +137,13 @@ class World:
     def center_camera_on_player(self):
         self.camera.smart_center_on(self.players[0])
 
-    def move_player_to(self, direction):
-        self.players[0].move_to_direction(direction)
-        self.camera.smart_center_on(self.players[0])
+    def move_player_to(self, player_id, direction):
+        try:
+            self.players[player_id].move_to_direction(direction)
+            self.camera.smart_center_on(self.players[player_id])
+        except IndexError:
+            # Видимо, игрока уже убили
+            pass
 
     def check_if_player_is_alive(self):
         return not self.players[0].is_destroyed
@@ -171,8 +175,8 @@ class World:
             if arguments[1] == "RotatableWorldObject":
                 coord_x, coord_y = int(arguments[2]), int(arguments[3])
                 width, height = int(arguments[4]), int(arguments[5])
-                image_name, start_angle = arguments[6], arguments[8]
-                world_id = int(arguments[9])
+                image_name, start_angle = arguments[6], arguments[7]
+                world_id = int(arguments[8])
                 temp_object = RotatableWorldObject(self)
                 temp_object.set_pos(coord_x, coord_y)
                 temp_object.set_size(width, height)
@@ -183,9 +187,9 @@ class World:
                 self.objects_id_dict[world_id] = temp_object
                 self.all_drawable_client.append(temp_object)
         elif arguments[0] == "move":
+            world_id = int(arguments[1])
             new_x, new_y = int(arguments[2]), int(arguments[3])
-            new_frame, new_angle = int(arguments[7]), arguments[8]
-            world_id = int(arguments[9])
+            new_frame, new_angle = int(arguments[4]), arguments[5]
             try:
                 self.objects_id_dict[world_id].set_pos(new_x, new_y)
                 self.objects_id_dict[world_id].set_angle(new_angle)
@@ -195,17 +199,27 @@ class World:
                 pass
         elif arguments[0] == "destroy":
             if arguments[1] == "RotatableWorldObject":
-                world_id = int(arguments[9])
-                remove_if_exists_in(self.objects_id_dict[world_id], self.all_drawable_client)
-                self.objects_id_dict[world_id].destroy()
+                world_id = int(arguments[2])
+                try:
+                    remove_if_exists_in(self.objects_id_dict[world_id], self.all_drawable_client)
+                    self.objects_id_dict[world_id].destroy()
+                except KeyError:
+                    # Видимо, этот объект уже уничтожили?
+                    pass
             elif arguments[1] == "WorldTile":
-                world_id = int(arguments[7])
-                remove_if_exists_in(self.objects_id_dict[world_id], self.all_drawable_client)
+                world_id = int(arguments[2])
                 self.objects_id_dict[world_id].destroy()
         elif arguments[0] == "gethit":
-            world_id = int(arguments[7])
-            bullet_direction = arguments[8]
+            world_id = int(arguments[1])
+            bullet_direction = arguments[2]
             self.objects_id_dict[world_id].get_hit(bullet_direction)
         elif arguments[0] == "camera":
             camera_x, camera_y = int(arguments[2]), int(arguments[3])
             self.camera.set_coords(camera_x, camera_y)
+
+    def check_if_all_world_ids_are_correct(self):
+        for obj_id in self.objects_id_dict:
+            if not self.objects_id_dict[obj_id].world_id == obj_id:
+                # Если id-шники не совпадают
+                return False
+        return True
