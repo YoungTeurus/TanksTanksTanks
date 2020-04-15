@@ -1,6 +1,8 @@
 import json
 import socketserver
 
+from Consts import SOCKET_DEBUG
+
 
 class MyUDPHandlerClientSide(socketserver.BaseRequestHandler):
     """
@@ -8,12 +10,14 @@ class MyUDPHandlerClientSide(socketserver.BaseRequestHandler):
     воздейсвтует на игру.
     """
     parent_game = None
+    port = None
 
     def handle(self):
         data = self.request[0].decode()  # Вытаскиваем data
         data_dict = json.loads(data)  # Делаем из этого словарь
-        print("{} wrote: ".format(self.client_address[0]), end="")
-        print(data_dict)  # Вывод дебаг-информации
+        if SOCKET_DEBUG:
+            print("{} wrote: ".format(self.client_address[0]), end="")
+            print(data_dict)  # Вывод дебаг-информации
 
         if data_dict["type"] == "ok":
             # Если сервер отправил ok
@@ -27,8 +31,6 @@ class MyUDPHandlerClientSide(socketserver.BaseRequestHandler):
             # Если сервер прислал текущие изменения
             self.parent_game.world.process_many_changes(data_dict["changes"])
 
-        # self.parent_game.world.process_change(inp)
-
 
 class MyUDPHandlerServerSide(socketserver.BaseRequestHandler):
     """
@@ -40,23 +42,28 @@ class MyUDPHandlerServerSide(socketserver.BaseRequestHandler):
     def handle(self):
         data = self.request[0].decode()  # Вытаскиваем data
         data_dict = json.loads(data)  # Делаем из этого словарь
-        print("{} wrote: ".format(self.client_address[0]), end="")
-        print(data_dict)  # Вывод дебаг-информации
+        if SOCKET_DEBUG:
+            print("{} wrote: ".format(self.client_address[0]), end="")
+            print(data_dict)  # Вывод дебаг-информации
 
         if data_dict["type"] == "ask_for_ok":
             # Если клиент спрашивает об OK-ее
-            self.parent_game.serverside_sender.send_ok(self.client_address[0])  # Отправляем ему OK
+            self.parent_game.serverside_sender.send_ok(self.client_address[0], data_dict["port"])  # Отправляем ему OK
         elif data_dict["type"] == "connect":
             # Если клиент хочет подключиться
-            if self.client_address[
-                0] not in self.parent_game.serverside_sender.clients:  # Если этого IP ещё не было, заносим его в список клиентов
-                self.parent_game.serverside_sender.clients.append(self.client_address[0])  # Заносим IP-шник отправителю
+            if self.client_address[0] not in self.parent_game.serverside_sender.clients:
+                # Если этого IP ещё не было, заносим его в список клиентов
+                # Заносим IP-шник и порт отправителю
+                self.parent_game.serverside_sender.clients[self.client_address[0]] = data_dict["port"]
+                # Присваиваем ip-шнику id игрока
+                self.parent_game.serverside_sender.clients_player_id[self.client_address[0]] = self.parent_game.serverside_sender.last_free_player_id
+                self.parent_game.serverside_sender.last_free_player_id += 1
             # Говорим клиенту подгрузить такую-то карту
-            self.parent_game.serverside_sender.send_load_world(self.client_address[0],
-                                                               self.parent_game.world.world_map.map_id)
+            self.parent_game.serverside_sender.send_load_world(self.client_address[0], data_dict["port"], self.parent_game.world.world_map.map_id)
+            self.parent_game.world.spawn_player()
             # TODO: отправлять карту клиенту
         elif data_dict["type"] == "button":
-            player_id = self.parent_game.serverside_sender.clients.index(self.client_address[0])
+            player_id = self.parent_game.serverside_sender.clients_player_id[self.client_address[0]]
             # TODO: разделять управление для разных клиентов
             if data_dict["button_id"] == "MOVE_UP":
                 self.parent_game.world.move_player_to(player_id, "UP",)

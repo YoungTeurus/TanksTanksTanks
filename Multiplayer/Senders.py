@@ -1,39 +1,49 @@
 import json
 import socket
 
+from Consts import SOCKET_DEBUG
+
 
 class DataSenderServerSide:
     """
     Данный класс отправляет клиентам необходимые данные
     """
     parent_game = None
-    clients = []
+    clients: dict = None  # Словарь "ip - порт"
+    clients_player_id: dict = None  # Словарь "ip - id_игрока"
+
+    last_free_player_id: int = None  # Последний свободный id игрока
 
     def __init__(self, parent_game):
         self.parent_game = parent_game
+        self.clients = dict()
+        self.clients_player_id = dict()
+        self.last_free_player_id = 0
 
-    def send_ok(self, ip):
-        host, port = ip, 9999
+    def send_ok(self, ip, port):
+        host, port = ip, port
         data_dict = dict()
         data_dict["type"] = "ok"
         data = json.dumps(data_dict)
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.sendto(data.encode(), (host, port))
-        print("Sent:     {}".format(data))
+        if SOCKET_DEBUG:
+            print("Sent:     {}".format(data))
 
-    def send_load_world(self, ip, world_id):
-        host, port = ip, 9999
+    def send_load_world(self, ip, port, world_id):
+        host, port = ip, port
         data_dict = dict()
         data_dict["type"] = "load_world"
         data_dict["world_id"] = world_id
         data = json.dumps(data_dict)
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.sendto(data.encode(), (host, port))
-        print("Sent:     {}".format(data))
+        if SOCKET_DEBUG:
+            print("Sent:     {}".format(data))
 
     def send_changes(self):
         for client_ip in self.clients:
-            host, port = client_ip, 9999
+            host, port = client_ip, self.clients[client_ip]
             data_dict = dict()
             data_dict["type"] = "changes"
             changes = dict()
@@ -45,7 +55,8 @@ class DataSenderServerSide:
             data = json.dumps(data_dict)
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             sock.sendto(data.encode(), (host, port))
-            print("Sent:     {}".format(data))
+            if SOCKET_DEBUG:
+                print("Sent:     {}".format(data))
 
 
 class DataSenderClientSide:
@@ -65,19 +76,23 @@ class DataSenderClientSide:
         host, port = ip, 9998
         data_dict = dict()
         data_dict["type"] = "ask_for_ok"
+        data_dict["port"] = self.parent_game.clientside_server_port
         data = json.dumps(data_dict)
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.sendto(data.encode(), (host, port))
-        print("Sent:     {}".format(data))
+        if SOCKET_DEBUG:
+            print("Sent:     {}".format(data))
 
     def connect_to_server(self):
         host, port = self.server, 9998
         data_dict = dict()
         data_dict["type"] = "connect"
+        data_dict["port"] = self.parent_game.clientside_server_port
         data = json.dumps(data_dict)
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.sendto(data.encode(), (host, port))
-        print("Sent:     {}".format(data))
+        if SOCKET_DEBUG:
+            print("Sent:     {}".format(data))
 
     def send_button(self, button_id):
         host, port = self.server, 9998
@@ -87,4 +102,5 @@ class DataSenderClientSide:
         data = json.dumps(data_dict)
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.sendto(data.encode(), (host, port))
-        print("Sent:     {}".format(data))
+        if SOCKET_DEBUG:
+            print("Sent:     {}".format(data))

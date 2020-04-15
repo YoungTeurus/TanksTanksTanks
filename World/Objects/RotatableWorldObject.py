@@ -4,6 +4,7 @@ import pygame
 from pygame import transform
 from pygame.rect import Rect
 
+from Consts import ID_DEBUG
 from World.Objects.WorldObject import WorldObject
 
 ANGLE = {
@@ -30,7 +31,8 @@ class RotatableWorldObject(WorldObject):
         self.current_angle = "UP"
 
         # Тестовое:
-        self.test_font = pygame.font.Font(None, 16)
+        if ID_DEBUG:
+            self.test_font = pygame.font.Font(None, 16)
 
     def set_angle(self, angle):
         if angle in ANGLE:  # Поворачивать можно только на заранее обговоренные углы
@@ -61,9 +63,10 @@ class RotatableWorldObject(WorldObject):
                 self.image.next()
 
             # Тестовое:
-            self.test_text = self.test_font.render("id={}".format(self.world_id), 0, (255, 255, 255))
-            self.parent_world.parent_surface.blit(self.test_text, (self.object_rect.x + camera.get_coords()[0],
-                                                                   self.object_rect.y + camera.get_coords()[1]))
+            if ID_DEBUG:
+                self.test_text = self.test_font.render("id={}".format(self.world_id), 0, (255, 255, 255))
+                self.parent_world.parent_surface.blit(self.test_text, (self.object_rect.x + camera.get_coords()[0],
+                                                                       self.object_rect.y + camera.get_coords()[1]))
 
     def __str__(self):
         return "{0} {1} {2} {3} {4} {5} {8} {6} {7}".format(

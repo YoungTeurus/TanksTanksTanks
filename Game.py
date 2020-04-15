@@ -1,9 +1,11 @@
 import logging
+import random
 import socketserver
 
 import pygame
 
-from Consts import targetFPS, DARK_GREY, BLACK, MOVE_RIGHT, SHOOT, MOVE_LEFT, MOVE_DOWN, MOVE_UP
+from Consts import targetFPS, DARK_GREY, BLACK, MOVE_RIGHT, SHOOT, MOVE_LEFT, MOVE_DOWN, MOVE_UP, CLIENT_IP, \
+    CONNECT_TO_IP, CHANGES_DEBUG
 from Files import ImageLoader
 from Images.Tileset import Tileset
 from Multiplayer.Senders import DataSenderServerSide, DataSenderClientSide
@@ -14,8 +16,12 @@ import threading
 
 
 class Game:
-    clientside_sender = None  # Отправители пакетов
-    serverside_sender = None
+    clientside_sender: DataSenderClientSide = None  # Отправители пакетов
+    serverside_sender: DataSenderServerSide = None
+    clientside_server: socketserver.UDPServer = None
+    serverside_server: socketserver.UDPServer = None
+
+    clientside_server_port = None  # Порт для подключения сервера к клиенту
 
     is_server = None
 
@@ -54,7 +60,8 @@ class Game:
         else:
             self.world = World(self.game_surface, self.tileset, True)
             self.clientside_sender = DataSenderClientSide(self)
-            self.create_clientside_server()
+            self.clientside_server_port = random.randint(9999, 60000)
+            self.create_clientside_server(self.clientside_server_port)
             self.check_id_timer = Timer(100)
 
         if self.is_server:
@@ -68,23 +75,25 @@ class Game:
         if self.is_server:
             # Если мы сервер, то мы ничего не делаем до тех пор, пока не подключится хотя бы 1 клиент
             # TODO: сделать проверку на количество подключённых игроков
-            while self.serverside_sender.clients.__len__() <= 0 and self.game_running:
+            while self.serverside_sender.clients.__len__() < 2 and self.game_running:
                 # Обработка событий:
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
                         self.game_running = False
             # Как только к нам подключились, спавним игрока и центруем на нём камеру
-            self.world.spawn_player()
-            self.world.center_camera_on_player()
+            # self.world.spawn_player()
+            # self.world.center_camera_on_player()
 
         self.main_cycle()
 
-    def create_clientside_server(self):
+    def create_clientside_server(self, client_port):
         class MyUDPHandlerClientSideWithObject(MyUDPHandlerClientSide):  # Костыль(?)
             parent_game = self  # Передаю ссылку на объект
+            port = client_port
 
-        HOST, PORT = "localhost", 9999
-        self.clientside_server = socketserver.UDPServer((HOST, PORT), MyUDPHandlerClientSideWithObject)  # Созадём севрер
+        HOST, PORT = CLIENT_IP, client_port
+        # Созадём севрер
+        self.clientside_server = socketserver.UDPServer((HOST, PORT), MyUDPHandlerClientSideWithObject)
         server_thread = threading.Thread(target=self.clientside_server.serve_forever)  # Создаём поток
         server_thread.setDaemon(True)
         server_thread.start()  # Запускаем поток
@@ -95,10 +104,10 @@ class Game:
         class MyUDPHandlerServerSideWithObject(MyUDPHandlerServerSide):  # Костыль(?)
             parent_game = self  # Передаю ссылку на объект
 
-        HOST, PORT = "localhost", 9998
-        self.clientside_server = socketserver.UDPServer((HOST, PORT),
+        HOST, PORT = CLIENT_IP, 9998
+        self.serverside_server = socketserver.UDPServer((HOST, PORT),
                                                         MyUDPHandlerServerSideWithObject)  # Созадём севрер
-        server_thread = threading.Thread(target=self.clientside_server.serve_forever)  # Создаём поток
+        server_thread = threading.Thread(target=self.serverside_server.serve_forever)  # Создаём поток
         server_thread.setDaemon(True)
         server_thread.start()  # Запускаем поток
 
@@ -180,7 +189,7 @@ class Game:
             if not self.is_server:
                 if keyboard_pressed[pygame.K_0]:
                     if not self.server_button_pressed:
-                        self.clientside_sender.ask_for_ok("localhost")
+                        self.clientside_sender.ask_for_ok(CONNECT_TO_IP)
                         self.server_button_pressed = True
                 else:
                     self.server_button_pressed = False
@@ -200,9 +209,11 @@ class Game:
                         # Если получилось заспавнить врага
                         self.world.enemies_remains -= 1
                         self.world.enemy_spawn_timer.reset()
+
                 # Изменения в мире:
                 if (changes := self.world.get_changes()).__len__() > 0:
-                    print(changes)
+                    if CHANGES_DEBUG:
+                        print(changes)
                     self.serverside_sender.send_changes()  # Вместо "localhost" - все клиенты
                 self.world.clear_changes()
 

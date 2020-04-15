@@ -1,5 +1,9 @@
 import pygame
 
+ID_DEBUG = False  # Нужно ли отрисовывать id-шники у каждого объекта
+CHANGES_DEBUG = False  # Нужно ли выводить все изменения в мире
+SOCKET_DEBUG = False  # Нужно ли выводить все принятые и отправленные данные
+
 # Стандартные размеры окна
 window_w = 800
 window_h = 600
@@ -68,3 +72,7 @@ CREATE_STRING = "create {object_type} {x} {y} {width} {height} {image_name} {sta
 MOVE_STRING = "move {world_id} {x} {y} {frame} {angle}"
 DESTROY_STRING = "destroy {object_type} {world_id}"
 GETHIT_STRING = "gethit {world_id} {bullet_direction}"
+
+# Для мультиплеера:
+CLIENT_IP = "192.168.0.104"
+CONNECT_TO_IP = "192.168.0.104"
