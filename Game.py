@@ -1,5 +1,6 @@
 import random
 import socketserver
+import threading
 
 import pygame
 
@@ -9,9 +10,7 @@ from Files import ImageLoader
 from Images.Tileset import Tileset
 from Multiplayer.Senders import DataSenderServerSide, DataSenderClientSide
 from Multiplayer.UDPHandlers import MyUDPHandlerClientSide, MyUDPHandlerServerSide
-from World.Timer import Timer
 from World.World import World
-import threading
 
 
 class Game:

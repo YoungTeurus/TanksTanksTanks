@@ -1,20 +1,21 @@
+from pygame.constants import MOUSEBUTTONUP
 from pygame.font import Font
 from pygame.rect import Rect
 from pygame.surface import Surface
 
 from Consts import BLACK
-from Menu.MenuObjects.MenuObject import MenuObject
+from Menu.MenuObjects.MenuObjectWithText import MenuObjectWithText
+
+CLICKED_LINK_COLOR = (128, 0, 128)
 
 
-class Label(MenuObject):
+class Label(MenuObjectWithText):
     window_surface: Surface = None  # Поверхность окна
 
-    rect: Rect = None
     text_str: str = None
     text_color: tuple = None
     is_text_underlined: bool = None  # Подчёркнут ли текст
 
-    function = None  # Функция, выполняемая при нажатии
     font: Font = None  # Шрифт, используемый для отрисовки текста
     font_size: int = None  # Размер шрифта
     text_surf: Surface = None  # Отрисовываемый текст
@@ -40,7 +41,8 @@ class Label(MenuObject):
             self.set_text_color(BLACK)  # Стандартный цвет текста кнопки
 
         if function is not None:
-            self.set_function(function)
+            self.set_function_onClick(function)
+            self.is_text_underlined = True
         else:
             self.is_text_underlined = False
 
@@ -51,14 +53,9 @@ class Label(MenuObject):
 
         # Работа с текстом:
         self.font = Font(None, self.font_size)  # Стандартный шрифт
-        self.render_text()
+        self.label_render_text()
 
     # Функции ниже дублируется в Button.py !
-    def set_pos(self, pos_x, pos_y, width, height):
-        self.rect.x = pos_x
-        self.rect.y = pos_y
-        self.rect.width = width
-        self.rect.height = height
 
     def set_text(self, text: str):
         self.text_str = text
@@ -66,19 +63,22 @@ class Label(MenuObject):
 
     def set_text_color(self, text_color: tuple):
         self.text_color = text_color
-
-    def set_function(self, function):
-        self.function = function
-
-    def render_text(self):
-        self.text_surf = self.font.render(self.text_str, 1, self.text_color)
-        self.text_size = self.font.size(self.text_str)
-        self.has_text_changed = False
-
-    def set_font_size(self, size: int):
-        self.font_size = size
         self.has_text_changed = True
+
+    def label_render_text(self):
+        self.font.set_underline(self.is_text_underlined)
+        super().render_text(self.text_str, self.text_color)
+
     # Функции выше дублируется в Button.py !
+
+    def handle_event(self, event):
+        """
+        Обработка события кнопкой.
+        """
+        if event.type == MOUSEBUTTONUP:
+            if self.rect.collidepoint(event.pos[0], event.pos[1]):
+                self.function_onClick()
+                self.set_text_color(CLICKED_LINK_COLOR)
 
     def draw(self):
         self.window_surface.blit(self.text_surf,
@@ -90,4 +90,4 @@ class Label(MenuObject):
         Проверка на изменение текста. Происходит каждый такт игры.
         """
         if self.has_text_changed:
-            self.render_text()
+            self.label_render_text()

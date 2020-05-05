@@ -3,6 +3,7 @@ import pygame
 from Consts import targetFPS, DARK_GREY
 from Menu.MenuObjects.Button import Button
 from Menu.MenuObjects.Label import Label
+from Menu.MenuObjects.TextBox import TextBox
 
 
 class Menu:
@@ -27,11 +28,14 @@ class Menu:
         button_3 = Button(self.window_surface, pos=(100, 180, 100, 50), text="Unlock Button 2", color=(60, 60, 192),
                           selected_color=(120, 120, 215), text_color=(230, 230, 230),
                           function=(lambda: button_2.set_active(True)), font_size=18)
-        label_1 = Label(self.window_surface, font_size=24, text="Cool LABEL")
+        textbox_1 = TextBox(self.window_surface, pos=(100, 250, 100, 30))
+        label_1 = Label(self.window_surface, font_size=24, text="Cool LABEL, click me!", pos=(100, 0, 100, 50),
+                        function=(lambda: print("Clicked!")))
         self.objects.append(button_1)
         self.objects.append(button_2)
         self.objects.append(button_3)
         self.objects.append(label_1)
+        self.objects.append(textbox_1)
 
     def main_cycle(self):
         while self.is_running:
