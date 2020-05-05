@@ -2,6 +2,7 @@ import pygame
 
 from Consts import targetFPS, DARK_GREY
 from Menu.MenuObjects.Button import Button
+from Menu.MenuObjects.Label import Label
 
 
 class Menu:
@@ -20,15 +21,17 @@ class Menu:
         self.objects = []
 
         button_1 = Button(self.window_surface, pos=(100, 50, 100, 50), text="Button 1", color=(192, 60, 60),
-                          selected_color=(215, 120, 120))
+                          selected_color=(215, 120, 120), font_size=24)
         button_2 = Button(self.window_surface, pos=(100, 115, 100, 50), text="Button 2", color=(60, 192, 60),
-                          selected_color=(120, 215, 120), active=False)
-        button_3 = Button(self.window_surface, pos=(100, 180, 100, 50), text="Button 3", color=(60, 60, 192),
+                          selected_color=(120, 215, 120), active=False, font_size=24)
+        button_3 = Button(self.window_surface, pos=(100, 180, 100, 50), text="Unlock Button 2", color=(60, 60, 192),
                           selected_color=(120, 120, 215), text_color=(230, 230, 230),
-                          function=(lambda: button_2.set_active(True)))
+                          function=(lambda: button_2.set_active(True)), font_size=18)
+        label_1 = Label(self.window_surface, font_size=24, text="Cool LABEL")
         self.objects.append(button_1)
         self.objects.append(button_2)
         self.objects.append(button_3)
+        self.objects.append(label_1)
 
     def main_cycle(self):
         while self.is_running:
@@ -44,6 +47,7 @@ class Menu:
             keyboard_pressed = pygame.key.get_pressed()
 
             for obj in self.objects:
+                obj.update()
                 obj.draw()
 
             pygame.display.update()

@@ -1,9 +1,8 @@
-from pygame import MOUSEMOTION, MOUSEBUTTONDOWN, MOUSEBUTTONUP
+from pygame import MOUSEMOTION, MOUSEBUTTONUP
 from pygame import Rect, Surface
-from pygame.event import Event
 from pygame.font import Font
 
-from Consts import GREY, BLACK, WHITE, DARK_GREY
+from Consts import GREY, BLACK, WHITE
 from Menu.MenuObjects.MenuObject import MenuObject
 
 
@@ -18,6 +17,7 @@ class Button(MenuObject):
 
     function = None  # Функция, выполняемая при нажатии
     font: Font = None  # Шрифт, используемый для отрисовки текста
+    font_size: int = None  # Размер шрифта
     text_surf: Surface = None  # Отрисовываемый текст
     text_size: tuple = None  # Размер места, занимаемого текстом
 
@@ -27,8 +27,8 @@ class Button(MenuObject):
     is_selected = None  # Выбрана ли сейчас кнопка
 
     def __init__(self, window_surface: Surface, pos: tuple = None, text: str = None, active: bool = None,
-                 color: tuple = None,
-                 selected_color: tuple = None, text_color: tuple = None, function=None):
+                 color: tuple = None, selected_color: tuple = None, text_color: tuple = None, function=None,
+                 font_size: int = None):
         self.window_surface = window_surface
         self.rect = Rect(0, 0, 100, 50)  # Стандартные размер и положение кнопки
         if pos is not None:
@@ -64,8 +64,13 @@ class Button(MenuObject):
         else:
             self.set_function(lambda: print(self.text_str))
 
+        if font_size is not None:
+            self.set_font_size(font_size)
+        else:
+            self.set_font_size(16)
+
         # Работа с текстом:
-        self.font = Font(None, 16)  # Стандартный шрифт
+        self.font = Font(None, self.font_size)  # Стандартный шрифт
         self.render_text()
 
     def set_pos(self, pos_x, pos_y, width, height):
@@ -76,6 +81,7 @@ class Button(MenuObject):
 
     def set_text(self, text: str):
         self.text_str = text
+        self.has_text_changed = True
 
     def set_active(self, active: bool):
         self.is_active = active
@@ -93,9 +99,13 @@ class Button(MenuObject):
         self.function = function
 
     def render_text(self):
-        self.text_surf = self.font.render(self.text_str, 0, self.text_color)
+        self.text_surf = self.font.render(self.text_str, 1, self.text_color)
         self.text_size = self.font.size(self.text_str)
         self.has_text_changed = False
+
+    def set_font_size(self, size: int):
+        self.font_size = size
+        self.has_text_changed = True
 
     def handle_event(self, event):
         """
@@ -103,14 +113,21 @@ class Button(MenuObject):
         """
         if self.is_active:
             if event.type == MOUSEMOTION:
-                if self.rect.collidepoint(event.pos):
+                if self.rect.collidepoint(event.pos[0], event.pos[1]):
                     self.is_selected = True
                 else:
                     self.is_selected = False
 
             if event.type == MOUSEBUTTONUP:
-                if self.rect.collidepoint(event.pos):
+                if self.rect.collidepoint(event.pos[0], event.pos[1]):
                     self.function()
+
+    def update(self):
+        """
+        Проверка на изменение текста. Происходит каждый такт игры.
+        """
+        if self.has_text_changed:
+            self.render_text()
 
     def draw(self):
         """
@@ -126,10 +143,7 @@ class Button(MenuObject):
                 self.window_surface.fill(self.color, self.rect)
         else:
             # Если кнопка не активна
-            darker_color = []
-            darker_color.append(max(self.color[0] - 55, 0))
-            darker_color.append(max(self.color[1] - 55, 0))
-            darker_color.append(max(self.color[2] - 55, 0))
+            darker_color = (max(self.color[0] - 55, 0), max(self.color[1] - 55, 0), max(self.color[2] - 55, 0))
             self.window_surface.fill(darker_color, self.rect)
         self.window_surface.blit(self.text_surf,
                                  (self.rect.x + (self.rect.w / 2) - (self.text_size[0] / 2),
