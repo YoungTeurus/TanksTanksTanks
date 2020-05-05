@@ -2,6 +2,7 @@ import pygame
 
 from Consts import window_w, window_h
 from Game import Game
+from Menu.Menu import Menu
 
 
 def main():
@@ -10,8 +11,11 @@ def main():
 
     window_surface = pygame.display.set_mode((window_w, window_h))  # Основная поверхность
 
-    game = Game(window_surface, is_server=False)  # Создание игры
-    game.main_cycle()
+    menu = Menu(window_surface)
+    menu.main_cycle()
+
+    # game = Game(window_surface, is_server=False)  # Создание игры
+    # game.main_cycle()
 
 
 

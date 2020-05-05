@@ -1,4 +1,3 @@
-import logging
 import random
 import socketserver
 
@@ -23,22 +22,24 @@ class Game:
 
     clientside_server_port = None  # Порт для подключения сервера к клиенту
 
-    is_server = None
+    window_surface = None  # Основная поверхность
 
-    check_id_timer = None
+    is_server = None
+    game_running = None  # Флаг запущенной игры
+
+    # check_id_timer = None
 
     def __init__(self, window_surface, is_server):
-        logging.basicConfig(filename="log.log", level=logging.INFO, filemode="w")
-        self.window_surface = window_surface  # Основная поверхность
+        self.window_surface = window_surface
 
         minimal_dimention = min(self.window_surface.get_width(),
                                 self.window_surface.get_height())  # Наименьшая сторона окна
         self.game_surface = pygame.Surface((minimal_dimention, minimal_dimention))
-        # Выравнивание по левому краю
+        # Выравнивание по левому краю:
         # game_rect = pygame.Rect(0,
         #                         0,
         #                         minimal_dimention, minimal_dimention)
-        # Выравнивание по центру
+        # Выравнивание по центру:
         self.game_rect = pygame.Rect(self.window_surface.get_width() / 2 - minimal_dimention / 2,
                                      self.window_surface.get_height() / 2 - minimal_dimention / 2,
                                      minimal_dimention, minimal_dimention)
@@ -48,7 +49,7 @@ class Game:
         self.imageloader = ImageLoader()
         self.tileset = Tileset(64, 64, self.imageloader.get_image_by_name("tileset.png"))
 
-        self.game_running = True  # Флаг продолжения игры
+        self.game_running = True
 
         self.is_server = is_server
 
@@ -62,7 +63,7 @@ class Game:
             self.clientside_sender = DataSenderClientSide(self)
             self.clientside_server_port = random.randint(9999, 60000)
             self.create_clientside_server(self.clientside_server_port)
-            self.check_id_timer = Timer(100)
+            # self.check_id_timer = Timer(100)
 
         if self.is_server:
             self.world.setup_world()
@@ -221,11 +222,11 @@ class Game:
 
             pygame.display.update()
 
-            if not self.is_server:
-                self.check_id_timer.tick()
-                if self.check_id_timer.is_ready():
-                    if not self.world.check_if_all_world_ids_are_correct():
-                        raise Exception("IDs are not correct!")
+            # if not self.is_server:
+            #     self.check_id_timer.tick()
+            #     if self.check_id_timer.is_ready():
+            #         if not self.world.check_if_all_world_ids_are_correct():
+            #             raise Exception("IDs are not correct!")
 
     def game_over(self, game_over_id):
         game_overs = [
