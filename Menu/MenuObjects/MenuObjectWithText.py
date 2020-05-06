@@ -1,10 +1,10 @@
 from pygame.font import Font
 from pygame.surface import Surface
 
-from Menu.MenuObjects.MenuObject import MenuObject
+from Menu.MenuObjects.MenuObjectClickable import MenuObjectClickable
 
 
-class MenuObjectWithText(MenuObject):
+class MenuObjectWithText(MenuObjectClickable):
     font: Font = None  # Шрифт, используемый для отрисовки текста
     font_size: int = None  # Размер шрифта
     text_surf: Surface = None  # Отрисовываемый текст

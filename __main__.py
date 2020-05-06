@@ -12,10 +12,11 @@ def main():
     window_surface = pygame.display.set_mode((window_w, window_h))  # Основная поверхность
 
     menu = Menu(window_surface)
-    menu.main_cycle()
+    result = menu.main_cycle()
 
-    # game = Game(window_surface, is_server=False)  # Создание игры
-    # game.main_cycle()
+    if result["result"] == "start":
+        game = Game(window_surface, is_server=False)  # Создание игры
+        game.main_cycle()
 
 
 if __name__ == "__main__":

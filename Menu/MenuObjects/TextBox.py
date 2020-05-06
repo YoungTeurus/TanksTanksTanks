@@ -22,7 +22,7 @@ class TextBox(MenuObjectWithText):
 
     def __init__(self, window_surface: Surface, pos: tuple = None, start_text: str = None,
                  empty_text: str = None, active: bool = None, selected: bool = None,
-                 function=None, font_size: int = None):
+                 function_onEnter=None, font_size: int = None):
         self.window_surface = window_surface
 
         self.rect = Rect(0, 0, 100, 50)  # Стандартные размер и положение TextBox
@@ -49,10 +49,10 @@ class TextBox(MenuObjectWithText):
         else:
             self.is_active = True  # Стандартная кнопка активна
 
-        if function is not None:
-            self.set_function_onClick(function)
+        if function_onEnter is not None:
+            self.set_function_onEnter(function_onEnter)
         else:
-            self.set_function_onClick(lambda: print(self.text_str))
+            self.set_function_onEnter(lambda: print(self.text_str))
 
         if font_size is not None:
             self.set_font_size(font_size)
@@ -82,6 +82,9 @@ class TextBox(MenuObjectWithText):
             # Если поле пустое и не выбрано
             super().render_text(self.empty_text_str, GREY)
 
+    def set_function_onEnter(self, function):
+        self.function_onEnter = function
+
     def draw(self):
         if self.is_active:
             # Если активен:
@@ -107,7 +110,7 @@ class TextBox(MenuObjectWithText):
                     self.set_selected(False)
             if self.is_selected and event.type == KEYDOWN:
                 if event.key == K_RETURN:
-                    print(self.text_str)
+                    self.function_onEnter()
                 elif event.key == K_BACKSPACE:
                     self.text_str = self.text_str[:-1]
                 else:

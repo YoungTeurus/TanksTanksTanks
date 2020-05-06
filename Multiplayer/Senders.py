@@ -97,7 +97,7 @@ class DataSenderClientSide:
     def send_button(self, button_id):
         host, port = self.server, 9998
         data_dict = dict()
-        data_dict["type"] = "button"
+        data_dict["type"] = "key"
         data_dict["button_id"] = button_id
         data = json.dumps(data_dict)
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
