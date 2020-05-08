@@ -29,9 +29,11 @@ class Map:
 
     def load_from_file(self, filename):
         try:
-            with open(get_script_dir() + filename, "r") as file:
+            with open(get_script_dir() + filename, "r", encoding='utf-8') as file:
                 rows = 0
                 while (current_line := file.readline()).__len__() > 0:
+                    if current_line[0] == "#":
+                        continue
                     temp_list = []
 
                     # Вычисление ширины мира
@@ -46,7 +48,7 @@ class Map:
                     rows += 1
                 self.size_h = rows
         except FileNotFoundError:
-            logging.error("There was an attempt to open a file but it does not exist: {}".format(filename))
+            print("There was an attempt to open a file but it does not exist: {}".format(filename))
 
     def create_object_map(self):
         if self.size_w is not None: # Если мир загружен (размер не пуст)

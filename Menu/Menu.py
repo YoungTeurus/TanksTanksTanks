@@ -1,3 +1,5 @@
+from os import listdir
+
 import pygame
 
 from Consts import targetFPS, DARK_GREY
@@ -98,9 +100,6 @@ class Menu:
             self.result["mode"] = "client"
             self.result["multi"] = False
 
-        def set_result_level(level: int):
-            self.result["level"] = level
-
         self.objects.clear()
 
         button_start_new = Button(self.window_surface, pos=(80, 50, 140, 30), text="Начать новую",
@@ -111,13 +110,21 @@ class Menu:
                                   function_onHover=self.play_sound, arg_onHover="select")
         label_start_new_shadow = Label(self.window_surface, pos=(82, 52, 140, 30), text="Начать новую",
                                        text_color=(0, 0, 0), font_size=24, font="main_menu")
+        button_select_level = Button(self.window_surface, pos=(80, 90, 140, 30), text="Выбрать уровень",
+                                     transparent=True, text_color=(224, 154, 24), selected_text_color=(237, 210, 7),
+                                     font_size=24, font="main_menu",
+                                     function_onClick_list=[self.play_sound, self.load_select_level_group],
+                                     args_list=["press", None],
+                                     function_onHover=self.play_sound, arg_onHover="select")
+        label_select_level_shadow = Label(self.window_surface, pos=(82, 92, 140, 30), text="Выбрать уровень",
+                                          text_color=(0, 0, 0), font_size=24, font="main_menu")
         label_menu_name = Label(self.window_surface, pos=(150, 25, 0, 0), text="ОДИНОЧНАЯ ИГРА",
                                 text_color=(240, 240, 240), font_size=28, font="main_menu")
         label_menu_name_shadow = Label(self.window_surface, pos=(152, 27, 0, 0), text="ОДИНОЧНАЯ ИГРА",
                                        text_color=(0, 0, 0), font_size=28, font="main_menu")
         button_trigger_esc = ButtonTrigger(key=pygame.K_ESCAPE,
                                            function_list=[self.play_sound, self.load_title_group],
-                                           args_list=["press", None],)
+                                           args_list=["press", None], )
         button_return = Button(self.window_surface, pos=(0, 200, 140, 30), text="Назад",
                                transparent=True, text_color=(224, 154, 24), selected_text_color=(237, 210, 7),
                                font_size=24, font="main_menu",
@@ -129,11 +136,47 @@ class Menu:
 
         self.objects.append(label_start_new_shadow)
         self.objects.append(button_start_new)
+        self.objects.append(label_select_level_shadow)
+        self.objects.append(button_select_level)
         self.objects.append(label_return_shadow)
         self.objects.append(button_return)
         self.objects.append(label_menu_name_shadow)
         self.objects.append(label_menu_name)
         self.objects.append(button_trigger_esc)
+
+    def load_select_level_group(self):
+        """
+        Загружает элементы подменю "Выбор уровня"
+        """
+
+        def set_result_level(level: int):
+            self.result["level"] = level
+
+        self.objects.clear()
+
+        label_menu_name = Label(self.window_surface, pos=(150, 25, 0, 0), text="ВЫБРАТЬ УРОВЕНЬ",
+                                text_color=(240, 240, 240), font_size=28, font="main_menu")
+        label_menu_name_shadow = Label(self.window_surface, pos=(152, 27, 0, 0), text="ВЫБРАТЬ УРОВЕНЬ",
+                                       text_color=(0, 0, 0), font_size=28, font="main_menu")
+        button_trigger_esc = ButtonTrigger(key=pygame.K_ESCAPE,
+                                           function_list=[self.play_sound, self.load_start_solo_group],
+                                           args_list=["press", None], )
+        button_return = Button(self.window_surface, pos=(0, 200, 140, 30), text="Назад",
+                               transparent=True, text_color=(224, 154, 24), selected_text_color=(237, 210, 7),
+                               font_size=24, font="main_menu",
+                               function_onClick_list=[self.play_sound, self.load_start_solo_group],
+                               args_list=["press", None],
+                               function_onHover=self.play_sound, arg_onHover="select")
+        label_return_shadow = Label(self.window_surface, pos=(2, 202, 140, 30), text="Назад",
+                                    text_color=(0, 0, 0), font_size=24, font="main_menu")
+
+        self.objects.append(label_return_shadow)
+        self.objects.append(button_return)
+        self.objects.append(label_menu_name_shadow)
+        self.objects.append(label_menu_name)
+        self.objects.append(button_trigger_esc)
+
+        print(get_all_maps_names())
 
     def load_start_multi_group(self):
         """
@@ -143,7 +186,7 @@ class Menu:
 
         button_trigger_esc = ButtonTrigger(key=pygame.K_ESCAPE,
                                            function_list=[self.play_sound, self.load_title_group],
-                                           args_list=["press", None],)
+                                           args_list=["press", None], )
         button_return = Button(self.window_surface, pos=(0, 200, 140, 30), text="Назад",
                                transparent=True, text_color=(224, 154, 24), selected_text_color=(237, 210, 7),
                                font_size=24, font="main_menu",
@@ -183,3 +226,24 @@ class Menu:
             pygame.display.update()
 
         return self.result
+
+
+def get_all_maps_names():
+    """
+    Возвращает список названий карт.
+    """
+    return_tuple = []
+    script_dir = get_script_dir()
+    files = listdir(script_dir + "\\assets\\maps")
+    for file in files:
+        filename = get_script_dir() + "\\assets\\maps\\" + file
+        try:
+            with open(filename, "r", encoding='utf-8') as f:
+                while (current_line := f.readline()).__len__() > 0:
+                    if current_line[0] == "#":
+                        mini_dict = current_line[1:-1].split("=")
+                        if mini_dict[0] == "title":
+                            return_tuple.append(mini_dict[1])
+        except FileNotFoundError:
+            print("There was an attempt to open a file but it does not exist: {}".format(filename))
+    return return_tuple
