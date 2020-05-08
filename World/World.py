@@ -81,7 +81,6 @@ class World:
         new_player = Player(self)
         new_player.setup_in_world(place_to_spawn_x, place_to_spawn_y)
 
-
     def draw(self):
         # Сперва отрисовываем танки и пули
         for bullet in self.all_bullets:
@@ -103,7 +102,6 @@ class World:
 
         self.enemy_spawn_timer.tick()
 
-
     def create_enemy(self):
         """
         Спавнит врага на одном из мест спавна для врагов. При этом проверяется максимальное число заспавенных врагов
@@ -123,7 +121,6 @@ class World:
                 return False
         return False
 
-
     def create_bullet(self, tank):
         if tank.fire_timer.is_ready():
             bullet = Bullet(self, tank)
@@ -137,7 +134,7 @@ class World:
         self.camera.set_coords(x, y)
 
     def center_camera_on_player(self):
-        self.camera.smart_center_on(self.players[0])
+        self.camera.smart_center_on(self.players[0])  # TODO: Центровать камеру не на одном игроке
 
     def move_player_to(self, player_id, direction):
         try:

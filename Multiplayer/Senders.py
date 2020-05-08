@@ -24,6 +24,7 @@ class DataSenderServerSide:
         host, port = ip, port
         data_dict = dict()
         data_dict["type"] = "ok"
+        data_dict["ip"] = self.parent_game.server_ip
         data = json.dumps(data_dict)
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.sendto(data.encode(), (host, port))
@@ -76,6 +77,7 @@ class DataSenderClientSide:
         host, port = ip, 9998
         data_dict = dict()
         data_dict["type"] = "ask_for_ok"
+        data_dict["ip"] = self.parent_game.client_ip
         data_dict["port"] = self.parent_game.clientside_server_port
         data = json.dumps(data_dict)
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -87,6 +89,7 @@ class DataSenderClientSide:
         host, port = self.server, 9998
         data_dict = dict()
         data_dict["type"] = "connect"
+        data_dict["ip"] = self.parent_game.client_ip
         data_dict["port"] = self.parent_game.clientside_server_port
         data = json.dumps(data_dict)
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -98,6 +101,7 @@ class DataSenderClientSide:
         host, port = self.server, 9998
         data_dict = dict()
         data_dict["type"] = "key"
+        data_dict["ip"] = self.parent_game.client_ip
         data_dict["button_id"] = button_id
         data = json.dumps(data_dict)
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)

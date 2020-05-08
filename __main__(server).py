@@ -14,6 +14,5 @@ def main():
     game.main_cycle()
 
 
-
 if __name__ == "__main__":
     main()

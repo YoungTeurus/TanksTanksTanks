@@ -21,7 +21,7 @@ class MyUDPHandlerClientSide(socketserver.BaseRequestHandler):
 
         if data_dict["type"] == "ok":
             # Если сервер отправил ok
-            self.parent_game.clientside_sender.server = self.client_address[0]  # Запоминаем IP сервера
+            self.parent_game.clientside_sender.server = data_dict["ip"]  # Запоминаем IP сервера
             self.parent_game.clientside_sender.connect_to_server()  # Пробуем подключиться к серверу
         elif data_dict["type"] == "load_world":
             # Если сервер сказал подгрузить карту
@@ -48,22 +48,23 @@ class MyUDPHandlerServerSide(socketserver.BaseRequestHandler):
 
         if data_dict["type"] == "ask_for_ok":
             # Если клиент спрашивает об OK-ее
-            self.parent_game.serverside_sender.send_ok(self.client_address[0], data_dict["port"])  # Отправляем ему OK
+            self.parent_game.serverside_sender.send_ok(data_dict["ip"], data_dict["port"])  # Отправляем ему OK
         elif data_dict["type"] == "connect":
             # Если клиент хочет подключиться
             if self.client_address[0] not in self.parent_game.serverside_sender.clients:
                 # Если этого IP ещё не было, заносим его в список клиентов
                 # Заносим IP-шник и порт отправителю
-                self.parent_game.serverside_sender.clients[self.client_address[0]] = data_dict["port"]
+                self.parent_game.serverside_sender.clients[data_dict["ip"]] = data_dict["port"]
                 # Присваиваем ip-шнику id игрока
-                self.parent_game.serverside_sender.clients_player_id[self.client_address[0]] = self.parent_game.serverside_sender.last_free_player_id
+                self.parent_game.serverside_sender.clients_player_id[data_dict["ip"]] = self.parent_game.serverside_sender.last_free_player_id
                 self.parent_game.serverside_sender.last_free_player_id += 1
             # Говорим клиенту подгрузить такую-то карту
-            self.parent_game.serverside_sender.send_load_world(self.client_address[0], data_dict["port"], self.parent_game.world.world_map.map_id)
+            self.parent_game.serverside_sender.send_load_world(data_dict["ip"], data_dict["port"], self.parent_game.world.world_map.map_id)
             self.parent_game.world.spawn_player()  # Спавн нового игрока
+            self.parent_game.world.center_camera_on_player()
             # TODO: отправлять карту клиенту
         elif data_dict["type"] == "key":
-            player_id = self.parent_game.serverside_sender.clients_player_id[self.client_address[0]]
+            player_id = self.parent_game.serverside_sender.clients_player_id[data_dict["ip"]]
             # TODO: разделять управление для разных клиентов
             if data_dict["button_id"] == "MOVE_UP":
                 self.parent_game.world.move_player_to(player_id, "UP",)

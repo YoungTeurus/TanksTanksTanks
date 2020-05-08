@@ -26,7 +26,8 @@ def main():
                             multi=True, connect_to_ip=result["server_ip"])  # Создание игры
             else:
                 # Если запускается сервер
-                pass
+                game = Game(window_surface, is_server=True,
+                            multi=True, server_ip=result["server_ip"])  # Создание игры
         else:
             # Если одиночная игра
             game = Game(window_surface, is_server=False, multi=False)  # Создание игры

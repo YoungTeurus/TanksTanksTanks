@@ -74,7 +74,7 @@ DESTROY_STRING = "destroy {object_type} {world_id}"
 GETHIT_STRING = "gethit {world_id} {bullet_direction}"
 
 # Для мультиплеера:
-CLIENT_IP = "127.0.0.1"
+# CLIENT_IP = "127.0.0.1"
 # CONNECT_TO_IP = "192.168.0.104"
 
 # Настройки в игре:

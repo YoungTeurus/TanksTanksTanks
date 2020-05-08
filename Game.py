@@ -1,10 +1,11 @@
 import random
+import socket
 import socketserver
 import threading
 
 import pygame
 
-from Consts import targetFPS, DARK_GREY, BLACK, MOVE_RIGHT, SHOOT, MOVE_LEFT, MOVE_DOWN, MOVE_UP, CLIENT_IP, \
+from Consts import targetFPS, DARK_GREY, BLACK, MOVE_RIGHT, SHOOT, MOVE_LEFT, MOVE_DOWN, MOVE_UP, \
     CHANGES_DEBUG
 from Files import ImageLoader
 from Images.Tileset import Tileset
@@ -23,16 +24,17 @@ class Game:
 
     window_surface = None  # Основная поверхность
 
-    is_server = None
+    is_server: bool = None
+    is_connected: bool = None  # Подключён ли клиент к серверу
     multi = None  # Сетевой режим или нет?
     game_running = None  # Флаг запущенной игры
 
-    connect_to_ip: str = None  # Адрес, к которому будет пытаться подключить клиент
-
-    # check_id_timer = None
+    connect_to_ip: str = None  # Адрес, к которому будет пытаться подключиться клиент
+    client_ip: str = None  # Адрес, на котором расположен клиент
+    server_ip: str = None  # Адрес, на котором расположен сервер
 
     def __init__(self, window_surface, is_server, multi, start_map_id: int = None,
-                 connect_to_ip: str = None):
+                 connect_to_ip: str = None, server_ip: str = None):
         """
         Если multi = False, значит никакой работы с сервером и клиентом проводиться не будет.
         Елси multi = True:
@@ -44,10 +46,7 @@ class Game:
         minimal_dimention = min(self.window_surface.get_width(),
                                 self.window_surface.get_height())  # Наименьшая сторона окна
         self.game_surface = pygame.Surface((minimal_dimention, minimal_dimention))
-        # Выравнивание по левому краю:
-        # game_rect = pygame.Rect(0,
-        #                         0,
-        #                         minimal_dimention, minimal_dimention)
+
         # Выравнивание по центру:
         self.game_rect = pygame.Rect(self.window_surface.get_width() / 2 - minimal_dimention / 2,
                                      self.window_surface.get_height() / 2 - minimal_dimention / 2,
@@ -65,6 +64,7 @@ class Game:
         if self.is_server or not multi:
             self.world = World(self.game_surface, self.tileset, True)
             if multi:
+                self.server_ip = server_ip
                 self.world.set_ready_for_server()
                 self.serverside_sender = DataSenderServerSide(self)
                 self.create_serverside_server()
@@ -74,7 +74,7 @@ class Game:
             self.clientside_server_port = random.randint(9999, 60000)
             self.create_clientside_server(self.clientside_server_port)
             self.connect_to_ip = connect_to_ip
-            # self.check_id_timer = Timer(100)
+            self.is_connected = False
 
         if not multi:
             self.world.load_world_map(start_map_id)
@@ -106,7 +106,8 @@ class Game:
             parent_game = self  # Передаю ссылку на объект
             port = client_port
 
-        HOST, PORT = CLIENT_IP, client_port
+        self.client_ip = socket.gethostbyname(socket.getfqdn())
+        HOST, PORT = self.client_ip, client_port
         # Созадём севрер
         self.clientside_server = socketserver.UDPServer((HOST, PORT), MyUDPHandlerClientSideWithObject)
         server_thread = threading.Thread(target=self.clientside_server.serve_forever)  # Создаём поток
@@ -119,7 +120,7 @@ class Game:
         class MyUDPHandlerServerSideWithObject(MyUDPHandlerServerSide):  # Костыль(?)
             parent_game = self  # Передаю ссылку на объект
 
-        HOST, PORT = CLIENT_IP, 9998
+        HOST, PORT = self.server_ip, 9998
         self.serverside_server = socketserver.UDPServer((HOST, PORT),
                                                         MyUDPHandlerServerSideWithObject)  # Созадём севрер
         server_thread = threading.Thread(target=self.serverside_server.serve_forever)  # Создаём поток
@@ -201,14 +202,9 @@ class Game:
                     self.clientside_sender.send_button("SHOOT")
 
             # Тестовая попытка подключиться к серверу:
-            if not self.is_server:
-                if keyboard_pressed[pygame.K_0]:
-                    if not self.server_button_pressed:
-                        print(self.connect_to_ip)
-                        self.clientside_sender.ask_for_ok(self.connect_to_ip)
-                        self.server_button_pressed = True
-                else:
-                    self.server_button_pressed = False
+            if not self.is_server and not self.is_connected:
+                self.clientside_sender.ask_for_ok(self.connect_to_ip)
+                self.is_connected = True
 
             # if not self.world.check_if_player_is_alive():
             #     self.game_over(0)
