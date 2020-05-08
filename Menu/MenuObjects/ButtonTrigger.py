@@ -9,18 +9,29 @@ class ButtonTrigger(MenuObject):
     """
 
     key = None  # Кнопка, на которую необходимо нажать
-    function = None  # Действие по нажатию кнопки
+    functions: list = None  # Действие по нажатию кнопки
 
     is_active: bool = None  # Активен ли триггер
 
-    def __init__(self, key, function, active: bool = None):
+    def __init__(self, key, function=None, function_list: list = None, active: bool = None):
         self.key = key
-        self.function = function
+        if function is not None:
+            self.add_function(function)
+        elif function_list is not None:
+            for fun in function_list:
+                self.add_function(fun)
+        else:
+            raise ValueError("ButtonTrigger не имеет функции для выполнения!")
 
         if active is not None:
             self.set_active(active)
         else:
             self.set_active(True)
+
+    def add_function(self, function):
+        if self.functions is None:
+            self.functions = []
+        self.functions.append(function)
 
     def set_active(self, active: bool):
         self.is_active = active
@@ -28,4 +39,5 @@ class ButtonTrigger(MenuObject):
     def handle_event(self, event):
         if self.is_active and event.type == KEYDOWN:
             if event.key == self.key:
-                self.function()
+                for fun in self.functions:
+                    fun()

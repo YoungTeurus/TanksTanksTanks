@@ -1,6 +1,5 @@
 from pygame import MOUSEMOTION, MOUSEBUTTONUP
 from pygame import Rect, Surface
-from pygame.font import Font
 
 from Consts import GREY, BLACK, WHITE
 from Menu.MenuObjects.MenuObjectWithText import MenuObjectWithText
@@ -14,13 +13,18 @@ class Button(MenuObjectWithText):
     color: tuple = None
     selected_color: tuple = None
     text_color: tuple = None
+    selected_text_color: tuple = None
+
+    function_onHover = None  # Функция, выполняемая при наведении курсором на кнопку
 
     is_active = None  # Активна ли сейчас кнопка (можно ли на неё нажать)
     is_selected = None  # Выбрана ли сейчас кнопка
+    is_transparent = None  # Прозрачность фона для кнопки
 
     def __init__(self, window_surface: Surface, pos: tuple = None, text: str = None, active: bool = None,
-                 color: tuple = None, selected_color: tuple = None, text_color: tuple = None, function=None,
-                 font_size: int = None):
+                 color: tuple = None, selected_color: tuple = None, text_color: tuple = None, transparent: bool = None,
+                 selected_text_color: tuple = None, function_onClick=None, font_size: int = None, font: str = None,
+                 function_onClick_list: list = None, function_onHover = None):
         self.window_surface = window_surface
         self.rect = Rect(0, 0, 100, 50)  # Стандартные размер и положение кнопки
         if pos is not None:
@@ -51,18 +55,32 @@ class Button(MenuObjectWithText):
         else:
             self.set_text_color(BLACK)  # Стандартный цвет текста кнопки
 
-        if function is not None:
-            self.set_function_onClick(function)
+        if selected_text_color is not None:
+            self.set_selected_text_color(selected_text_color)
+
+        if function_onClick is not None:
+            self.add_function_onClick(function_onClick)
+        elif function_onClick_list is not None:
+            for fun in function_onClick_list:
+                self.add_function_onClick(fun)
         else:
-            self.set_function_onClick(lambda: print(self.text_str))
+            self.add_function_onClick(lambda: print(self.text_str))
 
         if font_size is not None:
             self.set_font_size(font_size)
         else:
             self.set_font_size(16)
 
+        if transparent is not None:
+            self.is_transparent = transparent
+        else:
+            self.is_transparent = False
+
+        if function_onHover is not None:
+            self.function_onHover = function_onHover
+
         # Работа с текстом:
-        self.font = Font(None, self.font_size)  # Стандартный шрифт
+        self.set_font(self.font_size, font)
         self.render_text(self.text_str, self.text_color)
 
     def set_text(self, text: str):
@@ -82,6 +100,10 @@ class Button(MenuObjectWithText):
         self.text_color = text_color
         self.has_text_changed = True
 
+    def set_selected_text_color(self, selected_text_color):
+        self.selected_text_color = selected_text_color
+        self.has_text_changed = True
+
     def handle_event(self, event):
         """
         Обработка события кнопкой.
@@ -89,37 +111,50 @@ class Button(MenuObjectWithText):
         if self.is_active:
             if event.type == MOUSEMOTION:
                 if self.rect.collidepoint(event.pos[0], event.pos[1]):
+                    if self.function_onHover is not None and not self.is_selected:
+                        self.function_onHover()
                     self.is_selected = True
+                    if self.selected_text_color is not None:
+                        self.has_text_changed = True
+                        self.update()
                 else:
                     self.is_selected = False
+                    if self.selected_text_color is not None:
+                        self.has_text_changed = True
+                        self.update()
 
-            if event.type == MOUSEBUTTONUP:
+            if self.is_selected and event.type == MOUSEBUTTONUP:
                 if self.rect.collidepoint(event.pos[0], event.pos[1]):
-                    self.function_onClick()
+                    for fun in self.function_onClick:
+                        fun()
 
     def update(self):
         """
         Проверка на изменение текста. Происходит каждый такт игры.
         """
         if self.has_text_changed:
-            self.render_text(self.text_str, self.text_color)
+            if self.is_selected and self.selected_text_color is not None:
+                self.render_text(self.text_str, self.selected_text_color)
+            else:
+                self.render_text(self.text_str, self.text_color)
 
     def draw(self):
         """
         Отрисовка кнопки. Происходит каждый такт игры.
         """
-        if self.is_active:
-            # Если кнопка активна:
-            if self.is_selected:
-                # Если кнопка выделена
-                self.window_surface.fill(self.selected_color, self.rect)
+        if not self.is_transparent:
+            if self.is_active:
+                # Если кнопка активна:
+                if self.is_selected:
+                    # Если кнопка выделена
+                    self.window_surface.fill(self.selected_color, self.rect)
+                else:
+                    # Если кнопка не выделена
+                    self.window_surface.fill(self.color, self.rect)
             else:
-                # Если кнопка не выделена
-                self.window_surface.fill(self.color, self.rect)
-        else:
-            # Если кнопка не активна
-            darker_color = (max(self.color[0] - 55, 0), max(self.color[1] - 55, 0), max(self.color[2] - 55, 0))
-            self.window_surface.fill(darker_color, self.rect)
+                # Если кнопка не активна
+                darker_color = (max(self.color[0] - 55, 0), max(self.color[1] - 55, 0), max(self.color[2] - 55, 0))
+                self.window_surface.fill(darker_color, self.rect)
         self.window_surface.blit(self.text_surf,
                                  (self.rect.x + (self.rect.w / 2) - (self.text_size[0] / 2),
                                   self.rect.y + (self.rect.h / 2) - (self.text_size[1] / 2)))

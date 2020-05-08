@@ -17,6 +17,10 @@ def main():
     if result["result"] == "start":
         game = Game(window_surface, is_server=False)  # Создание игры
         game.main_cycle()
+    elif result["result"] == "quit":
+        pass
+    else:
+        pass
 
 
 if __name__ == "__main__":

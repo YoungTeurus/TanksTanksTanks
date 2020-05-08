@@ -24,7 +24,7 @@ class Label(MenuObjectWithText):
     has_text_changed = None  # Изменился ли текст, чтобы его нужно было вновь render-ить?
 
     def __init__(self, window_surface: Surface, pos: tuple = None, text: str = None,
-                 text_color: tuple = None, function=None, font_size: int = None):
+                 text_color: tuple = None, function=None, font_size: int = None, font: str = None):
         self.window_surface = window_surface
         self.rect = Rect(0, 0, 100, 50)  # Стандартные размер и положение кнопки
         if pos is not None:
@@ -41,7 +41,7 @@ class Label(MenuObjectWithText):
             self.set_text_color(BLACK)  # Стандартный цвет текста кнопки
 
         if function is not None:
-            self.set_function_onClick(function)
+            self.add_function_onClick(function)
             self.is_text_underlined = True
         else:
             self.is_text_underlined = False
@@ -52,10 +52,8 @@ class Label(MenuObjectWithText):
             self.set_font_size(16)
 
         # Работа с текстом:
-        self.font = Font(None, self.font_size)  # Стандартный шрифт
+        self.set_font(self.font_size, font)  # Стандартный шрифт
         self.label_render_text()
-
-    # Функции ниже дублируется в Button.py !
 
     def set_text(self, text: str):
         self.text_str = text
@@ -69,15 +67,14 @@ class Label(MenuObjectWithText):
         self.font.set_underline(self.is_text_underlined)
         super().render_text(self.text_str, self.text_color)
 
-    # Функции выше дублируется в Button.py !
-
     def handle_event(self, event):
         """
         Обработка события кнопкой.
         """
         if event.type == MOUSEBUTTONUP:
-            if self.rect.collidepoint(event.pos[0], event.pos[1]):
-                self.function_onClick()
+            if self.function_onClick is not None and self.rect.collidepoint(event.pos[0], event.pos[1]):
+                for fun in self.function_onClick:
+                    fun()
                 self.set_text_color(CLICKED_LINK_COLOR)
 
     def draw(self):

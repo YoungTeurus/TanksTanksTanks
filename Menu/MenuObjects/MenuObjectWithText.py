@@ -1,7 +1,12 @@
 from pygame.font import Font
 from pygame.surface import Surface
 
+from Files import get_script_dir
 from Menu.MenuObjects.MenuObjectClickable import MenuObjectClickable
+
+fonts = {
+    'main_menu': '\\assets\\fonts\\main_menu.ttf'
+}
 
 
 class MenuObjectWithText(MenuObjectClickable):
@@ -20,3 +25,10 @@ class MenuObjectWithText(MenuObjectClickable):
     def set_font_size(self, size: int):
         self.font_size = size
         self.has_text_changed = True
+
+    def set_font(self, size: int, font: str = None):
+        if font is not None and font in fonts:
+            path = get_script_dir() + fonts[font]
+            self.font = Font(path, size)
+        else:
+            self.font = Font(None, size)
