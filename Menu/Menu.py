@@ -38,12 +38,6 @@ class Menu:
         if sound in self.sounds:
             self.sounds[sound].play()
 
-    def play_select_sound(self):
-        self.play_sound('select')
-
-    def play_press_sound(self):
-        self.play_sound('press')
-
     def load_title_group(self):
         """
         Загружает элементы заглавного меню
@@ -58,22 +52,25 @@ class Menu:
         button_start_solo = Button(self.window_surface, pos=(80, 50, 140, 30), text="Одиночная игра",
                                    transparent=True, text_color=(224, 154, 24), selected_text_color=(237, 210, 7),
                                    font_size=24, font="main_menu",
-                                   function_onClick_list=[self.play_press_sound, self.load_start_solo_group],
-                                   function_onHover=self.play_select_sound)
+                                   function_onClick_list=[self.play_sound, self.load_start_solo_group],
+                                   args_list=["press", None],
+                                   function_onHover=self.play_sound, arg_onHover="select")
         label_start_solo_shadow = Label(self.window_surface, pos=(82, 52, 140, 30), text="Одиночная игра",
                                         text_color=(0, 0, 0), font_size=24, font="main_menu")
         button_start_multi = Button(self.window_surface, pos=(80, 90, 140, 30), text="Совместная игра",
                                     transparent=True, text_color=(224, 154, 24), selected_text_color=(237, 210, 7),
                                     font_size=24, font="main_menu",
-                                    function_onClick_list=[self.play_press_sound, self.load_start_multi_group],
-                                    function_onHover=self.play_select_sound)
+                                    function_onClick_list=[self.play_sound, self.load_start_multi_group],
+                                    args_list=["press", None],
+                                    function_onHover=self.play_sound, arg_onHover="select")
         label_start_milti_shadow = Label(self.window_surface, pos=(82, 92, 140, 30), text="Совместная игра",
                                          text_color=(0, 0, 0), font_size=24, font="main_menu")
         button_quit = Button(self.window_surface, pos=(90, 190, 120, 30), text="Выйти из игры",
                              transparent=True, text_color=(224, 154, 24), selected_text_color=(237, 210, 7),
                              font_size=24, font="main_menu",
-                             function_onClick_list=[self.play_press_sound, quit_game],
-                             function_onHover=self.play_select_sound)
+                             function_onClick_list=[self.play_sound, quit_game],
+                             args_list=["press", None],
+                             function_onHover=self.play_sound, arg_onHover="select")
         label_quit_shadow = Label(self.window_surface, pos=(92, 192, 120, 30), text="Выйти из игры",
                                   text_color=(0, 0, 0), font_size=24, font="main_menu")
         label_title = Label(self.window_surface, pos=(150, 25, 0, 0), text="TANK! TANK! TANK!",
@@ -101,13 +98,17 @@ class Menu:
             self.result["mode"] = "client"
             self.result["multi"] = False
 
+        def set_result_level(level: int):
+            self.result["level"] = level
+
         self.objects.clear()
 
         button_start_new = Button(self.window_surface, pos=(80, 50, 140, 30), text="Начать новую",
                                   transparent=True, text_color=(224, 154, 24), selected_text_color=(237, 210, 7),
                                   font_size=24, font="main_menu",
-                                  function_onClick_list=[self.play_press_sound, start_solo_game],
-                                  function_onHover=self.play_select_sound)
+                                  function_onClick_list=[self.play_sound, start_solo_game],
+                                  args_list=["press", None],
+                                  function_onHover=self.play_sound, arg_onHover="select")
         label_start_new_shadow = Label(self.window_surface, pos=(82, 52, 140, 30), text="Начать новую",
                                        text_color=(0, 0, 0), font_size=24, font="main_menu")
         label_menu_name = Label(self.window_surface, pos=(150, 25, 0, 0), text="ОДИНОЧНАЯ ИГРА",
@@ -115,12 +116,14 @@ class Menu:
         label_menu_name_shadow = Label(self.window_surface, pos=(152, 27, 0, 0), text="ОДИНОЧНАЯ ИГРА",
                                        text_color=(0, 0, 0), font_size=28, font="main_menu")
         button_trigger_esc = ButtonTrigger(key=pygame.K_ESCAPE,
-                                           function_list=[self.play_press_sound, self.load_title_group])
+                                           function_list=[self.play_sound, self.load_title_group],
+                                           args_list=["press", None],)
         button_return = Button(self.window_surface, pos=(0, 200, 140, 30), text="Назад",
                                transparent=True, text_color=(224, 154, 24), selected_text_color=(237, 210, 7),
                                font_size=24, font="main_menu",
-                               function_onClick_list=[self.play_press_sound, self.load_title_group],
-                               function_onHover=self.play_select_sound)
+                               function_onClick_list=[self.play_sound, self.load_title_group],
+                               args_list=["press", None],
+                               function_onHover=self.play_sound, arg_onHover="select")
         label_return_shadow = Label(self.window_surface, pos=(2, 202, 140, 30), text="Назад",
                                     text_color=(0, 0, 0), font_size=24, font="main_menu")
 
@@ -139,18 +142,26 @@ class Menu:
         self.objects.clear()
 
         button_trigger_esc = ButtonTrigger(key=pygame.K_ESCAPE,
-                                           function_list=[self.play_press_sound, self.load_title_group])
+                                           function_list=[self.play_sound, self.load_title_group],
+                                           args_list=["press", None],)
         button_return = Button(self.window_surface, pos=(0, 200, 140, 30), text="Назад",
                                transparent=True, text_color=(224, 154, 24), selected_text_color=(237, 210, 7),
                                font_size=24, font="main_menu",
-                               function_onClick_list=[self.play_press_sound, self.load_title_group],
-                               function_onHover=self.play_select_sound)
+                               function_onClick_list=[self.play_sound, self.load_title_group],
+                               args_list=["press", None],
+                               function_onHover=self.play_sound, arg_onHover="select")
         label_return_shadow = Label(self.window_surface, pos=(2, 202, 140, 30), text="Назад",
                                     text_color=(0, 0, 0), font_size=24, font="main_menu")
+        label_menu_name = Label(self.window_surface, pos=(150, 25, 0, 0), text="СОВМЕСТНАЯ ИГРА",
+                                text_color=(240, 240, 240), font_size=28, font="main_menu")
+        label_menu_name_shadow = Label(self.window_surface, pos=(152, 27, 0, 0), text="СОВМЕСТНАЯ ИГРА",
+                                       text_color=(0, 0, 0), font_size=28, font="main_menu")
 
         self.objects.append(button_trigger_esc)
         self.objects.append(label_return_shadow)
         self.objects.append(button_return)
+        self.objects.append(label_menu_name_shadow)
+        self.objects.append(label_menu_name)
 
     def main_cycle(self):
         while self.is_running:

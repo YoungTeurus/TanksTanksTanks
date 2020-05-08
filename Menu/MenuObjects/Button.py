@@ -16,6 +16,7 @@ class Button(MenuObjectWithText):
     selected_text_color: tuple = None
 
     function_onHover = None  # Функция, выполняемая при наведении курсором на кнопку
+    arg_onHover: str = None  # Аргумент для этой функции
 
     is_active = None  # Активна ли сейчас кнопка (можно ли на неё нажать)
     is_selected = None  # Выбрана ли сейчас кнопка
@@ -24,7 +25,7 @@ class Button(MenuObjectWithText):
     def __init__(self, window_surface: Surface, pos: tuple = None, text: str = None, active: bool = None,
                  color: tuple = None, selected_color: tuple = None, text_color: tuple = None, transparent: bool = None,
                  selected_text_color: tuple = None, function_onClick=None, font_size: int = None, font: str = None,
-                 function_onClick_list: list = None, function_onHover = None):
+                 function_onClick_list: list = None, function_onHover=None, args_list: list = None, arg_onHover=None):
         self.window_surface = window_surface
         self.rect = Rect(0, 0, 100, 50)  # Стандартные размер и положение кнопки
         if pos is not None:
@@ -61,8 +62,13 @@ class Button(MenuObjectWithText):
         if function_onClick is not None:
             self.add_function_onClick(function_onClick)
         elif function_onClick_list is not None:
-            for fun in function_onClick_list:
-                self.add_function_onClick(fun)
+            if args_list is not None and function_onClick_list.__len__() != args_list.__len__():
+                raise ValueError("Список аргументов не равен по размеру со списком функций!")
+            for (i, fun) in enumerate(function_onClick_list):
+                if args_list is not None:
+                    self.add_function_onClick(fun, args_list[i])
+                else:
+                    self.add_function_onClick(fun)
         else:
             self.add_function_onClick(lambda: print(self.text_str))
 
@@ -77,6 +83,8 @@ class Button(MenuObjectWithText):
             self.is_transparent = False
 
         if function_onHover is not None:
+            if arg_onHover is not None:
+                self.arg_onHover = arg_onHover
             self.function_onHover = function_onHover
 
         # Работа с текстом:
@@ -112,7 +120,10 @@ class Button(MenuObjectWithText):
             if event.type == MOUSEMOTION:
                 if self.rect.collidepoint(event.pos[0], event.pos[1]):
                     if self.function_onHover is not None and not self.is_selected:
-                        self.function_onHover()
+                        if self.arg_onHover is not None:
+                            self.function_onHover(self.arg_onHover)
+                        else:
+                            self.function_onHover()
                     self.is_selected = True
                     if self.selected_text_color is not None:
                         self.has_text_changed = True
@@ -125,8 +136,11 @@ class Button(MenuObjectWithText):
 
             if self.is_selected and event.type == MOUSEBUTTONUP:
                 if self.rect.collidepoint(event.pos[0], event.pos[1]):
-                    for fun in self.function_onClick:
-                        fun()
+                    for (i, fun) in enumerate(self.function_onClick):
+                        if (arg := self.function_args[i]) is not None:
+                            fun(arg)
+                        else:
+                            fun()
 
     def update(self):
         """

@@ -1,25 +1,31 @@
 from pygame.constants import KEYDOWN
 
-from Menu.MenuObjects.MenuObject import MenuObject
+from Menu.MenuObjects.MenuObjectClickable import MenuObjectClickable
 
 
-class ButtonTrigger(MenuObject):
+class ButtonTrigger(MenuObjectClickable):
     """
     Невидимый объект, который выполняет какое-либо действие по нажатию определённой клавиши.
     """
 
     key = None  # Кнопка, на которую необходимо нажать
-    functions: list = None  # Действие по нажатию кнопки
+    # function_onClick: list = None  # Действие по нажатию кнопки
 
     is_active: bool = None  # Активен ли триггер
 
-    def __init__(self, key, function=None, function_list: list = None, active: bool = None):
+    def __init__(self, key, function=None, function_list: list = None,
+                 active: bool = None, args_list: list = None):
         self.key = key
         if function is not None:
-            self.add_function(function)
+            self.add_function_onClick(function)
         elif function_list is not None:
-            for fun in function_list:
-                self.add_function(fun)
+            if args_list is not None and function_list.__len__() != args_list.__len__():
+                raise ValueError("Список аргументов не равен по размеру со списком функций!")
+            for (i, fun) in enumerate(function_list):
+                if args_list is not None:
+                    self.add_function_onClick(fun, args_list[i])
+                else:
+                    self.add_function_onClick(fun)
         else:
             raise ValueError("ButtonTrigger не имеет функции для выполнения!")
 
@@ -28,16 +34,14 @@ class ButtonTrigger(MenuObject):
         else:
             self.set_active(True)
 
-    def add_function(self, function):
-        if self.functions is None:
-            self.functions = []
-        self.functions.append(function)
-
     def set_active(self, active: bool):
         self.is_active = active
 
     def handle_event(self, event):
         if self.is_active and event.type == KEYDOWN:
             if event.key == self.key:
-                for fun in self.functions:
-                    fun()
+                for (i, fun) in enumerate(self.function_onClick):
+                    if (arg := self.function_args[i]) is not None:
+                        fun(arg)
+                    else:
+                        fun()

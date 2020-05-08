@@ -24,11 +24,18 @@ class Game:
     window_surface = None  # Основная поверхность
 
     is_server = None
+    multi = None  # Сетевой режим или нет?
     game_running = None  # Флаг запущенной игры
 
     # check_id_timer = None
 
-    def __init__(self, window_surface, is_server):
+    def __init__(self, window_surface, is_server, multi):
+        """
+        Если multi = False, значит никакой работы с сервером и клиентом проводиться не будет.
+        Елси multi = True:
+            Если is_server = True, значит будет запущен сервер.
+            Если is_server = False, значит будет запущен клиент.
+        """
         self.window_surface = window_surface
 
         minimal_dimention = min(self.window_surface.get_width(),
@@ -51,12 +58,14 @@ class Game:
         self.game_running = True
 
         self.is_server = is_server
+        self.multi = multi
 
-        if self.is_server:
+        if self.is_server or not multi:
             self.world = World(self.game_surface, self.tileset, True)
-            self.world.set_ready_for_server()
-            self.serverside_sender = DataSenderServerSide(self)
-            self.create_serverside_server()
+            if multi:
+                self.world.set_ready_for_server()
+                self.serverside_sender = DataSenderServerSide(self)
+                self.create_serverside_server()
         else:
             self.world = World(self.game_surface, self.tileset, True)
             self.clientside_sender = DataSenderClientSide(self)
@@ -64,15 +73,17 @@ class Game:
             self.create_clientside_server(self.clientside_server_port)
             # self.check_id_timer = Timer(100)
 
-        if self.is_server:
+        if self.is_server or not multi:
             self.world.setup_world()
+            self.world.spawn_player()
+            self.world.center_camera_on_player()
             self.world.clear_changes()
 
         self.server_button_pressed = False  # Флаг для однократной отработки нажатия кнопки подключения
 
         self.last_moved_direction = None
 
-        if self.is_server:
+        if self.is_server and multi:
             # Если мы сервер, то мы ничего не делаем до тех пор, пока не подключится хотя бы 1 клиент
             # TODO: сделать проверку на количество подключённых игроков
             while self.serverside_sender.clients.__len__() < 2 and self.game_running:
@@ -126,7 +137,7 @@ class Game:
             keyboard_pressed = pygame.key.get_pressed()
 
             # Движение игрока
-            if self.is_server:
+            if self.is_server or not self.multi:
                 if keyboard_pressed[pygame.K_RIGHT]:
                     if self.last_moved_direction is None or self.last_moved_direction == "RIGHT":
                         self.world.move_player_to(0, "RIGHT")
@@ -201,7 +212,7 @@ class Game:
             #     self.game_over(1)
 
             self.world.draw()
-            if self.is_server:
+            if self.is_server or not self.multi:
                 self.world.act()
                 # Спавн врагов:
                 if self.world.enemy_spawn_timer.is_ready():
@@ -211,7 +222,7 @@ class Game:
                         self.world.enemy_spawn_timer.reset()
 
                 # Изменения в мире:
-                if (changes := self.world.get_changes()).__len__() > 0:
+                if (changes := self.world.get_changes()).__len__() > 0 and self.multi:
                     if CHANGES_DEBUG:
                         print(changes)
                     self.serverside_sender.send_changes()  # Вместо "localhost" - все клиенты

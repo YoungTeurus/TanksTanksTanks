@@ -15,8 +15,13 @@ def main():
     result = menu.main_cycle()
 
     if result["result"] == "start":
-        game = Game(window_surface, is_server=False)  # Создание игры
-        game.main_cycle()
+        if result["multi"]:
+            # Если сетевая игра
+            pass
+        else:
+            # Если одиночная игра
+            game = Game(window_surface, is_server=False, multi=False)  # Создание игры
+            game.main_cycle()
     elif result["result"] == "quit":
         pass
     else:

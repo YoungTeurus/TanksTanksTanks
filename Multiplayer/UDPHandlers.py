@@ -60,7 +60,7 @@ class MyUDPHandlerServerSide(socketserver.BaseRequestHandler):
                 self.parent_game.serverside_sender.last_free_player_id += 1
             # Говорим клиенту подгрузить такую-то карту
             self.parent_game.serverside_sender.send_load_world(self.client_address[0], data_dict["port"], self.parent_game.world.world_map.map_id)
-            self.parent_game.world.spawn_player()
+            self.parent_game.world.spawn_player()  # Спавн нового игрока
             # TODO: отправлять карту клиенту
         elif data_dict["type"] == "key":
             player_id = self.parent_game.serverside_sender.clients_player_id[self.client_address[0]]
