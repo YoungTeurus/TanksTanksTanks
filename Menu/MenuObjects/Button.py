@@ -25,9 +25,11 @@ class Button(MenuObjectWithText):
     def __init__(self, window_surface: Surface, pos: tuple = None, text: str = None, active: bool = None,
                  color: tuple = None, selected_color: tuple = None, text_color: tuple = None, transparent: bool = None,
                  selected_text_color: tuple = None, function_onClick=None, font_size: int = None, font: str = None,
-                 function_onClick_list: list = None, function_onHover=None, args_list: list = None, arg_onHover=None):
+                 function_onClick_list: list = None, function_onHover=None, args_list: list = None, arg_onHover=None,
+                 auto_adjust: bool = True):
         self.window_surface = window_surface
         self.rect = Rect(0, 0, 100, 50)  # Стандартные размер и положение кнопки
+
         if pos is not None:
             self.set_pos(pos[0], pos[1], pos[2], pos[3])
 
@@ -90,6 +92,8 @@ class Button(MenuObjectWithText):
         # Работа с текстом:
         self.set_font(self.font_size, font)
         self.render_text(self.text_str, self.text_color)
+        if auto_adjust:
+            self.adjust_size()
 
     def set_text(self, text: str):
         self.text_str = text

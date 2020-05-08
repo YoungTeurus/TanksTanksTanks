@@ -4,9 +4,8 @@ from World.Map import Map
 import random
 
 from World.Objects.Collisionable import remove_if_exists_in
-from World.Objects.Movable import Movable
 from World.Objects.RotatableWorldObject import RotatableWorldObject
-from World.Objects.Tank import Tank, Player, Enemy, Bullet
+from World.Objects.Tank import Player, Enemy, Bullet
 from World.Timer import Timer
 
 
@@ -55,7 +54,9 @@ class World:
         self.is_server = is_server
         self.last_id = 0
 
-    def setup_world(self):
+    def load_world_map(self, map_id: int = None):
+        if map_id is not None:
+            self.load_map(map_id)
         self.load_map(0)
         # self.spawn_player()
         # self.center_camera_on_player()
@@ -68,13 +69,14 @@ class World:
         self.world_map.load_by_id(map_id)
         self.world_map.check()
 
-    def spawn_player(self, player_id=0):
+    def spawn_player(self, player_id: int = 0):
         """
         Спавнит игрока под айди id на одной из точек спавна
         :param player_id: Айди игрока (для мультиплеера)
         :return:
         """
-        place_to_spawn = random.choice(self.world_map.player_spawn_places)
+        place_to_spawn = self.world_map.player_spawn_places[player_id]
+        # place_to_spawn = random.choice(self.world_map.player_spawn_places)
         (place_to_spawn_x, place_to_spawn_y) = place_to_spawn.get_world_pos()
         new_player = Player(self)
         new_player.setup_in_world(place_to_spawn_x, place_to_spawn_y)

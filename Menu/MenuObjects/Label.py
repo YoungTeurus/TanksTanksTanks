@@ -56,8 +56,9 @@ class Label(MenuObjectWithText):
         self.label_render_text()
 
     def set_text(self, text: str):
-        self.text_str = text
-        self.has_text_changed = True
+        if self.text_str is None or text != self.text_str:
+            self.text_str = text
+            self.has_text_changed = True
 
     def set_text_color(self, text_color: tuple):
         self.text_color = text_color

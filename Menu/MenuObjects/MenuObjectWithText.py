@@ -22,6 +22,14 @@ class MenuObjectWithText(MenuObjectClickable):
         self.text_size = self.font.size(text_str)
         self.has_text_changed = False
 
+    def adjust_size(self):
+        """
+        Размеры кнопки всегда соответствуют размеру текста
+        """
+        if (difference := self.text_size[0] - self.rect.width) != 0:  # Если ширина надписи больше кнопки
+            self.rect.width = self.text_size[0]
+            self.rect.x -= (difference / 2)
+
     def set_font_size(self, size: int):
         self.font_size = size
         self.has_text_changed = True

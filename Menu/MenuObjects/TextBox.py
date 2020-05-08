@@ -4,10 +4,12 @@ from pygame.rect import Rect
 from pygame.surface import Surface
 
 from Consts import BLACK, GREY, WHITE
-from Menu.MenuObjects.MenuObjectWithText import MenuObjectWithText
+from Files import get_script_dir
+from Menu.MenuObjects.MenuObjectWithText import MenuObjectWithText, fonts
 
 VERY_LIGHT_GREY = (210, 210, 210)
 LIGHT_GREY = (160, 160, 160)
+
 
 class TextBox(MenuObjectWithText):
     window_surface: Surface = None  # Поверхность окна
@@ -16,13 +18,14 @@ class TextBox(MenuObjectWithText):
     empty_text_str: str = None  # Строка, которую хранит TextBox, пока в него ничего не введено
 
     function_onEnter = None  # Функция, выполняемая при нажатии Enter-а
+    arg_onEnter: str = None
 
     is_active = None  # Активен ли сейчас кнопка (можно ли на него нажать)
     is_selected = None  # Выбран ли сейчас TextBox
 
     def __init__(self, window_surface: Surface, pos: tuple = None, start_text: str = None,
                  empty_text: str = None, active: bool = None, selected: bool = None,
-                 function_onEnter=None, font_size: int = None):
+                 function_onEnter=None, arg_onEnter: str = None, font_size: int = None, font: str = None):
         self.window_surface = window_surface
 
         self.rect = Rect(0, 0, 100, 50)  # Стандартные размер и положение TextBox
@@ -59,8 +62,15 @@ class TextBox(MenuObjectWithText):
         else:
             self.set_font_size(16)
 
+        if arg_onEnter is not None:
+            self.arg_onEnter = arg_onEnter
+
         # Работа с текстом:
-        self.font = Font(None, self.font_size)  # Стандартный шрифт
+        if font is not None and font in fonts:
+            path = get_script_dir() + fonts[font]
+            self.font = Font(path, self.font_size)
+        else:
+            self.font = Font(None, self.font_size)
         self.textbox_render_text()
 
     def set_active(self, active: bool):
@@ -110,7 +120,10 @@ class TextBox(MenuObjectWithText):
                     self.set_selected(False)
             if self.is_selected and event.type == KEYDOWN:
                 if event.key == K_RETURN:
-                    self.function_onEnter()
+                    if self.arg_onEnter is not None:
+                        self.function_onEnter(self.arg_onEnter)
+                    else:
+                        self.function_onEnter()
                 elif event.key == K_BACKSPACE:
                     self.text_str = self.text_str[:-1]
                 else:

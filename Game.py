@@ -5,7 +5,7 @@ import threading
 import pygame
 
 from Consts import targetFPS, DARK_GREY, BLACK, MOVE_RIGHT, SHOOT, MOVE_LEFT, MOVE_DOWN, MOVE_UP, CLIENT_IP, \
-    CONNECT_TO_IP, CHANGES_DEBUG
+    CHANGES_DEBUG
 from Files import ImageLoader
 from Images.Tileset import Tileset
 from Multiplayer.Senders import DataSenderServerSide, DataSenderClientSide
@@ -27,9 +27,12 @@ class Game:
     multi = None  # Сетевой режим или нет?
     game_running = None  # Флаг запущенной игры
 
+    connect_to_ip: str = None  # Адрес, к которому будет пытаться подключить клиент
+
     # check_id_timer = None
 
-    def __init__(self, window_surface, is_server, multi):
+    def __init__(self, window_surface, is_server, multi, start_map_id: int = None,
+                 connect_to_ip: str = None):
         """
         Если multi = False, значит никакой работы с сервером и клиентом проводиться не будет.
         Елси multi = True:
@@ -50,7 +53,6 @@ class Game:
                                      self.window_surface.get_height() / 2 - minimal_dimention / 2,
                                      minimal_dimention, minimal_dimention)
 
-        pygame.display.set_caption("TANK! TANK! TANK!")
         self.clock = pygame.time.Clock()
         self.imageloader = ImageLoader()
         self.tileset = Tileset(64, 64, self.imageloader.get_image_by_name("tileset.png"))
@@ -71,22 +73,24 @@ class Game:
             self.clientside_sender = DataSenderClientSide(self)
             self.clientside_server_port = random.randint(9999, 60000)
             self.create_clientside_server(self.clientside_server_port)
+            self.connect_to_ip = connect_to_ip
             # self.check_id_timer = Timer(100)
 
-        if self.is_server or not multi:
-            self.world.setup_world()
+        if not multi:
+            self.world.load_world_map(start_map_id)
             self.world.spawn_player()
             self.world.center_camera_on_player()
-            self.world.clear_changes()
 
         self.server_button_pressed = False  # Флаг для однократной отработки нажатия кнопки подключения
 
         self.last_moved_direction = None
 
         if self.is_server and multi:
+            self.world.load_world_map(start_map_id)
+            self.world.clear_changes()
             # Если мы сервер, то мы ничего не делаем до тех пор, пока не подключится хотя бы 1 клиент
             # TODO: сделать проверку на количество подключённых игроков
-            while self.serverside_sender.clients.__len__() < 2 and self.game_running:
+            while self.serverside_sender.clients.__len__() < 1 and self.game_running:
                 # Обработка событий:
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
@@ -200,7 +204,8 @@ class Game:
             if not self.is_server:
                 if keyboard_pressed[pygame.K_0]:
                     if not self.server_button_pressed:
-                        self.clientside_sender.ask_for_ok(CONNECT_TO_IP)
+                        print(self.connect_to_ip)
+                        self.clientside_sender.ask_for_ok(self.connect_to_ip)
                         self.server_button_pressed = True
                 else:
                     self.server_button_pressed = False

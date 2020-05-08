@@ -10,7 +10,7 @@ def main():
 
     window_surface = pygame.display.set_mode((window_w, window_h))  # Основная поверхность
 
-    game = Game(window_surface, is_server=True)  # Создание игры
+    game = Game(window_surface, is_server=True, multi=True)  # Создание игры
     game.main_cycle()
 
 
