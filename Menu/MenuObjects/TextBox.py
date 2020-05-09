@@ -3,7 +3,7 @@ from pygame.font import Font
 from pygame.rect import Rect
 from pygame.surface import Surface
 
-from Consts import BLACK, GREY, WHITE
+from Consts import BLACK, WHITE, DARK_GREY
 from Files import get_script_dir
 from Menu.MenuObjects.MenuObjectWithText import MenuObjectWithText, fonts
 
@@ -90,7 +90,7 @@ class TextBox(MenuObjectWithText):
             super().render_text(self.text_str, BLACK)
         else:
             # Если поле пустое и не выбрано
-            super().render_text(self.empty_text_str, GREY)
+            super().render_text(self.empty_text_str, DARK_GREY)
 
     def set_function_onEnter(self, function):
         self.function_onEnter = function

@@ -1,4 +1,5 @@
 import re
+import socket
 
 import pygame
 
@@ -18,6 +19,8 @@ class Menu:
     result: dict = None  # Словарь, содержащий результат работы меню
 
     sounds: dict = None
+
+    is_client_ip_changed: bool = False  # Был ли изменён IP клиента (см. self.load_multi_settings_group)
 
     def __init__(self, window_surface):
         self.window_surface = window_surface  # Основная поверхность
@@ -212,6 +215,8 @@ class Menu:
         self.result["result"] = "start"
         self.result["mode"] = "client"
         self.result["multi"] = True
+        if "client_ip" not in self.result:
+            self.result["client_ip"] = socket.gethostbyname(socket.getfqdn())
 
     def load_start_multi_group(self):
         """
@@ -287,31 +292,26 @@ class Menu:
 
         def connect_to():
             if regex.match(textbox_server_ip.text_str):
-                label_wrong_ip.set_text("")
-                label_wrong_ip_shadow.set_text("")
                 self.result["server_ip"] = textbox_server_ip.text_str
                 self.start_multi_game_client()
             else:
-                label_wrong_ip.set_text("Неправильный формат IP адреса!")
-                label_wrong_ip_shadow.set_text("Неправильный формат IP адреса!")
+                self.objects.append(label_wrong_ip_shadow)
+                self.objects.append(label_wrong_ip)
 
         self.objects.clear()
 
         label_wrong_ip = Label(self.window_surface, pos=(80, 120, 140, 30),
-                               text="",
+                               text="Неправильный формат IP адреса!",
                                text_color=(224, 24, 24), font_size=14, font="main_menu")
         label_wrong_ip_shadow = Label(self.window_surface, pos=(81, 121, 140, 30),
-                                      text="",
+                                      text="Неправильный формат IP адреса!",
                                       text_color=(0, 0, 0), font_size=14, font="main_menu")
-        self.objects.append(label_wrong_ip_shadow)
-        self.objects.append(label_wrong_ip)
-
         label_server_ip = Label(self.window_surface, pos=(80, 50, 140, 30), text="IP сервера:",
                                 text_color=(224, 154, 24), font_size=24, font="main_menu")
         label_server_ip_shadow = Label(self.window_surface, pos=(82, 52, 140, 30), text="IP сервера:",
                                        text_color=(0, 0, 0), font_size=24, font="main_menu")
         textbox_server_ip = TextBox(self.window_surface, pos=(80, 90, 140, 30), font="main_menu",
-                                    function_onEnter=connect_to)
+                                    function_onEnter=connect_to, empty_text="IP адрес")
         button_connect = Button(self.window_surface, pos=(80, 155, 140, 30), text="Подключиться",
                                 transparent=True, text_color=(224, 154, 24), selected_text_color=(237, 210, 7),
                                 font_size=24, font="main_menu",
@@ -525,8 +525,70 @@ class Menu:
         """
         Загружает элементы подменю "Настройки подключения"
         """
+
+        regex_str = r"((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)"
+        regex = re.compile(regex_str)
+
+        def save_client_ip():
+            if not self.is_client_ip_changed:
+                self.result["client_ip"] = None
+                self.is_client_ip_changed = False
+                self.load_settings_group()
+            else:
+                if regex.match(textbox_client_ip.text_str):
+                    self.result["client_ip"] = textbox_client_ip.text_str
+                    self.is_client_ip_changed = True
+                    self.load_settings_group()
+                else:
+                    self.objects.append(label_wrong_ip_shadow)
+                    self.objects.append(label_wrong_ip)
+
+        def change_local_remote():
+            if textbox_client_ip not in self.objects:
+                # Если идёт первое изменение "локальности" или локальность сейчас в положении True
+                button_is_local.set_text("Локальное подключение: нет")
+                label_is_local_shadow.set_text("Локальное подключение: нет")
+                self.objects.append(textbox_client_ip)
+                self.objects.append(label_client_ip_shadow)
+                self.objects.append(label_client_ip)
+            else:
+                # Если локальность сейчас в положении False
+                button_is_local.set_text("Локальное подключение: да")
+                label_is_local_shadow.set_text("Локальное подключение: да")
+                self.objects.remove(textbox_client_ip)
+                self.objects.remove(label_client_ip_shadow)
+                self.objects.remove(label_client_ip)
+
         self.objects.clear()
 
+        label_wrong_ip = Label(self.window_surface, pos=(80, 150, 140, 30),
+                               text="Неправильный формат IP адреса!",
+                               text_color=(224, 24, 24), font_size=14, font="main_menu")
+        label_wrong_ip_shadow = Label(self.window_surface, pos=(81, 151, 140, 30),
+                                      text="Неправильный формат IP адреса!",
+                                      text_color=(0, 0, 0), font_size=14, font="main_menu")
+        button_is_local = Button(self.window_surface, pos=(80, 50, 140, 30), text="Локальное подключение: да",
+                                 transparent=True, text_color=(224, 154, 24), selected_text_color=(237, 210, 7),
+                                 font_size=24, font="main_menu",
+                                 function_onClick_list=[self.play_sound, change_local_remote],
+                                 args_list=["press", None],
+                                 function_onHover=self.play_sound, arg_onHover="select")
+        label_is_local_shadow = Label(self.window_surface, pos=(82, 52, 140, 30), text="Локальное подключение: да",
+                                      text_color=(0, 0, 0), font_size=24, font="main_menu")
+        label_client_ip = Label(self.window_surface, pos=(80, 90, 140, 30), text="IP клиента:",
+                                text_color=(224, 154, 24), font_size=24, font="main_menu")
+        label_client_ip_shadow = Label(self.window_surface, pos=(82, 92, 140, 30), text="IP клиента:",
+                                       text_color=(0, 0, 0), font_size=24, font="main_menu")
+        textbox_client_ip = TextBox(self.window_surface, pos=(80, 120, 140, 30), font="main_menu",
+                                    empty_text="IP адрес")
+        button_save = Button(self.window_surface, pos=(80, 175, 140, 30), text="Сохранить",
+                             transparent=True, text_color=(224, 154, 24), selected_text_color=(237, 210, 7),
+                             font_size=24, font="main_menu",
+                             function_onClick_list=[self.play_sound, save_client_ip],
+                             args_list=["press", None],
+                             function_onHover=self.play_sound, arg_onHover="select")
+        label_save_shadow = Label(self.window_surface, pos=(82, 177, 140, 30), text="Сохранить",
+                                  text_color=(0, 0, 0), font_size=24, font="main_menu")
         label_menu_name = Label(self.window_surface, pos=(150, 25, 0, 0), text="НАСТРОЙКИ ПОДКЛЮЧЕНИЯ",
                                 text_color=(240, 240, 240), font_size=28, font="main_menu")
         label_menu_name_shadow = Label(self.window_surface, pos=(152, 27, 0, 0), text="НАСТРОЙКИ ПОДКЛЮЧЕНИЯ",
@@ -543,11 +605,23 @@ class Menu:
         label_return_shadow = Label(self.window_surface, pos=(2, 202, 140, 30), text="Назад",
                                     text_color=(0, 0, 0), font_size=24, font="main_menu")
 
+        self.objects.append(label_is_local_shadow)
+        self.objects.append(button_is_local)
         self.objects.append(label_return_shadow)
         self.objects.append(button_return)
         self.objects.append(label_menu_name_shadow)
         self.objects.append(label_menu_name)
         self.objects.append(button_trigger_esc)
+        self.objects.append(label_save_shadow)
+        self.objects.append(button_save)
+
+        if self.is_client_ip_changed:
+            button_is_local.set_text("Локальное подключение: нет")
+            label_is_local_shadow.set_text("Локальное подключение: нет")
+            textbox_client_ip.set_text(self.result["client_ip"])
+            self.objects.append(textbox_client_ip)
+            self.objects.append(label_client_ip_shadow)
+            self.objects.append(label_client_ip)
 
     def main_cycle(self):
         while self.is_running:
