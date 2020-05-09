@@ -71,6 +71,14 @@ class Menu:
                                     function_onHover=self.play_sound, arg_onHover="select")
         label_start_milti_shadow = Label(self.window_surface, pos=(82, 92, 140, 30), text="Совместная игра",
                                          text_color=(0, 0, 0), font_size=24, font="main_menu")
+        button_settings = Button(self.window_surface, pos=(80, 130, 140, 30), text="Настройки",
+                                 transparent=True, text_color=(224, 154, 24), selected_text_color=(237, 210, 7),
+                                 font_size=24, font="main_menu",
+                                 function_onClick_list=[self.play_sound, self.load_settings_group],
+                                 args_list=["press", None],
+                                 function_onHover=self.play_sound, arg_onHover="select")
+        label_settings_shadow = Label(self.window_surface, pos=(82, 132, 140, 30), text="Настройки",
+                                      text_color=(0, 0, 0), font_size=24, font="main_menu")
         button_quit = Button(self.window_surface, pos=(90, 190, 120, 30), text="Выйти из игры",
                              transparent=True, text_color=(224, 154, 24), selected_text_color=(237, 210, 7),
                              font_size=24, font="main_menu",
@@ -88,6 +96,8 @@ class Menu:
         self.objects.append(button_start_solo)
         self.objects.append(label_start_milti_shadow)
         self.objects.append(button_start_multi)
+        self.objects.append(label_settings_shadow)
+        self.objects.append(button_settings)
         self.objects.append(label_quit_shadow)
         self.objects.append(button_quit)
         self.objects.append(label_title_shadow)
@@ -342,6 +352,7 @@ class Menu:
         """
         Загружает элементы подменю "Создать сервер"
         """
+
         def start_multi_game_server():
             self.is_running = False
             self.result["result"] = "start"
@@ -433,6 +444,9 @@ class Menu:
         self.objects.append(button_return)
         self.objects.append(label_menu_name_shadow)
         self.objects.append(label_menu_name)
+
+    def load_settings_group(self):
+        pass
 
     def main_cycle(self):
         while self.is_running:
