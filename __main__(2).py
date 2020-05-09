@@ -23,7 +23,8 @@ def main():
             if result["mode"] == "client":
                 # Если запускается клиент
                 game = Game(window_surface, is_server=False,
-                            multi=True, connect_to_ip=result["server_ip"])  # Создание игры
+                            multi=True, connect_to_ip=result["server_ip"],
+                            client_ip=result["client_ip"])  # Создание игры
             else:
                 # Если запускается сервер
                 game = Game(window_surface, is_server=True,

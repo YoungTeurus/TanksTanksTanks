@@ -34,7 +34,7 @@ class Game:
     server_ip: str = None  # Адрес, на котором расположен сервер
 
     def __init__(self, window_surface, is_server, multi, start_map_id: int = None,
-                 connect_to_ip: str = None, server_ip: str = None):
+                 connect_to_ip: str = None, server_ip: str = None, client_ip: str = None):
         """
         Если multi = False, значит никакой работы с сервером и клиентом проводиться не будет.
         Елси multi = True:
@@ -72,6 +72,7 @@ class Game:
             self.world = World(self.game_surface, self.tileset, True)
             self.clientside_sender = DataSenderClientSide(self)
             self.clientside_server_port = random.randint(9999, 60000)
+            self.client_ip = client_ip
             self.create_clientside_server(self.clientside_server_port)
             self.connect_to_ip = connect_to_ip
             self.is_connected = False
@@ -106,7 +107,6 @@ class Game:
             parent_game = self  # Передаю ссылку на объект
             port = client_port
 
-        self.client_ip = socket.gethostbyname(socket.getfqdn())
         HOST, PORT = self.client_ip, client_port
         # Созадём севрер
         self.clientside_server = socketserver.UDPServer((HOST, PORT), MyUDPHandlerClientSideWithObject)

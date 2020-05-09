@@ -20,8 +20,6 @@ class Menu:
 
     sounds: dict = None
 
-    is_client_ip_changed: bool = False  # Был ли изменён IP клиента (см. self.load_multi_settings_group)
-
     def __init__(self, window_surface):
         self.window_surface = window_surface  # Основная поверхность
 
@@ -521,6 +519,8 @@ class Menu:
         self.objects.append(label_menu_name)
         self.objects.append(button_trigger_esc)
 
+    is_client_ip_local = None
+
     def load_multi_settings_group(self):
         """
         Загружает элементы подменю "Настройки подключения"
@@ -529,35 +529,39 @@ class Menu:
         regex_str = r"((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)"
         regex = re.compile(regex_str)
 
+        if "client_ip" in self.result:
+            self.is_client_ip_local = False
+        else:
+            self.is_client_ip_local = True
+
         def save_client_ip():
-            if not self.is_client_ip_changed:
-                self.result["client_ip"] = None
-                self.is_client_ip_changed = False
+            if self.is_client_ip_local:
+                self.result.pop("client_ip", None)
                 self.load_settings_group()
             else:
                 if regex.match(textbox_client_ip.text_str):
                     self.result["client_ip"] = textbox_client_ip.text_str
-                    self.is_client_ip_changed = True
                     self.load_settings_group()
                 else:
                     self.objects.append(label_wrong_ip_shadow)
                     self.objects.append(label_wrong_ip)
 
         def change_local_remote():
-            if textbox_client_ip not in self.objects:
+            if self.is_client_ip_local:
                 # Если идёт первое изменение "локальности" или локальность сейчас в положении True
-                button_is_local.set_text("Локальное подключение: нет")
-                label_is_local_shadow.set_text("Локальное подключение: нет")
+                button_is_local.set_text("Локальный адрес: нет")
+                label_is_local_shadow.set_text("Локальный адрес: нет")
                 self.objects.append(textbox_client_ip)
                 self.objects.append(label_client_ip_shadow)
                 self.objects.append(label_client_ip)
             else:
                 # Если локальность сейчас в положении False
-                button_is_local.set_text("Локальное подключение: да")
-                label_is_local_shadow.set_text("Локальное подключение: да")
+                button_is_local.set_text("Локальный адрес: да")
+                label_is_local_shadow.set_text("Локальный адрес: да")
                 self.objects.remove(textbox_client_ip)
                 self.objects.remove(label_client_ip_shadow)
                 self.objects.remove(label_client_ip)
+            self.is_client_ip_local = not self.is_client_ip_local
 
         self.objects.clear()
 
@@ -567,13 +571,13 @@ class Menu:
         label_wrong_ip_shadow = Label(self.window_surface, pos=(81, 151, 140, 30),
                                       text="Неправильный формат IP адреса!",
                                       text_color=(0, 0, 0), font_size=14, font="main_menu")
-        button_is_local = Button(self.window_surface, pos=(80, 50, 140, 30), text="Локальное подключение: да",
+        button_is_local = Button(self.window_surface, pos=(80, 50, 140, 30), text="Локальный адрес: да",
                                  transparent=True, text_color=(224, 154, 24), selected_text_color=(237, 210, 7),
                                  font_size=24, font="main_menu",
                                  function_onClick_list=[self.play_sound, change_local_remote],
                                  args_list=["press", None],
                                  function_onHover=self.play_sound, arg_onHover="select")
-        label_is_local_shadow = Label(self.window_surface, pos=(82, 52, 140, 30), text="Локальное подключение: да",
+        label_is_local_shadow = Label(self.window_surface, pos=(82, 52, 140, 30), text="Локальный адрес: да",
                                       text_color=(0, 0, 0), font_size=24, font="main_menu")
         label_client_ip = Label(self.window_surface, pos=(80, 90, 140, 30), text="IP клиента:",
                                 text_color=(224, 154, 24), font_size=24, font="main_menu")
@@ -615,7 +619,7 @@ class Menu:
         self.objects.append(label_save_shadow)
         self.objects.append(button_save)
 
-        if self.is_client_ip_changed:
+        if not self.is_client_ip_local:
             button_is_local.set_text("Локальное подключение: нет")
             label_is_local_shadow.set_text("Локальное подключение: нет")
             textbox_client_ip.set_text(self.result["client_ip"])
