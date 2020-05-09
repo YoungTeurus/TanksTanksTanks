@@ -446,7 +446,108 @@ class Menu:
         self.objects.append(label_menu_name)
 
     def load_settings_group(self):
-        pass
+        """
+        Загружает элементы подменю "Настройки"
+        """
+        self.objects.clear()
+
+        button_sound_settings = Button(self.window_surface, pos=(80, 50, 140, 30), text="Звук",
+                                       transparent=True, text_color=(224, 154, 24), selected_text_color=(237, 210, 7),
+                                       font_size=24, font="main_menu",
+                                       function_onClick_list=[self.play_sound, self.load_sound_settings_group],
+                                       args_list=["press", None],
+                                       function_onHover=self.play_sound, arg_onHover="select")
+        label_sound_settings_shadow = Label(self.window_surface, pos=(82, 52, 140, 30), text="Звук",
+                                            text_color=(0, 0, 0), font_size=24, font="main_menu")
+        button_multi_settings = Button(self.window_surface, pos=(80, 90, 140, 30), text="Настройки подключения",
+                                       transparent=True, text_color=(224, 154, 24), selected_text_color=(237, 210, 7),
+                                       font_size=24, font="main_menu",
+                                       function_onClick_list=[self.play_sound, self.load_multi_settings_group],
+                                       args_list=["press", None],
+                                       function_onHover=self.play_sound, arg_onHover="select")
+        label_multi_settings_shadow = Label(self.window_surface, pos=(82, 92, 140, 30), text="Настройки подключения",
+                                            text_color=(0, 0, 0), font_size=24, font="main_menu")
+        label_menu_name = Label(self.window_surface, pos=(150, 25, 0, 0), text="НАСТРОЙКИ",
+                                text_color=(240, 240, 240), font_size=28, font="main_menu")
+        label_menu_name_shadow = Label(self.window_surface, pos=(152, 27, 0, 0), text="НАСТРОЙКИ",
+                                       text_color=(0, 0, 0), font_size=28, font="main_menu")
+        button_trigger_esc = ButtonTrigger(key=pygame.K_ESCAPE,
+                                           function_list=[self.play_sound, self.load_title_group],
+                                           args_list=["press", None], )
+        button_return = Button(self.window_surface, pos=(0, 200, 140, 30), text="Назад",
+                               transparent=True, text_color=(224, 154, 24), selected_text_color=(237, 210, 7),
+                               font_size=24, font="main_menu",
+                               function_onClick_list=[self.play_sound, self.load_title_group],
+                               args_list=["press", None],
+                               function_onHover=self.play_sound, arg_onHover="select")
+        label_return_shadow = Label(self.window_surface, pos=(2, 202, 140, 30), text="Назад",
+                                    text_color=(0, 0, 0), font_size=24, font="main_menu")
+
+        self.objects.append(label_sound_settings_shadow)
+        self.objects.append(button_sound_settings)
+        self.objects.append(label_multi_settings_shadow)
+        self.objects.append(button_multi_settings)
+        self.objects.append(label_return_shadow)
+        self.objects.append(button_return)
+        self.objects.append(label_menu_name_shadow)
+        self.objects.append(label_menu_name)
+        self.objects.append(button_trigger_esc)
+
+    def load_sound_settings_group(self):
+        """
+        Загружает элементы подменю "Звук"
+        """
+        self.objects.clear()
+
+        label_menu_name = Label(self.window_surface, pos=(150, 25, 0, 0), text="НАСТРОЙКИ ЗВУКА",
+                                text_color=(240, 240, 240), font_size=28, font="main_menu")
+        label_menu_name_shadow = Label(self.window_surface, pos=(152, 27, 0, 0), text="НАСТРОЙКИ ЗВУКА",
+                                       text_color=(0, 0, 0), font_size=28, font="main_menu")
+        button_trigger_esc = ButtonTrigger(key=pygame.K_ESCAPE,
+                                           function_list=[self.play_sound, self.load_settings_group],
+                                           args_list=["press", None], )
+        button_return = Button(self.window_surface, pos=(0, 200, 140, 30), text="Назад",
+                               transparent=True, text_color=(224, 154, 24), selected_text_color=(237, 210, 7),
+                               font_size=24, font="main_menu",
+                               function_onClick_list=[self.play_sound, self.load_settings_group],
+                               args_list=["press", None],
+                               function_onHover=self.play_sound, arg_onHover="select")
+        label_return_shadow = Label(self.window_surface, pos=(2, 202, 140, 30), text="Назад",
+                                    text_color=(0, 0, 0), font_size=24, font="main_menu")
+
+        self.objects.append(label_return_shadow)
+        self.objects.append(button_return)
+        self.objects.append(label_menu_name_shadow)
+        self.objects.append(label_menu_name)
+        self.objects.append(button_trigger_esc)
+
+    def load_multi_settings_group(self):
+        """
+        Загружает элементы подменю "Настройки подключения"
+        """
+        self.objects.clear()
+
+        label_menu_name = Label(self.window_surface, pos=(150, 25, 0, 0), text="НАСТРОЙКИ ПОДКЛЮЧЕНИЯ",
+                                text_color=(240, 240, 240), font_size=28, font="main_menu")
+        label_menu_name_shadow = Label(self.window_surface, pos=(152, 27, 0, 0), text="НАСТРОЙКИ ПОДКЛЮЧЕНИЯ",
+                                       text_color=(0, 0, 0), font_size=28, font="main_menu")
+        button_trigger_esc = ButtonTrigger(key=pygame.K_ESCAPE,
+                                           function_list=[self.play_sound, self.load_settings_group],
+                                           args_list=["press", None], )
+        button_return = Button(self.window_surface, pos=(0, 200, 140, 30), text="Назад",
+                               transparent=True, text_color=(224, 154, 24), selected_text_color=(237, 210, 7),
+                               font_size=24, font="main_menu",
+                               function_onClick_list=[self.play_sound, self.load_settings_group],
+                               args_list=["press", None],
+                               function_onHover=self.play_sound, arg_onHover="select")
+        label_return_shadow = Label(self.window_surface, pos=(2, 202, 140, 30), text="Назад",
+                                    text_color=(0, 0, 0), font_size=24, font="main_menu")
+
+        self.objects.append(label_return_shadow)
+        self.objects.append(button_return)
+        self.objects.append(label_menu_name_shadow)
+        self.objects.append(label_menu_name)
+        self.objects.append(button_trigger_esc)
 
     def main_cycle(self):
         while self.is_running:

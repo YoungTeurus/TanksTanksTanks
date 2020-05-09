@@ -202,7 +202,7 @@ class Game:
                     self.clientside_sender.send_button("SHOOT")
 
             # Тестовая попытка подключиться к серверу:
-            if not self.is_server and not self.is_connected:
+            if not self.is_server and not self.is_connected and self.multi:
                 self.clientside_sender.ask_for_ok(self.connect_to_ip)
                 self.is_connected = True
 
