@@ -1,7 +1,8 @@
 import json
 import socketserver
 
-from Consts import SOCKET_DEBUG
+from Consts import SOCKET_DEBUG, MAPS
+from Files import get_script_dir
 
 
 class MyUDPHandlerClientSide(socketserver.BaseRequestHandler):
@@ -25,7 +26,11 @@ class MyUDPHandlerClientSide(socketserver.BaseRequestHandler):
             self.parent_game.clientside_sender.connect_to_server()  # Пробуем подключиться к серверу
         elif data_dict["type"] == "load_world":
             # Если сервер сказал подгрузить карту
-            self.parent_game.world.load_map(0)  # Грузим карту
+            world_id = 100 + data_dict["world_id"]
+            MAPS[world_id] = "\\assets\\maps\\downloaded\\map{}.txt".format(world_id)
+            with open(get_script_dir()+MAPS[world_id], "w") as world_file:
+                world_file.write(data_dict["world"])
+            self.parent_game.world.load_map(world_id)  # Грузим карту
             self.parent_game.world.is_server = False  # Говорим миру, что он больше не сервер
         elif data_dict["type"] == "changes":
             # Если сервер прислал текущие изменения

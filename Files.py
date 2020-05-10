@@ -24,13 +24,19 @@ class ImageLoader:
         return None
 
 
+script_dir = None
+
 # Возвращает путь до папки скрипта
 # НЕ ПЕРЕМЕЩАТЬ ДАННЫЙ КОД ИЗ КОРНЕВОЙ ПАПКИ!
 def get_script_dir(follow_symlinks=True):
+    global script_dir
+    if script_dir is not None:
+        return script_dir
     if getattr(sys, 'frozen', False):  # py2exe, PyInstaller, cx_Freeze
         path = os.path.abspath(sys.executable)
     else:
         path = inspect.getabsfile(get_script_dir)
     if follow_symlinks:
         path = os.path.realpath(path)
-    return os.path.dirname(path)
+    script_dir = os.path.dirname(path)
+    return script_dir
