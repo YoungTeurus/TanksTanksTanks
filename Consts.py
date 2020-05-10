@@ -2,7 +2,7 @@ import pygame
 
 ID_DEBUG = False  # Нужно ли отрисовывать id-шники у каждого объекта
 CHANGES_DEBUG = False  # Нужно ли выводить все изменения в мире
-SOCKET_DEBUG = True  # Нужно ли выводить все принятые и отправленные данные
+SOCKET_DEBUG = False  # Нужно ли выводить все принятые и отправленные данные
 
 # Стандартные размеры окна
 window_w = 800
@@ -45,7 +45,8 @@ EPSILON = 0.15
 
 # Все доступные стандартные карты и пути к ним
 MAPS = {
-    0: "\\assets\\maps\\map0.txt"
+    0: "\\assets\\maps\\map0.txt",
+    1: "\\assets\\maps\\map1.txt"
 }
 
 # Все тайлы, используемые в tileset.png

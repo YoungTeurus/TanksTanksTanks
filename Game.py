@@ -91,7 +91,7 @@ class Game:
             self.world.clear_changes()
             # Если мы сервер, то мы ничего не делаем до тех пор, пока не подключится хотя бы 1 клиент
             # TODO: сделать проверку на количество подключённых игроков
-            while self.serverside_sender.clients.__len__() < 1 and self.game_running:
+            while self.serverside_sender.clients.__len__() < 2 and self.game_running:
                 # Обработка событий:
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
