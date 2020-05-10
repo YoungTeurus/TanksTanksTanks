@@ -1,4 +1,5 @@
 import json
+import os
 import socketserver
 
 from Consts import SOCKET_DEBUG, MAPS
@@ -27,6 +28,11 @@ class MyUDPHandlerClientSide(socketserver.BaseRequestHandler):
         elif data_dict["type"] == "load_world":
             # Если сервер сказал подгрузить карту
             world_id = 100 + data_dict["world_id"]
+            try:
+                os.mkdir(get_script_dir()+"\\assets\\maps\\downloaded")
+            except OSError:
+                # Если папка уже создана
+                pass
             MAPS[world_id] = "\\assets\\maps\\downloaded\\map{}.txt".format(world_id)
             with open(get_script_dir()+MAPS[world_id], "w") as world_file:
                 world_file.write(data_dict["world"])
