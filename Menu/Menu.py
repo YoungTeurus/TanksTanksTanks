@@ -576,6 +576,10 @@ class Menu:
         self.result["dedicated"] = True
 
         def create_server():
+            if textbox_server_ip.text_str.__len__() == 0:
+                self.result["server_ip"] = socket.gethostbyname(socket.getfqdn())
+                start_multi_game_server()
+                return
             if regex.match(textbox_server_ip.text_str):
                 label_wrong_ip.set_text("")
                 label_wrong_ip_shadow.set_text("")
@@ -610,7 +614,7 @@ class Menu:
         label_server_ip_shadow = Label(self.window_surface, pos=(82, 52, 140, 30), text="IP сервера:",
                                        text_color=(0, 0, 0), font_size=24, font="main_menu")
         textbox_server_ip = TextBox(self.window_surface, pos=(80, 90, 140, 30), font="main_menu",
-                                    function_onEnter=create_server)
+                                    function_onEnter=create_server, empty_text="Локальный сервер")
         button_dedicated = Button(self.window_surface, pos=(80, 135, 140, 30), text="Выделенный: да",
                                   transparent=True, text_color=BUTTON_YELLOW,
                                   selected_text_color=BUTTON_SELECTED_YELLOW,
