@@ -5,7 +5,7 @@ import random
 
 from World.Objects.Collisionable import remove_if_exists_in
 from World.Objects.RotatableWorldObject import RotatableWorldObject
-from World.Objects.Tank import Player, Enemy, Bullet
+from World.Objects.Tank import PlayerTank, EnemyTank, Bullet
 from World.Timer import Timer
 
 
@@ -69,16 +69,18 @@ class World:
         self.world_map.load_by_id(map_id)
         self.world_map.check()
 
-    def spawn_player(self, player_id: int = 0):
+    def spawn_player(self, player_id=None):
         """
         Спавнит игрока под айди id на одной из точек спавна
         :param player_id: Айди игрока (для мультиплеера)
         :return:
         """
+        if player_id is None:
+            player_id = len(self.players)
         place_to_spawn = self.world_map.player_spawn_places[player_id]
         # place_to_spawn = random.choice(self.world_map.player_spawn_places)
         (place_to_spawn_x, place_to_spawn_y) = place_to_spawn.get_world_pos()
-        new_player = Player(self)
+        new_player = PlayerTank(self)
         new_player.setup_in_world(place_to_spawn_x, place_to_spawn_y)
 
     def draw(self):
@@ -114,7 +116,7 @@ class World:
                 if place_to_spawn.check_collisions(self.collisionable_objects).__len__() > 0:
                     return False
                 (place_to_spawn_x, place_to_spawn_y) = place_to_spawn.get_world_pos()
-                enemy = Enemy(self)
+                enemy = EnemyTank(self)
                 enemy.setup_in_world(place_to_spawn_x, place_to_spawn_y)
                 return True
             except IndexError:
@@ -215,10 +217,3 @@ class World:
         elif arguments[0] == "camera":
             camera_x, camera_y = int(arguments[2]), int(arguments[3])
             self.camera.set_coords(camera_x, camera_y)
-
-    def check_if_all_world_ids_are_correct(self):
-        for obj_id in self.objects_id_dict:
-            if not self.objects_id_dict[obj_id].world_id == obj_id:
-                # Если id-шники не совпадают
-                return False
-        return True

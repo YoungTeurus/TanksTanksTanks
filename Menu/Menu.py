@@ -8,6 +8,8 @@ from Files import get_script_dir
 from Menu.MenuObjects.Button import Button
 from Menu.MenuObjects.ButtonTrigger import ButtonTrigger
 from Menu.MenuObjects.Label import Label
+from Menu.MenuObjects.MenuObject import SKIP_EVENT
+from Menu.MenuObjects.PopupBox import PopupBox
 from Menu.MenuObjects.TextBox import TextBox
 
 
@@ -19,6 +21,11 @@ class Menu:
     result: dict = None  # Словарь, содержащий результат работы меню
 
     sounds: dict = None
+
+    # TODO: придумать способ избавить от этого:
+    any_popup: PopupBox = None  # Ужасный костыль. Если эта ссылка не None, значит данный объект должен первым получить
+
+    # любой event и при этом отрисовываться последним.
 
     def __init__(self, window_surface):
         self.window_surface = window_surface  # Основная поверхность
@@ -53,6 +60,12 @@ class Menu:
         def quit_game():
             self.is_running = False
             self.result["result"] = "quit"
+
+        def add_popup():
+            self.any_popup = popupbox_test
+
+        def delete_popup():
+            self.any_popup = None
 
         self.objects.clear()
 
@@ -92,6 +105,20 @@ class Menu:
                             text_color=(240, 240, 240), font_size=28, font="main_menu")
         label_title_shadow = Label(self.window_surface, pos=(152, 27, 0, 0), text="TANK! TANK! TANK!",
                                    text_color=(0, 0, 0), font_size=28, font="main_menu")
+
+        button_test_popup = Button(self.window_surface, pos=(280, 50, 140, 30), text="Вызвать PopUp",
+                                   transparent=True, text_color=(224, 154, 24), selected_text_color=(237, 210, 7),
+                                   font_size=24, font="main_menu",
+                                   function_onClick_list=[self.play_sound, add_popup],
+                                   args_list=["press", None],
+                                   function_onHover=self.play_sound, arg_onHover="select")
+        popupbox_test = PopupBox(self.window_surface, pos=(100, 100, 100, 150))
+        buttontrigger_esc = ButtonTrigger(key=pygame.K_ESCAPE,
+                                          function_list=[self.play_sound, delete_popup],
+                                          args_list=["press", None])
+        popupbox_test.add_object(buttontrigger_esc)
+
+        self.objects.append(button_test_popup)
 
         self.objects.append(label_start_solo_shadow)
         self.objects.append(button_start_solo)
@@ -139,9 +166,9 @@ class Menu:
                                 text_color=(240, 240, 240), font_size=28, font="main_menu")
         label_menu_name_shadow = Label(self.window_surface, pos=(152, 27, 0, 0), text="ОДИНОЧНАЯ ИГРА",
                                        text_color=(0, 0, 0), font_size=28, font="main_menu")
-        button_trigger_esc = ButtonTrigger(key=pygame.K_ESCAPE,
-                                           function_list=[self.play_sound, self.load_title_group],
-                                           args_list=["press", None], )
+        buttontrigger_esc = ButtonTrigger(key=pygame.K_ESCAPE,
+                                          function_list=[self.play_sound, self.load_title_group],
+                                          args_list=["press", None])
         button_return = Button(self.window_surface, pos=(0, 200, 140, 30), text="Назад",
                                transparent=True, text_color=(224, 154, 24), selected_text_color=(237, 210, 7),
                                font_size=24, font="main_menu",
@@ -159,7 +186,7 @@ class Menu:
         self.objects.append(button_return)
         self.objects.append(label_menu_name_shadow)
         self.objects.append(label_menu_name)
-        self.objects.append(button_trigger_esc)
+        self.objects.append(buttontrigger_esc)
 
     def load_select_level_group(self):
         """
@@ -176,9 +203,9 @@ class Menu:
                                 text_color=(240, 240, 240), font_size=28, font="main_menu")
         label_menu_name_shadow = Label(self.window_surface, pos=(152, 27, 0, 0), text="ВЫБРАТЬ УРОВЕНЬ",
                                        text_color=(0, 0, 0), font_size=28, font="main_menu")
-        button_trigger_esc = ButtonTrigger(key=pygame.K_ESCAPE,
-                                           function_list=[self.play_sound, self.load_start_solo_group],
-                                           args_list=["press", None], )
+        buttontrigger_esc = ButtonTrigger(key=pygame.K_ESCAPE,
+                                          function_list=[self.play_sound, self.load_start_solo_group],
+                                          args_list=["press", None], )
         button_return = Button(self.window_surface, pos=(0, 200, 140, 30), text="Назад",
                                transparent=True, text_color=(224, 154, 24), selected_text_color=(237, 210, 7),
                                font_size=24, font="main_menu",
@@ -206,7 +233,7 @@ class Menu:
         self.objects.append(button_return)
         self.objects.append(label_menu_name_shadow)
         self.objects.append(label_menu_name)
-        self.objects.append(button_trigger_esc)
+        self.objects.append(buttontrigger_esc)
 
     def start_multi_game_client(self):
         self.is_running = False
@@ -252,9 +279,9 @@ class Menu:
         label_direct_connect_shadow = Label(self.window_surface, pos=(82, 132, 140, 30), text="Прямое подключение",
                                             text_color=(0, 0, 0), font_size=24, font="main_menu")
 
-        button_trigger_esc = ButtonTrigger(key=pygame.K_ESCAPE,
-                                           function_list=[self.play_sound, self.load_title_group],
-                                           args_list=["press", None], )
+        buttontrigger_esc = ButtonTrigger(key=pygame.K_ESCAPE,
+                                          function_list=[self.play_sound, self.load_title_group],
+                                          args_list=["press", None], )
         button_return = Button(self.window_surface, pos=(0, 200, 140, 30), text="Назад",
                                transparent=True, text_color=(224, 154, 24), selected_text_color=(237, 210, 7),
                                font_size=24, font="main_menu",
@@ -274,7 +301,7 @@ class Menu:
         self.objects.append(button_direct_connect)
         self.objects.append(label_connect_to_shadow)
         self.objects.append(button_connect_to)
-        self.objects.append(button_trigger_esc)
+        self.objects.append(buttontrigger_esc)
         self.objects.append(label_return_shadow)
         self.objects.append(button_return)
         self.objects.append(label_menu_name_shadow)
@@ -319,9 +346,9 @@ class Menu:
         label_connect_shadow = Label(self.window_surface, pos=(82, 157, 140, 30), text="Подключиться",
                                      text_color=(0, 0, 0), font_size=24, font="main_menu")
 
-        button_trigger_esc = ButtonTrigger(key=pygame.K_ESCAPE,
-                                           function_list=[self.play_sound, self.load_start_multi_group],
-                                           args_list=["press", None], )
+        buttontrigger_esc = ButtonTrigger(key=pygame.K_ESCAPE,
+                                          function_list=[self.play_sound, self.load_start_multi_group],
+                                          args_list=["press", None], )
         button_return = Button(self.window_surface, pos=(0, 200, 140, 30), text="Назад",
                                transparent=True, text_color=(224, 154, 24), selected_text_color=(237, 210, 7),
                                font_size=24, font="main_menu",
@@ -340,7 +367,7 @@ class Menu:
         self.objects.append(textbox_server_ip)
         self.objects.append(label_server_ip_shadow)
         self.objects.append(label_server_ip)
-        self.objects.append(button_trigger_esc)
+        self.objects.append(buttontrigger_esc)
         self.objects.append(label_return_shadow)
         self.objects.append(button_return)
         self.objects.append(label_menu_name_shadow)
@@ -414,9 +441,9 @@ class Menu:
         label_connect_shadow = Label(self.window_surface, pos=(82, 177, 140, 30), text="Создать",
                                      text_color=(0, 0, 0), font_size=24, font="main_menu")
 
-        button_trigger_esc = ButtonTrigger(key=pygame.K_ESCAPE,
-                                           function_list=[self.play_sound, self.load_start_multi_group],
-                                           args_list=["press", None], )
+        buttontrigger_esc = ButtonTrigger(key=pygame.K_ESCAPE,
+                                          function_list=[self.play_sound, self.load_start_multi_group],
+                                          args_list=["press", None], )
         button_return = Button(self.window_surface, pos=(0, 200, 140, 30), text="Назад",
                                transparent=True, text_color=(224, 154, 24), selected_text_color=(237, 210, 7),
                                font_size=24, font="main_menu",
@@ -437,7 +464,7 @@ class Menu:
         self.objects.append(textbox_server_ip)
         self.objects.append(label_server_ip_shadow)
         self.objects.append(label_server_ip)
-        self.objects.append(button_trigger_esc)
+        self.objects.append(buttontrigger_esc)
         self.objects.append(label_return_shadow)
         self.objects.append(button_return)
         self.objects.append(label_menu_name_shadow)
@@ -469,9 +496,9 @@ class Menu:
                                 text_color=(240, 240, 240), font_size=28, font="main_menu")
         label_menu_name_shadow = Label(self.window_surface, pos=(152, 27, 0, 0), text="НАСТРОЙКИ",
                                        text_color=(0, 0, 0), font_size=28, font="main_menu")
-        button_trigger_esc = ButtonTrigger(key=pygame.K_ESCAPE,
-                                           function_list=[self.play_sound, self.load_title_group],
-                                           args_list=["press", None], )
+        buttontrigger_esc = ButtonTrigger(key=pygame.K_ESCAPE,
+                                          function_list=[self.play_sound, self.load_title_group],
+                                          args_list=["press", None], )
         button_return = Button(self.window_surface, pos=(0, 200, 140, 30), text="Назад",
                                transparent=True, text_color=(224, 154, 24), selected_text_color=(237, 210, 7),
                                font_size=24, font="main_menu",
@@ -489,7 +516,7 @@ class Menu:
         self.objects.append(button_return)
         self.objects.append(label_menu_name_shadow)
         self.objects.append(label_menu_name)
-        self.objects.append(button_trigger_esc)
+        self.objects.append(buttontrigger_esc)
 
     def load_sound_settings_group(self):
         """
@@ -501,9 +528,9 @@ class Menu:
                                 text_color=(240, 240, 240), font_size=28, font="main_menu")
         label_menu_name_shadow = Label(self.window_surface, pos=(152, 27, 0, 0), text="НАСТРОЙКИ ЗВУКА",
                                        text_color=(0, 0, 0), font_size=28, font="main_menu")
-        button_trigger_esc = ButtonTrigger(key=pygame.K_ESCAPE,
-                                           function_list=[self.play_sound, self.load_settings_group],
-                                           args_list=["press", None], )
+        buttontrigger_esc = ButtonTrigger(key=pygame.K_ESCAPE,
+                                          function_list=[self.play_sound, self.load_settings_group],
+                                          args_list=["press", None], )
         button_return = Button(self.window_surface, pos=(0, 200, 140, 30), text="Назад",
                                transparent=True, text_color=(224, 154, 24), selected_text_color=(237, 210, 7),
                                font_size=24, font="main_menu",
@@ -517,7 +544,7 @@ class Menu:
         self.objects.append(button_return)
         self.objects.append(label_menu_name_shadow)
         self.objects.append(label_menu_name)
-        self.objects.append(button_trigger_esc)
+        self.objects.append(buttontrigger_esc)
 
     is_client_ip_local = None
 
@@ -597,9 +624,9 @@ class Menu:
                                 text_color=(240, 240, 240), font_size=28, font="main_menu")
         label_menu_name_shadow = Label(self.window_surface, pos=(152, 27, 0, 0), text="НАСТРОЙКИ ПОДКЛЮЧЕНИЯ",
                                        text_color=(0, 0, 0), font_size=28, font="main_menu")
-        button_trigger_esc = ButtonTrigger(key=pygame.K_ESCAPE,
-                                           function_list=[self.play_sound, self.load_settings_group],
-                                           args_list=["press", None], )
+        buttontrigger_esc = ButtonTrigger(key=pygame.K_ESCAPE,
+                                          function_list=[self.play_sound, self.load_settings_group],
+                                          args_list=["press", None], )
         button_return = Button(self.window_surface, pos=(0, 200, 140, 30), text="Назад",
                                transparent=True, text_color=(224, 154, 24), selected_text_color=(237, 210, 7),
                                font_size=24, font="main_menu",
@@ -615,7 +642,7 @@ class Menu:
         self.objects.append(button_return)
         self.objects.append(label_menu_name_shadow)
         self.objects.append(label_menu_name)
-        self.objects.append(button_trigger_esc)
+        self.objects.append(buttontrigger_esc)
         self.objects.append(label_save_shadow)
         self.objects.append(button_save)
 
@@ -636,13 +663,23 @@ class Menu:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.is_running = False
+                # TODO: избавиться от этого костыля:
+                if self.any_popup is not None:
+                    if (return_code := self.any_popup.handle_event(event)) is not None:
+                        if return_code == SKIP_EVENT:
+                            break
                 for obj in self.objects:
-                    obj.handle_event(event)
-            # keyboard_pressed = pygame.key.get_pressed()
+                    if (return_code := obj.handle_event(event)) is not None:
+                        if return_code == SKIP_EVENT:
+                            break
 
+            if self.any_popup is not None:
+                self.any_popup.update()
             for obj in self.objects:
                 obj.update()
                 obj.draw()
+            if self.any_popup is not None:
+                self.any_popup.draw()
 
             pygame.display.update()
 

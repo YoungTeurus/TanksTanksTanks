@@ -73,10 +73,8 @@ class MyUDPHandlerServerSide(socketserver.BaseRequestHandler):
             self.parent_game.serverside_sender.send_load_world(data_dict["ip"], data_dict["port"], self.parent_game.world.world_map.map_id)
             self.parent_game.world.spawn_player()  # Спавн нового игрока
             self.parent_game.world.center_camera_on_player()
-            # TODO: отправлять карту клиенту
         elif data_dict["type"] == "key":
             player_id = self.parent_game.serverside_sender.clients_player_id[data_dict["ip"]]
-            # TODO: разделять управление для разных клиентов
             if data_dict["button_id"] == "MOVE_UP":
                 self.parent_game.world.move_player_to(player_id, "UP",)
             elif data_dict["button_id"] == "MOVE_DOWN":

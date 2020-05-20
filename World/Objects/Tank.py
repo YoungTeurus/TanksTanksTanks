@@ -208,7 +208,7 @@ class Vector2:
 
 # TODO: разнести эти классы в разные места. Как-то.
 
-class Player(Tank):
+class PlayerTank(Tank):
     def __init__(self, world):
         super().__init__(world)
 
@@ -242,7 +242,7 @@ class Player(Tank):
         # self.last_direction = "UP"
 
 
-class Enemy(Tank):
+class EnemyTank(Tank):
     change_direction_timer = None
     shoot_timer = None
     change_state_timer = None
@@ -518,22 +518,22 @@ def bullet_collision(bullet, obj):
     if obj is bullet.parent_tank:  # Не реагируем на коллизию с танком, который выстрелил
         return
     if obj.is_solid:  # Если объект твёрдый
-        if isinstance(obj, Player) or isinstance(obj, Enemy):
+        if isinstance(obj, PlayerTank) or isinstance(obj, EnemyTank):
             bullet.destroy()
             bullet.parent_tank.fire_timer.set(min(bullet.parent_tank.fire_timer.current_delay, 10))
             # Если столкнулись с танком:
-            if isinstance(obj, Player):
+            if isinstance(obj, PlayerTank):
                 # Если попали в игрока
-                if isinstance(bullet.parent_tank, Enemy):
+                if isinstance(bullet.parent_tank, EnemyTank):
                     # Если стрелял враг
                     obj.decrease_hp(bullet.parent_tank.damage)
                     # bullet.destroy()
                     # bullet.parent_tank.fire_timer.set(min(bullet.parent_tank.fire_timer.current_delay, 10))
                 # Если игрок попал в игрока - ничего не будет
                 # TODO: сделать PvP режим!
-            elif isinstance(obj, Enemy):
+            elif isinstance(obj, EnemyTank):
                 # Если попали во врага
-                if isinstance(bullet.parent_tank, Player):
+                if isinstance(bullet.parent_tank, PlayerTank):
                     # Если стрелял игрок
                     obj.decrease_hp(bullet.parent_tank.damage)
                     # bullet.destroy()
