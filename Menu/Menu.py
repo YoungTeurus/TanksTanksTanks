@@ -299,6 +299,8 @@ class Menu:
         self.result["multi"] = True
         if "client_ip" not in self.result:
             self.result["client_ip"] = socket.gethostbyname(socket.getfqdn())
+        if "client_port" not in self.result:
+            self.result["client_port"] = randint(9999, 60000)
 
     def load_start_multi_group(self):
         """
@@ -369,7 +371,8 @@ class Menu:
         """
 
         def connect_to(server_ip: str):
-            pass
+            self.result["server_ip"] = server_ip
+            self.start_multi_game_client()
 
         class ServerRecord:
             # Небольшой класс, объединяющий кнопку и её тень
@@ -382,6 +385,7 @@ class Menu:
             server_finders[0].add_all_local_ips()  # Заносим все локальные IP-шники
             server_finders[0].start()
             timer_test.start()
+            button_refresh.set_active(False)
 
         def clear_servers():
             # Убирает надпись "Серверы не найдены", если она есть
@@ -395,9 +399,12 @@ class Menu:
             servers.clear()
 
         def add_server_button(server_ip: str):
+            for server in servers:
+                if server_ip == server.button.text_str:  # Избавляемся от копий
+                    return
             # Добавляет кнопку для подклчючения к серверу
             temp_record = ServerRecord()
-            temp_record.button = Button(self.window_surface, pos=(80, 60 + servers.__len__() * 30, 0, 0),
+            temp_record.button = Button(self.window_surface, pos=(100, 60 + servers.__len__() * 25, 0, 0),
                                         text=server_ip,
                                         transparent=True, text_color=BUTTON_YELLOW,
                                         selected_text_color=BUTTON_SELECTED_YELLOW,
@@ -405,10 +412,11 @@ class Menu:
                                         function_onClick_list=[self.play_sound, connect_to],
                                         args_list=["press", server_ip],
                                         function_onHover=self.play_sound, arg_onHover="select")
-            temp_record.button_shadow = Label(self.window_surface, pos=(82, 62 + servers.__len__() * 30, 0, 0),
+            temp_record.button_shadow = Label(self.window_surface, pos=(102, 62 + servers.__len__() * 25, 0, 0),
                                               text=server_ip, text_color=(0, 0, 0), font_size=18, font="main_menu")
             self.objects.append(temp_record.button_shadow)
             self.objects.append(temp_record.button)
+            servers.append(temp_record)
 
         def check_server_finder():
             if server_finders[0].is_ready:
@@ -424,6 +432,7 @@ class Menu:
                 del server_finders[0]
                 server_finders.clear()
                 server_finders.append(ServerFinder(self.result["client_ip"], self.result["client_port"]))
+                button_refresh.set_active(True)
             else:
                 # Если процесс поиска ещё не закончился...
                 timer_test.reset()
@@ -435,7 +444,8 @@ class Menu:
         server_finders: List[ServerFinder] = []  # TODO: супер-костыль - массив из 1-го элемента
         if "client_ip" not in self.result:
             self.result["client_ip"] = socket.gethostbyname(socket.getfqdn())
-        self.result["client_port"] = randint(9999, 60000)
+        if "client_port" not in self.result:
+            self.result["client_port"] = randint(9999, 60000)
         server_finders.append(ServerFinder(self.result["client_ip"], self.result["client_port"]))
 
         servers: List[ServerRecord] = []  # Список кнопок с ip-адресами серверов

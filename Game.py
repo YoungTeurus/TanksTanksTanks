@@ -20,8 +20,6 @@ class Game:
     clientside_server: socketserver.UDPServer = None
     serverside_server: socketserver.UDPServer = None
 
-    clientside_server_port = None  # Порт для подключения сервера к клиенту
-
     window_surface = None  # Основная поверхность
 
     is_server: bool = None
@@ -31,10 +29,12 @@ class Game:
 
     connect_to_ip: str = None  # Адрес, к которому будет пытаться подключиться клиент
     client_ip: str = None  # Адрес, на котором расположен клиент
+    client_port: int = None  # Порт клиента
     server_ip: str = None  # Адрес, на котором расположен сервер
 
     def __init__(self, window_surface, is_server, multi, start_map_id: int = None,
-                 connect_to_ip: str = None, server_ip: str = None, client_ip: str = None):
+                 connect_to_ip: str = None, server_ip: str = None, client_ip: str = None,
+                 client_port: int = None):
         """
         Если multi = False, значит никакой работы с сервером и клиентом проводиться не будет.
         Елси multi = True:
@@ -61,23 +61,24 @@ class Game:
         self.is_server = is_server
         self.multi = multi
 
-        if self.is_server or not multi:
-            self.world = World(self.game_surface, self.tileset, True)
-            if multi:
-                self.server_ip = server_ip
-                self.world.set_ready_for_server()
-                self.serverside_sender = DataSenderServerSide(self)
-                self.create_serverside_server()
+        self.world = World(self.game_surface, self.tileset, True)
+        if self.is_server and multi:
+            # Запуск сервера для мультиплеера
+            self.server_ip = server_ip
+            self.world.set_ready_for_server()
+            self.serverside_sender = DataSenderServerSide(self)
+            self.create_serverside_server()
         else:
-            self.world = World(self.game_surface, self.tileset, True)
+            # Запуск клиента для мультиплеера
             self.clientside_sender = DataSenderClientSide(self)
-            self.clientside_server_port = random.randint(9999, 60000)
             self.client_ip = client_ip
-            self.create_clientside_server(self.clientside_server_port)
+            self.client_port = client_port
+            self.create_clientside_server()
             self.connect_to_ip = connect_to_ip
             self.is_connected = False
 
         if not multi:
+            # Запуск одиночки
             self.world.load_world_map(start_map_id)
             self.world.spawn_player()
             self.world.center_camera_on_player()
@@ -102,12 +103,12 @@ class Game:
 
         self.main_cycle()
 
-    def create_clientside_server(self, client_port):
+    def create_clientside_server(self):
         class MyUDPHandlerClientSideWithObject(MyUDPHandlerClientSide):  # Костыль(?)
             parent_game = self  # Передаю ссылку на объект
-            port = client_port
+            port = self.client_port
 
-        HOST, PORT = self.client_ip, client_port
+        HOST, PORT = self.client_ip, self.client_port
         # Созадём севрер
         self.clientside_server = socketserver.UDPServer((HOST, PORT), MyUDPHandlerClientSideWithObject)
         server_thread = threading.Thread(target=self.clientside_server.serve_forever)  # Создаём поток
