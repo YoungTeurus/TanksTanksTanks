@@ -9,7 +9,6 @@ class ButtonTrigger(MenuObjectClickable):
     """
 
     key = None  # Кнопка, на которую необходимо нажать
-    # function_onClick: list = None  # Действие по нажатию кнопки
 
     is_active: bool = None  # Активен ли триггер
 

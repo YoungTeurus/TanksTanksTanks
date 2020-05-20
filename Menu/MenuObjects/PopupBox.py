@@ -25,7 +25,6 @@ class PopupBox(MenuObject):
     --------------------------------------
     """
 
-    window_surface: Surface = None  # Поверхность окна
     box_surface: Surface = None  # Поверхность всплывшего окошка
     dark_background: Surface = None  # Полупрозрачный фон (для одноразового создания поверхности)
 

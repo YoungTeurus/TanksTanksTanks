@@ -3,11 +3,12 @@ import socket
 import socketserver
 from threading import Thread
 from time import sleep
+from typing import Optional
 
 from Consts import SOCKET_DEBUG
 
 
-class ServerChecker(Thread):
+class ServerFinder(Thread):
     client_ip: str = None  # IP-адрес клиента
     client_port: int = None  # Порт клиента
 
@@ -16,6 +17,10 @@ class ServerChecker(Thread):
     good_ip_list: list = None  # Список ip-адресов с обратным ответом
 
     sent_all: bool = False  # Флаг окончания рассылки запросов на все IP
+
+    is_ready: bool = False  # Флаг окончания сканирования
+
+    server_Listener: Optional[socketserver.UDPServer] = None
 
     def __init__(self, client_ip, client_port):
         super().__init__()
@@ -30,7 +35,8 @@ class ServerChecker(Thread):
         for i in range(0, 256):
             self.ip_list.append("192.168.0.{}".format(i))  # Все компьютеры локальной сети
 
-    def start_checking(self):
+    def _start_checking(self):
+
         class Sender(Thread):
             serverchecker = self
 
@@ -53,6 +59,7 @@ class ServerChecker(Thread):
 
         class Listener(socketserver.BaseRequestHandler):
             serverchecker = self
+            is_running = True  # Флаг активности Listener-а
 
             def handle(self):
                 data = self.request[0].decode()  # Вытаскиваем data
@@ -65,11 +72,18 @@ class ServerChecker(Thread):
                     # Если сервер отправил ok
                     self.serverchecker.good_ip_list.append(data_dict["ip"])  # Запоминаем IP сервера
 
+            def serve_forever(self):
+                while self.is_running:
+                    self.handle()
+
+            def stop_serve(self):
+                self.is_running = False
+
         s = Sender()
 
         HOST, PORT = self.client_ip, self.client_port
-        Listener = socketserver.UDPServer((HOST, PORT), Listener)  # Созадём севрер
-        server_thread = Thread(target=Listener.serve_forever)  # Создаём поток
+        self.server_Listener = socketserver.UDPServer((HOST, PORT), Listener)  # Созадём севрер
+        server_thread = Thread(target=self.server_Listener.serve_forever)  # Создаём поток
         server_thread.setDaemon(True)
         server_thread.start()  # Запускаем поток
 
@@ -78,23 +92,34 @@ class ServerChecker(Thread):
         while not self.sent_all:
             pass
 
-        sleep(3)  # Выжидаем 3 секунды до ответа сервера
+        sleep(1.5)  # Выжидаем полторы секунды до ответа серверов
 
-        Listener.timeout = 3
+        self.server_Listener.shutdown()
+        self.server_Listener.server_close()
 
-        print(self.good_ip_list)
-        # return self.good_ip_list
+        self.is_ready = True
 
     def run(self) -> None:
-        self.start_checking()
+        self._start_checking()
+
+    def force_shutdown(self):
+        if self.server_Listener is not None:
+            self.server_Listener.shutdown()
+            self.good_ip_list = []
+            self.is_ready = True
+            print("Прервано!")
 
 
 if __name__ == "__main__":
-    sc = ServerChecker("127.0.0.1", 12314)
+    sc = ServerFinder("127.0.0.1", 12314)
     sc.add_all_local_ips()
     sc.start()
-    for i in range(100):
-        print(i)
-        sleep(0.1)
+    sleep(1)
+    sc.force_shutdown()
+    sleep(1)
+    # while not sc.is_ready:
+    #     print(sc.is_ready)
+    #     sleep(1)
+    print(sc.is_ready)
     # ip_list = sc.start_checking()
     # print(ip_list)

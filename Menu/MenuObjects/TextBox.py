@@ -12,7 +12,6 @@ LIGHT_GREY = (160, 160, 160)
 
 
 class TextBox(MenuObjectWithText):
-    window_surface: Surface = None  # Поверхность окна
 
     text_str: str = None  # Строка, которую хранит TextBox
     empty_text_str: str = None  # Строка, которую хранит TextBox, пока в него ничего не введено

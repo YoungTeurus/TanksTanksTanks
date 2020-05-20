@@ -1,19 +1,27 @@
 import re
 import socket
+from random import randint
+from typing import Optional, List
 
 import pygame
 
-from Consts import targetFPS, DARK_GREY, SOUNDS_VOLUME, MAPS
+from Consts import targetFPS, SOUNDS_VOLUME, MAPS
 from Files import get_script_dir
 from Menu.MenuObjects.Button import Button
 from Menu.MenuObjects.ButtonTrigger import ButtonTrigger
 from Menu.MenuObjects.Label import Label
 from Menu.MenuObjects.MenuObject import SKIP_EVENT
+from Menu.MenuObjects.MenuRect import MenuRect
 from Menu.MenuObjects.PopupBox import PopupBox
 from Menu.MenuObjects.TextBox import TextBox
+from Menu.MenuObjects.Timer import Timer
+from Multiplayer.ServerFinder import ServerFinder
 
 MAIN_MENU_BACKGROUND_COLOR = (27, 35, 44)
-MAIN_MENU_DARK_BACKGROUND_COLOR = (19,28,32)
+MAIN_MENU_DARK_BACKGROUND_COLOR = (19, 28, 32)
+BUTTON_YELLOW = (224, 154, 24)
+BUTTON_SELECTED_YELLOW = (237, 210, 7)
+
 
 class Menu:
     is_running: bool = None  # Флаг запущенного меню
@@ -72,7 +80,8 @@ class Menu:
         self.objects.clear()
 
         button_start_solo = Button(self.window_surface, pos=(80, 50, 140, 30), text="Одиночная игра",
-                                   transparent=True, text_color=(224, 154, 24), selected_text_color=(237, 210, 7),
+                                   transparent=True, text_color=BUTTON_YELLOW,
+                                   selected_text_color=BUTTON_SELECTED_YELLOW,
                                    font_size=24, font="main_menu",
                                    function_onClick_list=[self.play_sound, self.load_start_solo_group],
                                    args_list=["press", None],
@@ -80,7 +89,8 @@ class Menu:
         label_start_solo_shadow = Label(self.window_surface, pos=(82, 52, 140, 30), text="Одиночная игра",
                                         text_color=(0, 0, 0), font_size=24, font="main_menu")
         button_start_multi = Button(self.window_surface, pos=(80, 90, 140, 30), text="Совместная игра",
-                                    transparent=True, text_color=(224, 154, 24), selected_text_color=(237, 210, 7),
+                                    transparent=True, text_color=BUTTON_YELLOW,
+                                    selected_text_color=BUTTON_SELECTED_YELLOW,
                                     font_size=24, font="main_menu",
                                     function_onClick_list=[self.play_sound, self.load_start_multi_group],
                                     args_list=["press", None],
@@ -88,7 +98,8 @@ class Menu:
         label_start_milti_shadow = Label(self.window_surface, pos=(82, 92, 140, 30), text="Совместная игра",
                                          text_color=(0, 0, 0), font_size=24, font="main_menu")
         button_settings = Button(self.window_surface, pos=(80, 130, 140, 30), text="Настройки",
-                                 transparent=True, text_color=(224, 154, 24), selected_text_color=(237, 210, 7),
+                                 transparent=True, text_color=BUTTON_YELLOW,
+                                 selected_text_color=BUTTON_SELECTED_YELLOW,
                                  font_size=24, font="main_menu",
                                  function_onClick_list=[self.play_sound, self.load_settings_group],
                                  args_list=["press", None],
@@ -96,7 +107,8 @@ class Menu:
         label_settings_shadow = Label(self.window_surface, pos=(82, 132, 140, 30), text="Настройки",
                                       text_color=(0, 0, 0), font_size=24, font="main_menu")
         button_quit = Button(self.window_surface, pos=(90, 190, 120, 30), text="Выйти из игры",
-                             transparent=True, text_color=(224, 154, 24), selected_text_color=(237, 210, 7),
+                             transparent=True, text_color=BUTTON_YELLOW,
+                             selected_text_color=BUTTON_SELECTED_YELLOW,
                              font_size=24, font="main_menu",
                              function_onClick_list=[self.play_sound, add_quit_popup],
                              args_list=["press", None],
@@ -114,7 +126,7 @@ class Menu:
                                           pos=(popupbox_quit.rect.x + popupbox_quit.rect.w / 2,
                                                popupbox_quit.rect.y + 15,
                                                0, 0),
-                                          text="Вы это серьёзно?", text_color=(224, 154, 24),
+                                          text="Вы это серьёзно?", text_color=BUTTON_YELLOW,
                                           font_size=28, font="main_menu")
         label_popupbox_quit_title_shadow = Label(self.window_surface,
                                                  pos=(popupbox_quit.rect.x + popupbox_quit.rect.w / 2 + 2,
@@ -128,8 +140,8 @@ class Menu:
                                           pos=(popupbox_quit.rect.x + popupbox_quit.rect.w / 4,
                                                popupbox_quit.rect.y + 70,
                                                0, 0), text="Да",
-                                          transparent=True, text_color=(224, 154, 24),
-                                          selected_text_color=(237, 210, 7),
+                                          transparent=True, text_color=BUTTON_YELLOW,
+                                          selected_text_color=BUTTON_SELECTED_YELLOW,
                                           font_size=24, font="main_menu",
                                           function_onClick_list=[self.play_sound, quit_game],
                                           args_list=["press", None],
@@ -143,8 +155,8 @@ class Menu:
                                          pos=(popupbox_quit.rect.x + popupbox_quit.rect.w / 4 * 3,
                                               popupbox_quit.rect.y + 70,
                                               0, 0), text="Нет",
-                                         transparent=True, text_color=(224, 154, 24),
-                                         selected_text_color=(237, 210, 7),
+                                         transparent=True, text_color=BUTTON_YELLOW,
+                                         selected_text_color=BUTTON_SELECTED_YELLOW,
                                          font_size=24, font="main_menu",
                                          function_onClick_list=[self.play_sound, remove_quit_popup],
                                          args_list=["press", None],
@@ -189,7 +201,8 @@ class Menu:
         self.objects.clear()
 
         button_start_new = Button(self.window_surface, pos=(80, 50, 140, 30), text="Начать новую",
-                                  transparent=True, text_color=(224, 154, 24), selected_text_color=(237, 210, 7),
+                                  transparent=True, text_color=BUTTON_YELLOW,
+                                  selected_text_color=BUTTON_SELECTED_YELLOW,
                                   font_size=24, font="main_menu",
                                   function_onClick_list=[self.play_sound, self.start_solo_game],
                                   args_list=["press", None],
@@ -197,7 +210,8 @@ class Menu:
         label_start_new_shadow = Label(self.window_surface, pos=(82, 52, 140, 30), text="Начать новую",
                                        text_color=(0, 0, 0), font_size=24, font="main_menu")
         button_select_level = Button(self.window_surface, pos=(80, 90, 140, 30), text="Выбрать уровень",
-                                     transparent=True, text_color=(224, 154, 24), selected_text_color=(237, 210, 7),
+                                     transparent=True, text_color=BUTTON_YELLOW,
+                                     selected_text_color=BUTTON_SELECTED_YELLOW,
                                      font_size=24, font="main_menu",
                                      function_onClick_list=[self.play_sound, self.load_select_level_group],
                                      args_list=["press", None],
@@ -212,7 +226,7 @@ class Menu:
                                           function_list=[self.play_sound, self.load_title_group],
                                           args_list=["press", None])
         button_return = Button(self.window_surface, pos=(0, 200, 140, 30), text="Назад",
-                               transparent=True, text_color=(224, 154, 24), selected_text_color=(237, 210, 7),
+                               transparent=True, text_color=BUTTON_YELLOW, selected_text_color=BUTTON_SELECTED_YELLOW,
                                font_size=24, font="main_menu",
                                function_onClick_list=[self.play_sound, self.load_title_group],
                                args_list=["press", None],
@@ -249,7 +263,7 @@ class Menu:
                                           function_list=[self.play_sound, self.load_start_solo_group],
                                           args_list=["press", None], )
         button_return = Button(self.window_surface, pos=(0, 200, 140, 30), text="Назад",
-                               transparent=True, text_color=(224, 154, 24), selected_text_color=(237, 210, 7),
+                               transparent=True, text_color=BUTTON_YELLOW, selected_text_color=BUTTON_SELECTED_YELLOW,
                                font_size=24, font="main_menu",
                                function_onClick_list=[self.play_sound, self.load_start_solo_group],
                                args_list=["press", None],
@@ -260,7 +274,8 @@ class Menu:
             x = 80
             y = 50 + i * 40
             button_map_name = Button(self.window_surface, pos=(x, y, 140, 30), text=map_tuple[1],
-                                     transparent=True, text_color=(224, 154, 24), selected_text_color=(237, 210, 7),
+                                     transparent=True, text_color=BUTTON_YELLOW,
+                                     selected_text_color=BUTTON_SELECTED_YELLOW,
                                      font_size=24, font="main_menu",
                                      function_onClick_list=[self.play_sound, set_result_level],
                                      args_list=["press", map_tuple[0]],
@@ -290,22 +305,20 @@ class Menu:
         Загружает элементы подменю "Совместная игра"
         """
 
-        def do_nothing():
-            pass
-
         self.objects.clear()
 
-        button_connect_to = Button(self.window_surface, pos=(80, 50, 140, 30), text="Подключиться к серверу",
-                                   transparent=True, text_color=(224, 154, 24), selected_text_color=(237, 210, 7),
+        button_connect_to = Button(self.window_surface, pos=(80, 50, 140, 30), text="Браузер серверов",
+                                   transparent=True, text_color=BUTTON_YELLOW,
+                                   selected_text_color=BUTTON_SELECTED_YELLOW,
                                    font_size=24, font="main_menu",
-                                   function_onClick_list=[self.play_sound, do_nothing],
+                                   function_onClick_list=[self.play_sound, self.load_server_browser_group],
                                    args_list=["press", None],
-                                   function_onHover=self.play_sound, arg_onHover="select",
-                                   active=False)
-        label_connect_to_shadow = Label(self.window_surface, pos=(82, 52, 140, 30), text="Подключиться к серверу",
+                                   function_onHover=self.play_sound, arg_onHover="select")
+        label_connect_to_shadow = Label(self.window_surface, pos=(82, 52, 140, 30), text="Браузер серверов",
                                         text_color=(0, 0, 0), font_size=24, font="main_menu")
         button_create_server = Button(self.window_surface, pos=(80, 90, 140, 30), text="Создать сервер",
-                                      transparent=True, text_color=(224, 154, 24), selected_text_color=(237, 210, 7),
+                                      transparent=True, text_color=BUTTON_YELLOW,
+                                      selected_text_color=BUTTON_SELECTED_YELLOW,
                                       font_size=24, font="main_menu",
                                       function_onClick_list=[self.play_sound, self.load_create_server_group],
                                       args_list=["press", None],
@@ -313,7 +326,8 @@ class Menu:
         label_create_server_shadow = Label(self.window_surface, pos=(82, 92, 140, 30), text="Создать сервер",
                                            text_color=(0, 0, 0), font_size=24, font="main_menu")
         button_direct_connect = Button(self.window_surface, pos=(80, 130, 140, 30), text="Прямое подключение",
-                                       transparent=True, text_color=(224, 154, 24), selected_text_color=(237, 210, 7),
+                                       transparent=True, text_color=BUTTON_YELLOW,
+                                       selected_text_color=BUTTON_SELECTED_YELLOW,
                                        font_size=24, font="main_menu",
                                        function_onClick_list=[self.play_sound, self.load_direct_connect_group],
                                        args_list=["press", None],
@@ -325,7 +339,7 @@ class Menu:
                                           function_list=[self.play_sound, self.load_title_group],
                                           args_list=["press", None], )
         button_return = Button(self.window_surface, pos=(0, 200, 140, 30), text="Назад",
-                               transparent=True, text_color=(224, 154, 24), selected_text_color=(237, 210, 7),
+                               transparent=True, text_color=BUTTON_YELLOW, selected_text_color=BUTTON_SELECTED_YELLOW,
                                font_size=24, font="main_menu",
                                function_onClick_list=[self.play_sound, self.load_title_group],
                                args_list=["press", None],
@@ -346,6 +360,127 @@ class Menu:
         self.objects.append(buttontrigger_esc)
         self.objects.append(label_return_shadow)
         self.objects.append(button_return)
+        self.objects.append(label_menu_name_shadow)
+        self.objects.append(label_menu_name)
+
+    def load_server_browser_group(self):
+        """
+        Загружает элементы подменю "Браузер серверов"
+        """
+
+        def connect_to(server_ip: str):
+            pass
+
+        class ServerRecord:
+            # Небольшой класс, объединяющий кнопку и её тень
+            button: Button = None
+            button_shadow: Label = None
+
+        def find_servers():
+            # Запускает поиск серверов
+            clear_servers()  # Очищаем список серверов
+            server_finders[0].add_all_local_ips()  # Заносим все локальные IP-шники
+            server_finders[0].start()
+            timer_test.start()
+
+        def clear_servers():
+            # Убирает надпись "Серверы не найдены", если она есть
+            if label_no_servers_found in self.objects:
+                self.objects.remove(label_no_servers_found)
+                self.objects.remove(label_no_servers_found_shadow)
+            # Очищает список серверов
+            for server_record in servers:
+                self.objects.remove(server_record.button)
+                self.objects.remove(server_record.button_shadow)
+            servers.clear()
+
+        def add_server_button(server_ip: str):
+            # Добавляет кнопку для подклчючения к серверу
+            temp_record = ServerRecord()
+            temp_record.button = Button(self.window_surface, pos=(80, 60 + servers.__len__() * 30, 0, 0),
+                                        text=server_ip,
+                                        transparent=True, text_color=BUTTON_YELLOW,
+                                        selected_text_color=BUTTON_SELECTED_YELLOW,
+                                        font_size=18, font="main_menu",
+                                        function_onClick_list=[self.play_sound, connect_to],
+                                        args_list=["press", server_ip],
+                                        function_onHover=self.play_sound, arg_onHover="select")
+            temp_record.button_shadow = Label(self.window_surface, pos=(82, 62 + servers.__len__() * 30, 0, 0),
+                                              text=server_ip, text_color=(0, 0, 0), font_size=18, font="main_menu")
+            self.objects.append(temp_record.button_shadow)
+            self.objects.append(temp_record.button)
+
+        def check_server_finder():
+            if server_finders[0].is_ready:
+                # Если процесс поиска закончлся...
+                if server_finders[0].good_ip_list.__len__() == 0:
+                    # Если не было найдено ни одного сервера...
+                    self.objects.append(label_no_servers_found_shadow)
+                    self.objects.append(label_no_servers_found)
+                for ip in server_finders[0].good_ip_list:
+                    add_server_button(ip)
+
+                # TODO: супер-костыль - пересоздание ServerFinder-а
+                del server_finders[0]
+                server_finders.clear()
+                server_finders.append(ServerFinder(self.result["client_ip"], self.result["client_port"]))
+            else:
+                # Если процесс поиска ещё не закончился...
+                timer_test.reset()
+                timer_test.start()
+
+        self.objects.clear()
+
+        # Подготовка server_finder-а:
+        server_finders: List[ServerFinder] = []  # TODO: супер-костыль - массив из 1-го элемента
+        if "client_ip" not in self.result:
+            self.result["client_ip"] = socket.gethostbyname(socket.getfqdn())
+        self.result["client_port"] = randint(9999, 60000)
+        server_finders.append(ServerFinder(self.result["client_ip"], self.result["client_port"]))
+
+        servers: List[ServerRecord] = []  # Список кнопок с ip-адресами серверов
+
+        label_no_servers_found = Label(self.window_surface, pos=(80, 60, 140, 30), text="Серверы не найдены",
+                                       text_color=BUTTON_YELLOW, font_size=18, font="main_menu")
+        label_no_servers_found_shadow = Label(self.window_surface, pos=(82, 62, 140, 30), text="Серверы не найдены",
+                                              text_color=(0, 0, 0), font_size=18, font="main_menu")
+        menurect_servers_frame = MenuRect(self.window_surface, pos=(50, 50, 200, 100),
+                                          fill_color=MAIN_MENU_DARK_BACKGROUND_COLOR, frame_color=BUTTON_YELLOW)
+        button_refresh = Button(self.window_surface, pos=(80, 150, 140, 30), text="Обновить",
+                                transparent=True, text_color=BUTTON_YELLOW, selected_text_color=BUTTON_SELECTED_YELLOW,
+                                font_size=18, font="main_menu",
+                                function_onClick_list=[self.play_sound, find_servers],
+                                args_list=["press", None],
+                                function_onHover=self.play_sound, arg_onHover="select")
+        label_refresh_shadow = Label(self.window_surface, pos=(82, 152, 140, 30), text="Обновить",
+                                     text_color=(0, 0, 0), font_size=18, font="main_menu")
+
+        buttontrigger_esc = ButtonTrigger(key=pygame.K_ESCAPE,
+                                          function_list=[self.play_sound, self.load_start_multi_group],
+                                          args_list=["press", None])
+        button_return = Button(self.window_surface, pos=(0, 200, 140, 30), text="Назад",
+                               transparent=True, text_color=BUTTON_YELLOW, selected_text_color=BUTTON_SELECTED_YELLOW,
+                               font_size=24, font="main_menu",
+                               function_onClick_list=[self.play_sound, self.load_start_multi_group],
+                               args_list=["press", None],
+                               function_onHover=self.play_sound, arg_onHover="select")
+        label_return_shadow = Label(self.window_surface, pos=(2, 202, 140, 30), text="Назад",
+                                    text_color=(0, 0, 0), font_size=24, font="main_menu")
+        label_menu_name = Label(self.window_surface, pos=(150, 25, 0, 0), text="Браузер серверов".upper(),
+                                text_color=(240, 240, 240), font_size=28, font="main_menu")
+        label_menu_name_shadow = Label(self.window_surface, pos=(152, 27, 0, 0), text="Браузер серверов".upper(),
+                                       text_color=(0, 0, 0), font_size=28, font="main_menu")
+
+        timer_test = Timer(target_millis=500, function_onTarget=check_server_finder,
+                           function_args=None, start_of_init=False)
+
+        self.objects.append(timer_test)
+        self.objects.append(menurect_servers_frame)
+        self.objects.append(label_refresh_shadow)
+        self.objects.append(button_refresh)
+        self.objects.append(label_return_shadow)
+        self.objects.append(button_return)
+        self.objects.append(buttontrigger_esc)
         self.objects.append(label_menu_name_shadow)
         self.objects.append(label_menu_name)
 
@@ -374,13 +509,13 @@ class Menu:
                                       text="Неправильный формат IP адреса!",
                                       text_color=(0, 0, 0), font_size=14, font="main_menu")
         label_server_ip = Label(self.window_surface, pos=(80, 50, 140, 30), text="IP сервера:",
-                                text_color=(224, 154, 24), font_size=24, font="main_menu")
+                                text_color=BUTTON_YELLOW, font_size=24, font="main_menu")
         label_server_ip_shadow = Label(self.window_surface, pos=(82, 52, 140, 30), text="IP сервера:",
                                        text_color=(0, 0, 0), font_size=24, font="main_menu")
         textbox_server_ip = TextBox(self.window_surface, pos=(80, 90, 140, 30), font="main_menu",
                                     function_onEnter=connect_to, empty_text="IP адрес")
         button_connect = Button(self.window_surface, pos=(80, 155, 140, 30), text="Подключиться",
-                                transparent=True, text_color=(224, 154, 24), selected_text_color=(237, 210, 7),
+                                transparent=True, text_color=BUTTON_YELLOW, selected_text_color=BUTTON_SELECTED_YELLOW,
                                 font_size=24, font="main_menu",
                                 function_onClick_list=[self.play_sound, connect_to],
                                 args_list=["press", None],
@@ -392,7 +527,7 @@ class Menu:
                                           function_list=[self.play_sound, self.load_start_multi_group],
                                           args_list=["press", None], )
         button_return = Button(self.window_surface, pos=(0, 200, 140, 30), text="Назад",
-                               transparent=True, text_color=(224, 154, 24), selected_text_color=(237, 210, 7),
+                               transparent=True, text_color=BUTTON_YELLOW, selected_text_color=BUTTON_SELECTED_YELLOW,
                                font_size=24, font="main_menu",
                                function_onClick_list=[self.play_sound, self.load_start_multi_group],
                                args_list=["press", None],
@@ -461,13 +596,14 @@ class Menu:
         self.objects.append(label_wrong_ip)
 
         label_server_ip = Label(self.window_surface, pos=(80, 50, 140, 30), text="IP сервера:",
-                                text_color=(224, 154, 24), font_size=24, font="main_menu")
+                                text_color=BUTTON_YELLOW, font_size=24, font="main_menu")
         label_server_ip_shadow = Label(self.window_surface, pos=(82, 52, 140, 30), text="IP сервера:",
                                        text_color=(0, 0, 0), font_size=24, font="main_menu")
         textbox_server_ip = TextBox(self.window_surface, pos=(80, 90, 140, 30), font="main_menu",
                                     function_onEnter=create_server)
         button_dedicated = Button(self.window_surface, pos=(80, 135, 140, 30), text="Выделенный: да",
-                                  transparent=True, text_color=(224, 154, 24), selected_text_color=(237, 210, 7),
+                                  transparent=True, text_color=BUTTON_YELLOW,
+                                  selected_text_color=BUTTON_SELECTED_YELLOW,
                                   font_size=18, font="main_menu",
                                   function_onClick_list=[self.play_sound, change_dedicated],
                                   args_list=["press", None],
@@ -475,7 +611,7 @@ class Menu:
         label_dedicated_shadow = Label(self.window_surface, pos=(82, 137, 140, 30), text="Выделенный: да",
                                        text_color=(0, 0, 0), font_size=18, font="main_menu")
         button_connect = Button(self.window_surface, pos=(80, 175, 140, 30), text="Создать",
-                                transparent=True, text_color=(224, 154, 24), selected_text_color=(237, 210, 7),
+                                transparent=True, text_color=BUTTON_YELLOW, selected_text_color=BUTTON_SELECTED_YELLOW,
                                 font_size=24, font="main_menu",
                                 function_onClick_list=[self.play_sound, create_server],
                                 args_list=["press", None],
@@ -487,7 +623,7 @@ class Menu:
                                           function_list=[self.play_sound, self.load_start_multi_group],
                                           args_list=["press", None], )
         button_return = Button(self.window_surface, pos=(0, 200, 140, 30), text="Назад",
-                               transparent=True, text_color=(224, 154, 24), selected_text_color=(237, 210, 7),
+                               transparent=True, text_color=BUTTON_YELLOW, selected_text_color=BUTTON_SELECTED_YELLOW,
                                font_size=24, font="main_menu",
                                function_onClick_list=[self.play_sound, self.load_start_multi_group],
                                args_list=["press", None],
@@ -519,7 +655,8 @@ class Menu:
         self.objects.clear()
 
         button_sound_settings = Button(self.window_surface, pos=(80, 50, 140, 30), text="Звук",
-                                       transparent=True, text_color=(224, 154, 24), selected_text_color=(237, 210, 7),
+                                       transparent=True, text_color=BUTTON_YELLOW,
+                                       selected_text_color=BUTTON_SELECTED_YELLOW,
                                        font_size=24, font="main_menu",
                                        function_onClick_list=[self.play_sound, self.load_sound_settings_group],
                                        args_list=["press", None],
@@ -527,7 +664,8 @@ class Menu:
         label_sound_settings_shadow = Label(self.window_surface, pos=(82, 52, 140, 30), text="Звук",
                                             text_color=(0, 0, 0), font_size=24, font="main_menu")
         button_multi_settings = Button(self.window_surface, pos=(80, 90, 140, 30), text="Настройки подключения",
-                                       transparent=True, text_color=(224, 154, 24), selected_text_color=(237, 210, 7),
+                                       transparent=True, text_color=BUTTON_YELLOW,
+                                       selected_text_color=BUTTON_SELECTED_YELLOW,
                                        font_size=24, font="main_menu",
                                        function_onClick_list=[self.play_sound, self.load_multi_settings_group],
                                        args_list=["press", None],
@@ -542,7 +680,7 @@ class Menu:
                                           function_list=[self.play_sound, self.load_title_group],
                                           args_list=["press", None], )
         button_return = Button(self.window_surface, pos=(0, 200, 140, 30), text="Назад",
-                               transparent=True, text_color=(224, 154, 24), selected_text_color=(237, 210, 7),
+                               transparent=True, text_color=BUTTON_YELLOW, selected_text_color=BUTTON_SELECTED_YELLOW,
                                font_size=24, font="main_menu",
                                function_onClick_list=[self.play_sound, self.load_title_group],
                                args_list=["press", None],
@@ -574,7 +712,7 @@ class Menu:
                                           function_list=[self.play_sound, self.load_settings_group],
                                           args_list=["press", None], )
         button_return = Button(self.window_surface, pos=(0, 200, 140, 30), text="Назад",
-                               transparent=True, text_color=(224, 154, 24), selected_text_color=(237, 210, 7),
+                               transparent=True, text_color=BUTTON_YELLOW, selected_text_color=BUTTON_SELECTED_YELLOW,
                                font_size=24, font="main_menu",
                                function_onClick_list=[self.play_sound, self.load_settings_group],
                                args_list=["press", None],
@@ -641,7 +779,7 @@ class Menu:
                                       text="Неправильный формат IP адреса!",
                                       text_color=(0, 0, 0), font_size=14, font="main_menu")
         button_is_local = Button(self.window_surface, pos=(80, 50, 140, 30), text="Локальный адрес: да",
-                                 transparent=True, text_color=(224, 154, 24), selected_text_color=(237, 210, 7),
+                                 transparent=True, text_color=BUTTON_YELLOW, selected_text_color=BUTTON_SELECTED_YELLOW,
                                  font_size=24, font="main_menu",
                                  function_onClick_list=[self.play_sound, change_local_remote],
                                  args_list=["press", None],
@@ -649,13 +787,13 @@ class Menu:
         label_is_local_shadow = Label(self.window_surface, pos=(82, 52, 140, 30), text="Локальный адрес: да",
                                       text_color=(0, 0, 0), font_size=24, font="main_menu")
         label_client_ip = Label(self.window_surface, pos=(80, 90, 140, 30), text="IP клиента:",
-                                text_color=(224, 154, 24), font_size=24, font="main_menu")
+                                text_color=BUTTON_YELLOW, font_size=24, font="main_menu")
         label_client_ip_shadow = Label(self.window_surface, pos=(82, 92, 140, 30), text="IP клиента:",
                                        text_color=(0, 0, 0), font_size=24, font="main_menu")
         textbox_client_ip = TextBox(self.window_surface, pos=(80, 120, 140, 30), font="main_menu",
                                     empty_text="IP адрес")
         button_save = Button(self.window_surface, pos=(80, 175, 140, 30), text="Сохранить",
-                             transparent=True, text_color=(224, 154, 24), selected_text_color=(237, 210, 7),
+                             transparent=True, text_color=BUTTON_YELLOW, selected_text_color=BUTTON_SELECTED_YELLOW,
                              font_size=24, font="main_menu",
                              function_onClick_list=[self.play_sound, save_client_ip],
                              args_list=["press", None],
@@ -670,7 +808,7 @@ class Menu:
                                           function_list=[self.play_sound, self.load_settings_group],
                                           args_list=["press", None], )
         button_return = Button(self.window_surface, pos=(0, 200, 140, 30), text="Назад",
-                               transparent=True, text_color=(224, 154, 24), selected_text_color=(237, 210, 7),
+                               transparent=True, text_color=BUTTON_YELLOW, selected_text_color=BUTTON_SELECTED_YELLOW,
                                font_size=24, font="main_menu",
                                function_onClick_list=[self.play_sound, self.load_settings_group],
                                args_list=["press", None],

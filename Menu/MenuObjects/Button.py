@@ -6,9 +6,7 @@ from Menu.MenuObjects.MenuObjectWithText import MenuObjectWithText
 
 
 class Button(MenuObjectWithText):
-    window_surface: Surface = None  # Поверхность окна
 
-    rect: Rect = None
     text_str: str = None
     color: tuple = None
     selected_color: tuple = None

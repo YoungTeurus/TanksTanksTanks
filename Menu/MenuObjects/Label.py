@@ -10,7 +10,6 @@ CLICKED_LINK_COLOR = (128, 0, 128)
 
 
 class Label(MenuObjectWithText):
-    window_surface: Surface = None  # Поверхность окна
 
     text_str: str = None
     text_color: tuple = None
