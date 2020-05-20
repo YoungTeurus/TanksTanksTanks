@@ -12,6 +12,8 @@ from Menu.MenuObjects.MenuObject import SKIP_EVENT
 from Menu.MenuObjects.PopupBox import PopupBox
 from Menu.MenuObjects.TextBox import TextBox
 
+MAIN_MENU_BACKGROUND_COLOR = (27, 35, 44)
+MAIN_MENU_DARK_BACKGROUND_COLOR = (19,28,32)
 
 class Menu:
     is_running: bool = None  # Флаг запущенного меню
@@ -61,10 +63,10 @@ class Menu:
             self.is_running = False
             self.result["result"] = "quit"
 
-        def add_popup():
-            self.any_popup = popupbox_test
+        def add_quit_popup():
+            self.any_popup = popupbox_quit
 
-        def delete_popup():
+        def remove_quit_popup():
             self.any_popup = None
 
         self.objects.clear()
@@ -96,7 +98,7 @@ class Menu:
         button_quit = Button(self.window_surface, pos=(90, 190, 120, 30), text="Выйти из игры",
                              transparent=True, text_color=(224, 154, 24), selected_text_color=(237, 210, 7),
                              font_size=24, font="main_menu",
-                             function_onClick_list=[self.play_sound, quit_game],
+                             function_onClick_list=[self.play_sound, add_quit_popup],
                              args_list=["press", None],
                              function_onHover=self.play_sound, arg_onHover="select")
         label_quit_shadow = Label(self.window_surface, pos=(92, 192, 120, 30), text="Выйти из игры",
@@ -106,19 +108,59 @@ class Menu:
         label_title_shadow = Label(self.window_surface, pos=(152, 27, 0, 0), text="TANK! TANK! TANK!",
                                    text_color=(0, 0, 0), font_size=28, font="main_menu")
 
-        button_test_popup = Button(self.window_surface, pos=(280, 50, 140, 30), text="Вызвать PopUp",
-                                   transparent=True, text_color=(224, 154, 24), selected_text_color=(237, 210, 7),
-                                   font_size=24, font="main_menu",
-                                   function_onClick_list=[self.play_sound, add_popup],
-                                   args_list=["press", None],
-                                   function_onHover=self.play_sound, arg_onHover="select")
-        popupbox_test = PopupBox(self.window_surface, pos=(100, 100, 100, 150))
-        buttontrigger_esc = ButtonTrigger(key=pygame.K_ESCAPE,
-                                          function_list=[self.play_sound, delete_popup],
-                                          args_list=["press", None])
-        popupbox_test.add_object(buttontrigger_esc)
-
-        self.objects.append(button_test_popup)
+        # Всплывающее окно "Вы это серьёзно?" при выходе:
+        popupbox_quit = PopupBox(self.window_surface, pos=(50, 100, 200, 100), color=MAIN_MENU_BACKGROUND_COLOR)
+        label_popupbox_quit_title = Label(self.window_surface,
+                                          pos=(popupbox_quit.rect.x + popupbox_quit.rect.w / 2,
+                                               popupbox_quit.rect.y + 15,
+                                               0, 0),
+                                          text="Вы это серьёзно?", text_color=(224, 154, 24),
+                                          font_size=28, font="main_menu")
+        label_popupbox_quit_title_shadow = Label(self.window_surface,
+                                                 pos=(popupbox_quit.rect.x + popupbox_quit.rect.w / 2 + 2,
+                                                      popupbox_quit.rect.y + 17, 0, 0),
+                                                 text="Вы это серьёзно?", text_color=(0, 0, 0),
+                                                 font_size=28, font="main_menu")
+        buttontrigger_popupbox_quit_esc = ButtonTrigger(key=pygame.K_ESCAPE,
+                                                        function_list=[self.play_sound, remove_quit_popup],
+                                                        args_list=["press", None])
+        button_popupbox_quit_yes = Button(self.window_surface,
+                                          pos=(popupbox_quit.rect.x + popupbox_quit.rect.w / 4,
+                                               popupbox_quit.rect.y + 70,
+                                               0, 0), text="Да",
+                                          transparent=True, text_color=(224, 154, 24),
+                                          selected_text_color=(237, 210, 7),
+                                          font_size=24, font="main_menu",
+                                          function_onClick_list=[self.play_sound, quit_game],
+                                          args_list=["press", None],
+                                          function_onHover=self.play_sound, arg_onHover="select")
+        label_popupbox_quit_yes_shadow = Label(self.window_surface,
+                                               pos=(popupbox_quit.rect.x + popupbox_quit.rect.w / 4 + 2,
+                                                    popupbox_quit.rect.y + 72,
+                                                    0, 0),
+                                               text="Да", text_color=(0, 0, 0), font_size=24, font="main_menu")
+        button_popupbox_quit_no = Button(self.window_surface,
+                                         pos=(popupbox_quit.rect.x + popupbox_quit.rect.w / 4 * 3,
+                                              popupbox_quit.rect.y + 70,
+                                              0, 0), text="Нет",
+                                         transparent=True, text_color=(224, 154, 24),
+                                         selected_text_color=(237, 210, 7),
+                                         font_size=24, font="main_menu",
+                                         function_onClick_list=[self.play_sound, remove_quit_popup],
+                                         args_list=["press", None],
+                                         function_onHover=self.play_sound, arg_onHover="select")
+        label_popupbox_quit_no_shadow = Label(self.window_surface,
+                                              pos=(popupbox_quit.rect.x + popupbox_quit.rect.w / 4 * 3 + 2,
+                                                   popupbox_quit.rect.y + 72,
+                                                   0, 0),
+                                              text="Нет", text_color=(0, 0, 0), font_size=24, font="main_menu")
+        popupbox_quit.add_object(buttontrigger_popupbox_quit_esc)
+        popupbox_quit.add_object(label_popupbox_quit_yes_shadow)
+        popupbox_quit.add_object(button_popupbox_quit_yes)
+        popupbox_quit.add_object(label_popupbox_quit_no_shadow)
+        popupbox_quit.add_object(button_popupbox_quit_no)
+        popupbox_quit.add_object(label_popupbox_quit_title_shadow)
+        popupbox_quit.add_object(label_popupbox_quit_title)
 
         self.objects.append(label_start_solo_shadow)
         self.objects.append(button_start_solo)
@@ -657,21 +699,23 @@ class Menu:
     def main_cycle(self):
         while self.is_running:
             self.clock.tick(targetFPS)  # Требуемый FPS и соответствующая задержка
-            self.window_surface.fill(DARK_GREY)
+            self.window_surface.fill(MAIN_MENU_BACKGROUND_COLOR)
 
             # Обработка событий:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.is_running = False
                 # TODO: избавиться от этого костыля:
+                skip_objects = False
                 if self.any_popup is not None:
                     if (return_code := self.any_popup.handle_event(event)) is not None:
                         if return_code == SKIP_EVENT:
-                            break
-                for obj in self.objects:
-                    if (return_code := obj.handle_event(event)) is not None:
-                        if return_code == SKIP_EVENT:
-                            break
+                            skip_objects = True
+                if not skip_objects:
+                    for obj in self.objects:
+                        if (return_code := obj.handle_event(event)) is not None:
+                            if return_code == SKIP_EVENT:
+                                break
 
             if self.any_popup is not None:
                 self.any_popup.update()
