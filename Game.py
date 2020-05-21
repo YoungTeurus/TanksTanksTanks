@@ -141,7 +141,7 @@ class Game:
             # Обработка событий:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    self.game_running = False
+                    self.stop_game()
                 # Обработка всплывающих окон:
                 if self.any_popup_box is not None:
                     self.any_popup_box.handle_event(event)
