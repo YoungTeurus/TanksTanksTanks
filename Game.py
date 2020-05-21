@@ -1,5 +1,3 @@
-import random
-import socket
 import socketserver
 import threading
 
@@ -9,7 +7,8 @@ from Consts import targetFPS, DARK_GREY, BLACK, MOVE_RIGHT, SHOOT, MOVE_LEFT, MO
     CHANGES_DEBUG
 from Files import ImageLoader
 from Images.Tileset import Tileset
-from Multiplayer.Senders import DataSenderServerSide, DataSenderClientSide
+from Menu.MenuObjects.PopupBox import PopupBox
+from Multiplayer.Senders import DataSenderServerSide, DataSenderClientSide, EVENT_SERVER_STOP, EVENT_PLAYER_QUIT
 from Multiplayer.UDPHandlers import MyUDPHandlerClientSide, MyUDPHandlerServerSide
 from World.World import World
 
@@ -31,6 +30,9 @@ class Game:
     client_ip: str = None  # Адрес, на котором расположен клиент
     client_port: int = None  # Порт клиента
     server_ip: str = None  # Адрес, на котором расположен сервер
+
+    any_popup_box: PopupBox = None  # PopupBox должен быть здесь
+    need_to_return_to_menu: bool = False  # Уставнока этого флага позволяет вернуться в меню после завершения игры
 
     def __init__(self, window_surface, is_server, multi, start_map_id: int = None,
                  connect_to_ip: str = None, server_ip: str = None, client_ip: str = None,
@@ -68,7 +70,7 @@ class Game:
             self.world.set_ready_for_server()
             self.serverside_sender = DataSenderServerSide(self)
             self.create_serverside_server()
-        else:
+        elif not self.is_server and self.multi:
             # Запуск клиента для мультиплеера
             self.clientside_sender = DataSenderClientSide(self)
             self.client_ip = client_ip
@@ -96,7 +98,7 @@ class Game:
                 # Обработка событий:
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
-                        self.game_running = False
+                        self.stop_game()
             # Как только к нам подключились, спавним игрока и центруем на нём камеру
             # self.world.spawn_player()
             # self.world.center_camera_on_player()
@@ -140,67 +142,72 @@ class Game:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.game_running = False
+                # Обработка всплывающих окон:
+                if self.any_popup_box is not None:
+                    self.any_popup_box.handle_event(event)
             keyboard_pressed = pygame.key.get_pressed()
 
-            # Движение игрока
-            if self.is_server or not self.multi:
-                if keyboard_pressed[pygame.K_RIGHT]:
-                    if self.last_moved_direction is None or self.last_moved_direction == "RIGHT":
-                        self.world.move_player_to(0, "RIGHT")
-                        self.last_moved_direction = "RIGHT"
-                elif self.last_moved_direction == "RIGHT":
-                    self.last_moved_direction = None
-                if keyboard_pressed[pygame.K_UP]:
-                    if self.last_moved_direction is None or self.last_moved_direction == "UP":
-                        self.world.move_player_to(0, "UP")
-                        self.last_moved_direction = "UP"
-                elif self.last_moved_direction == "UP":
-                    self.last_moved_direction = None
-                if keyboard_pressed[pygame.K_DOWN]:
-                    if self.last_moved_direction is None or self.last_moved_direction == "DOWN":
-                        self.world.move_player_to(0, "DOWN")
-                        self.last_moved_direction = "DOWN"
-                elif self.last_moved_direction == "DOWN":
-                    self.last_moved_direction = None
-                if keyboard_pressed[pygame.K_LEFT]:
-                    if self.last_moved_direction is None or self.last_moved_direction == "LEFT":
-                        self.world.move_player_to(0, "LEFT")
-                        self.last_moved_direction = "LEFT"
-                elif self.last_moved_direction == "LEFT":
-                    self.last_moved_direction = None
+            # Перехватываем управление для popupbox-а:
+            if self.any_popup_box is None:
+                # Движение игрока
+                if self.is_server or not self.multi:
+                    if keyboard_pressed[pygame.K_RIGHT]:
+                        if self.last_moved_direction is None or self.last_moved_direction == "RIGHT":
+                            self.world.move_player_to(0, "RIGHT")
+                            self.last_moved_direction = "RIGHT"
+                    elif self.last_moved_direction == "RIGHT":
+                        self.last_moved_direction = None
+                    if keyboard_pressed[pygame.K_UP]:
+                        if self.last_moved_direction is None or self.last_moved_direction == "UP":
+                            self.world.move_player_to(0, "UP")
+                            self.last_moved_direction = "UP"
+                    elif self.last_moved_direction == "UP":
+                        self.last_moved_direction = None
+                    if keyboard_pressed[pygame.K_DOWN]:
+                        if self.last_moved_direction is None or self.last_moved_direction == "DOWN":
+                            self.world.move_player_to(0, "DOWN")
+                            self.last_moved_direction = "DOWN"
+                    elif self.last_moved_direction == "DOWN":
+                        self.last_moved_direction = None
+                    if keyboard_pressed[pygame.K_LEFT]:
+                        if self.last_moved_direction is None or self.last_moved_direction == "LEFT":
+                            self.world.move_player_to(0, "LEFT")
+                            self.last_moved_direction = "LEFT"
+                    elif self.last_moved_direction == "LEFT":
+                        self.last_moved_direction = None
 
-                # Стрельба
-                if keyboard_pressed[pygame.K_SPACE]:
-                    self.world.create_bullet(self.world.players[0])
-            else:
-                if keyboard_pressed[MOVE_RIGHT]:
-                    if self.last_moved_direction is None or self.last_moved_direction == "RIGHT":
-                        self.clientside_sender.send_button("MOVE_RIGHT")
-                        self.last_moved_direction = "RIGHT"
-                elif self.last_moved_direction == "RIGHT":
-                    self.last_moved_direction = None
-                if keyboard_pressed[MOVE_UP]:
-                    if self.last_moved_direction is None or self.last_moved_direction == "UP":
-                        self.clientside_sender.send_button("MOVE_UP")
-                        self.last_moved_direction = "UP"
-                elif self.last_moved_direction == "UP":
-                    self.last_moved_direction = None
-                if keyboard_pressed[MOVE_DOWN]:
-                    if self.last_moved_direction is None or self.last_moved_direction == "DOWN":
-                        self.clientside_sender.send_button("MOVE_DOWN")
-                        self.last_moved_direction = "DOWN"
-                elif self.last_moved_direction == "DOWN":
-                    self.last_moved_direction = None
-                if keyboard_pressed[MOVE_LEFT]:
-                    if self.last_moved_direction is None or self.last_moved_direction == "LEFT":
-                        self.clientside_sender.send_button("MOVE_LEFT")
-                        self.last_moved_direction = "LEFT"
-                elif self.last_moved_direction == "LEFT":
-                    self.last_moved_direction = None
+                    # Стрельба
+                    if keyboard_pressed[pygame.K_SPACE]:
+                        self.world.create_bullet(self.world.players[0])
+                else:
+                    if keyboard_pressed[MOVE_RIGHT]:
+                        if self.last_moved_direction is None or self.last_moved_direction == "RIGHT":
+                            self.clientside_sender.send_button("MOVE_RIGHT")
+                            self.last_moved_direction = "RIGHT"
+                    elif self.last_moved_direction == "RIGHT":
+                        self.last_moved_direction = None
+                    if keyboard_pressed[MOVE_UP]:
+                        if self.last_moved_direction is None or self.last_moved_direction == "UP":
+                            self.clientside_sender.send_button("MOVE_UP")
+                            self.last_moved_direction = "UP"
+                    elif self.last_moved_direction == "UP":
+                        self.last_moved_direction = None
+                    if keyboard_pressed[MOVE_DOWN]:
+                        if self.last_moved_direction is None or self.last_moved_direction == "DOWN":
+                            self.clientside_sender.send_button("MOVE_DOWN")
+                            self.last_moved_direction = "DOWN"
+                    elif self.last_moved_direction == "DOWN":
+                        self.last_moved_direction = None
+                    if keyboard_pressed[MOVE_LEFT]:
+                        if self.last_moved_direction is None or self.last_moved_direction == "LEFT":
+                            self.clientside_sender.send_button("MOVE_LEFT")
+                            self.last_moved_direction = "LEFT"
+                    elif self.last_moved_direction == "LEFT":
+                        self.last_moved_direction = None
 
-                # Стрельба
-                if keyboard_pressed[SHOOT]:
-                    self.clientside_sender.send_button("SHOOT")
+                    # Стрельба
+                    if keyboard_pressed[SHOOT]:
+                        self.clientside_sender.send_button("SHOOT")
 
             # Тестовая попытка подключиться к серверу:
             if not self.is_server and not self.is_connected and self.multi:
@@ -214,6 +221,7 @@ class Game:
             #     self.game_over(1)
 
             self.world.draw()
+
             if self.is_server or not self.multi:
                 self.world.act()
                 # Спавн врагов:
@@ -232,6 +240,11 @@ class Game:
 
             self.window_surface.blit(self.game_surface, self.game_rect)
 
+            # Отрисовка и обновление popupBox-а:
+            if self.any_popup_box is not None:
+                self.any_popup_box.draw()
+                self.any_popup_box.update()
+
             pygame.display.update()
 
             # if not self.is_server:
@@ -247,3 +260,23 @@ class Game:
         ]
         print(game_overs[game_over_id])
         self.game_running = False
+
+    def stop_game(self, send_to_server: bool = True):
+        """
+        Останавилвает выполнение игры, посылает на сервер сигнал об отключении клиента, если необходимо.
+        """
+        if self.multi and send_to_server:
+            if self.is_server:
+                # Если сервер
+                self.serverside_sender.send_event(EVENT_SERVER_STOP)
+            else:
+                # Если клиент
+                self.clientside_sender.send_event(EVENT_PLAYER_QUIT)
+        else:
+            # Если одиночка
+            pass
+        self.game_running = False
+
+    def return_to_menu(self):
+        self.need_to_return_to_menu = True
+        self.stop_game(send_to_server=False)

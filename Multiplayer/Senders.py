@@ -4,6 +4,9 @@ import socket
 from Consts import SOCKET_DEBUG, MAPS
 from Files import get_script_dir
 
+EVENT_SERVER_STOP = "EVENT_SERVER_STOP"
+EVENT_PLAYER_QUIT = "EVENT_PLAYER_QUIT"
+
 
 class DataSenderServerSide:
     """
@@ -61,6 +64,21 @@ class DataSenderServerSide:
             if SOCKET_DEBUG:
                 print("Sent:     {}".format(data))
 
+    def send_event(self, event_type: str):
+        """
+        Отправляет клиентам какой-то event-сигнал
+        """
+        for client_ip in self.clients:
+            host, port = client_ip, self.clients[client_ip]
+            data_dict = dict()
+            data_dict["type"] = "event"
+            data_dict["event_type"] = event_type
+            data = json.dumps(data_dict)
+            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            sock.sendto(data.encode(), (host, port))
+            if SOCKET_DEBUG:
+                print("Sent:     {}".format(data))
+
 
 class DataSenderClientSide:
     """
@@ -105,6 +123,20 @@ class DataSenderClientSide:
         data_dict["type"] = "key"
         data_dict["ip"] = self.parent_game.client_ip
         data_dict["button_id"] = button_id
+        data = json.dumps(data_dict)
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.sendto(data.encode(), (host, port))
+        if SOCKET_DEBUG:
+            print("Sent:     {}".format(data))
+
+    def send_event(self, event_type: str):
+        """
+        Отправляет серверу какой-то event-сигнал
+        """
+        host, port = self.server, 9998
+        data_dict = dict()
+        data_dict["type"] = "event"
+        data_dict["event_type"] = event_type
         data = json.dumps(data_dict)
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.sendto(data.encode(), (host, port))
