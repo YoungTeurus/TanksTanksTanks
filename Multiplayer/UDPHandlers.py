@@ -136,10 +136,11 @@ class MyUDPHandlerServerSide(socketserver.BaseRequestHandler):
             if self.client_address[0] not in self.parent_game.serverside_sender.clients:
                 # Если этого IP ещё не было, заносим его в список клиентов
                 # Заносим IP-шник и порт отправителю
-                self.parent_game.serverside_sender.clients[data_dict["ip"]] = data_dict["port"]
+                ip_port_combo = "{}:{}".format(data_dict["ip"], data_dict["port"])
+                self.parent_game.serverside_sender.clients.append(ip_port_combo)
                 # Присваиваем ip-шнику id игрока
                 self.parent_game.serverside_sender.clients_player_id[
-                    data_dict["ip"]] = self.parent_game.serverside_sender.last_free_player_id
+                    ip_port_combo] = self.parent_game.serverside_sender.last_free_player_id
                 self.parent_game.serverside_sender.last_free_player_id += 1
             # Говорим клиенту подгрузить такую-то карту
             self.parent_game.serverside_sender.send_load_world(data_dict["ip"], data_dict["port"],
@@ -147,7 +148,8 @@ class MyUDPHandlerServerSide(socketserver.BaseRequestHandler):
             self.parent_game.world.spawn_player()  # Спавн нового игрока
             self.parent_game.world.center_camera_on_player()
         elif data_dict["type"] == "key":
-            player_id = self.parent_game.serverside_sender.clients_player_id[data_dict["ip"]]
+            ip_port_combo = "{}:{}".format(data_dict["ip"], data_dict["port"])
+            player_id = self.parent_game.serverside_sender.clients_player_id[ip_port_combo]
             if data_dict["button_id"] == "MOVE_UP":
                 self.parent_game.world.move_player_to(player_id, "UP", )
             elif data_dict["button_id"] == "MOVE_DOWN":

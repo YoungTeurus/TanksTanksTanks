@@ -1,5 +1,6 @@
 import json
 import socket
+from typing import List
 
 from Consts import SOCKET_DEBUG, MAPS
 from Files import get_script_dir
@@ -13,14 +14,14 @@ class DataSenderServerSide:
     Данный класс отправляет клиентам необходимые данные
     """
     parent_game = None
-    clients: dict = None  # Словарь "ip - порт"
-    clients_player_id: dict = None  # Словарь "ip - id_игрока"
+    clients: List[str] = None  # Список "ip:порт" клиентов
+    clients_player_id: dict = None  # Словарь "ip:порт - id_игрока"
 
     last_free_player_id: int = None  # Последний свободный id игрока
 
     def __init__(self, parent_game):
         self.parent_game = parent_game
-        self.clients = dict()
+        self.clients = []
         self.clients_player_id = dict()
         self.last_free_player_id = 0
 
@@ -49,7 +50,7 @@ class DataSenderServerSide:
 
     def send_changes(self):
         for client_ip in self.clients:
-            host, port = client_ip, self.clients[client_ip]
+            host, port = client_ip.split(":")
             data_dict = dict()
             data_dict["type"] = "changes"
             changes = dict()
@@ -60,7 +61,7 @@ class DataSenderServerSide:
             data_dict["changes"] = changes
             data = json.dumps(data_dict)
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            sock.sendto(data.encode(), (host, port))
+            sock.sendto(data.encode(), (host, int(port)))
             if SOCKET_DEBUG:
                 print("Sent:     {}".format(data))
 
@@ -69,13 +70,13 @@ class DataSenderServerSide:
         Отправляет клиентам какой-то event-сигнал
         """
         for client_ip in self.clients:
-            host, port = client_ip, self.clients[client_ip]
+            host, port = client_ip.split(":")
             data_dict = dict()
             data_dict["type"] = "event"
             data_dict["event_type"] = event_type
             data = json.dumps(data_dict)
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            sock.sendto(data.encode(), (host, port))
+            sock.sendto(data.encode(), (host, int(port)))
             if SOCKET_DEBUG:
                 print("Sent:     {}".format(data))
 
@@ -122,6 +123,7 @@ class DataSenderClientSide:
         data_dict = dict()
         data_dict["type"] = "key"
         data_dict["ip"] = self.parent_game.client_ip
+        data_dict["port"] = self.parent_game.client_port
         data_dict["button_id"] = button_id
         data = json.dumps(data_dict)
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -136,6 +138,8 @@ class DataSenderClientSide:
         host, port = self.server, 9998
         data_dict = dict()
         data_dict["type"] = "event"
+        data_dict["ip"] = self.parent_game.client_ip
+        data_dict["port"] = self.parent_game.client_port
         data_dict["event_type"] = event_type
         data = json.dumps(data_dict)
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)

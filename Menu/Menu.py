@@ -320,8 +320,8 @@ class Menu:
         label_return_shadow = Label(self.window_surface, pos=(self.size[0] / 5 - BUTTON_WIDTH + 2, self.size[1] / 10 * 8 + 2, BUTTON_WIDTH, BUTTON_HEIGHT), text="Назад",
                                     text_color=BLACK, font_size=FONT_SIZE, font="main_menu")
         for (i, map_tuple) in enumerate(get_all_maps_names()):
-            x = 80
-            y = 50 + i * 40
+            x = self.size[0] / 2 - BUTTON_WIDTH / 2
+            y = self.size[1] / 10 * (2+i)
             button_map_name = Button(self.window_surface, pos=(x, y, BUTTON_WIDTH, BUTTON_HEIGHT), text=map_tuple[1],
                                      transparent=True, text_color=BUTTON_YELLOW,
                                      selected_text_color=BUTTON_SELECTED_YELLOW,
