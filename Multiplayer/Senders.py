@@ -29,6 +29,7 @@ class DataSenderServerSide:
         host, port = ip, port
         data_dict = dict()
         data_dict["type"] = "ok"
+        data_dict["server_name"] = "TEST SERVER"
         data_dict["ip"] = self.parent_game.server_ip
         data = json.dumps(data_dict)
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)

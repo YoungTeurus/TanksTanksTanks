@@ -3,7 +3,7 @@ import socket
 import socketserver
 from threading import Thread
 from time import sleep
-from typing import Optional
+from typing import Optional, List
 
 from Consts import SOCKET_DEBUG
 
@@ -14,7 +14,7 @@ class ServerFinder(Thread):
 
     ip_list: list = None  # Список ip-адресов для проверки наличия сервера
 
-    good_ip_list: list = None  # Список ip-адресов с обратным ответом
+    good_ip_list: List[tuple] = None  # Список ip-адресов и названий серверов с обратным ответом
 
     sent_all: bool = False  # Флаг окончания рассылки запросов на все IP
 
@@ -70,7 +70,8 @@ class ServerFinder(Thread):
 
                 if data_dict["type"] == "ok":
                     # Если сервер отправил ok
-                    self.serverchecker.good_ip_list.append(data_dict["ip"])  # Запоминаем IP сервера
+                    # Запоминаем IP и название сервера
+                    self.serverchecker.good_ip_list.append((data_dict["ip"], data_dict["server_name"]))
 
             def serve_forever(self):
                 while self.is_running:
