@@ -1,5 +1,6 @@
 import socketserver
 import threading
+from time import sleep
 
 import pygame
 from pygame.surface import Surface
@@ -8,8 +9,9 @@ from Consts import targetFPS, DARK_GREY, BLACK, MOVE_RIGHT, SHOOT, MOVE_LEFT, MO
     CHANGES_DEBUG
 from Files import ImageLoader
 from Images.Tileset import Tileset
+from Menu.ConstPopups import add_server_started_popupbox, remove_server_started_popupbox
 from Menu.MenuObjects.PopupBox import PopupBox
-from Multiplayer.Senders import DataSenderServerSide, DataSenderClientSide, EVENT_SERVER_STOP, EVENT_PLAYER_QUIT, \
+from Multiplayer.Senders import DataSenderServerSide, DataSenderClientSide, EVENT_SERVER_STOP, EVENT_CLIENT_PLAYER_QUIT, \
     EVENT_SERVER_GAME_STARTED
 from Multiplayer.UDPHandlers import MyUDPHandlerClientSide, MyUDPHandlerServerSide
 from World.World import World
@@ -73,6 +75,8 @@ class Game:
             self.world.set_ready_for_server()
             self.serverside_sender = DataSenderServerSide(self)
             self.create_serverside_server()
+            # Флаг, который принимает значение True после первой попытки ожидания клиентов.
+            self.server_waiting_started = False
         elif not self.is_server and self.multi:
             # Запуск клиента для мультиплеера
             self.clientside_sender = DataSenderClientSide(self)
@@ -82,6 +86,7 @@ class Game:
             self.connect_to_ip = connect_to_ip
             self.is_connected = False
             self.game_started = False
+            self.has_already_tried_to_connect = False
 
         if not multi:
             # Запуск одиночки
@@ -97,20 +102,31 @@ class Game:
         if self.is_server and multi:
             self.world.load_world_map(start_map_id)
             self.world.clear_changes()
-            # Если мы сервер, то мы ничего не делаем до тех пор, пока не подключится хотя бы 1 клиент
-            # TODO: сделать проверку на количество подключённых игроков
-            while self.serverside_sender.clients.__len__() < 2 and self.game_running:
-                # Обработка событий:
-                for event in pygame.event.get():
-                    if event.type == pygame.QUIT:
-                        self.stop_game()
-            if self.game_started:
-                self.serverside_sender.send_event(EVENT_SERVER_GAME_STARTED)
-            # Как только к нам подключились, спавним игрока и центруем на нём камеру
-            # self.world.spawn_player()
-            # self.world.center_camera_on_player()
 
         self.main_cycle()
+
+    def wait_for_players(self, num_of_player_to_start: int = 2):
+
+        def check_players_ready():
+            for client in self.serverside_sender.clients:
+                if not client.ready:
+                    # Если хотя бы один клиент не готов
+                    return False
+            return True
+
+        if self.serverside_sender.clients.__len__() < num_of_player_to_start:
+            return
+        if not check_players_ready():
+            # Пока игроки не будут готовы, ждём.
+            return
+        # Как только к нам подключилост достаточное количество игроков, спавним их и центруем камеру
+        self.serverside_sender.send_event(EVENT_SERVER_GAME_STARTED)
+        for (i, player) in enumerate(self.serverside_sender.clients):
+            self.world.spawn_player(i)
+        self.world.center_camera_on_player()
+
+        remove_server_started_popupbox(self)
+        self.game_started = True
 
     def create_clientside_server(self):
         class MyUDPHandlerClientSideWithObject(MyUDPHandlerClientSide):  # Костыль(?)
@@ -216,9 +232,10 @@ class Game:
                     if keyboard_pressed[SHOOT]:
                         self.clientside_sender.send_button("SHOOT")
 
-            # Тестовая попытка подключиться к серверу:
-            if not self.is_server and not self.is_connected and self.multi:
+            # Попытка подключиться к серверу при запуске клиента:
+            if not self.is_server and not self.is_connected and self.multi and not self.has_already_tried_to_connect:
                 self.clientside_sender.ask_for_ok(self.connect_to_ip)
+                self.has_already_tried_to_connect = True
 
             # if not self.world.check_if_player_is_alive():
             #     self.game_over(0)
@@ -226,13 +243,20 @@ class Game:
             # if not self.world.check_if_base_is_alive():
             #     self.game_over(1)
 
+            if self.is_server and not self.game_started:
+                if not self.server_waiting_started:
+                    add_server_started_popupbox(self)
+                    self.server_waiting_started = True
+                # Пока сервер не стартанул
+                self.wait_for_players()
+
             if self.game_started:
                 self.world.draw()
 
             if self.is_server or not self.multi:
                 self.world.act()
                 # Спавн врагов:
-                if self.world.enemy_spawn_timer.is_ready():
+                if self.world.enemy_spawn_timer.is_ready() and self.world.enemies_remains > 0:
                     if self.world.create_enemy():
                         # Если получилось заспавнить врага
                         self.world.enemies_remains -= 1
@@ -242,7 +266,7 @@ class Game:
                 if (changes := self.world.get_changes()).__len__() > 0 and self.multi:
                     if CHANGES_DEBUG:
                         print(changes)
-                    self.serverside_sender.send_changes()  # Вместо "localhost" - все клиенты
+                    self.serverside_sender.send_changes()
                 self.world.clear_changes()
 
             self.window_surface.blit(self.game_surface, self.game_rect)
@@ -253,12 +277,6 @@ class Game:
                 self.any_popup_box.update()
 
             pygame.display.update()
-
-            # if not self.is_server:
-            #     self.check_id_timer.tick()
-            #     if self.check_id_timer.is_ready():
-            #         if not self.world.check_if_all_world_ids_are_correct():
-            #             raise Exception("IDs are not correct!")
 
     def game_over(self, game_over_id):
         game_overs = [
@@ -276,9 +294,13 @@ class Game:
             if self.is_server:
                 # Если сервер
                 self.serverside_sender.send_event(EVENT_SERVER_STOP)
+                self.serverside_server.shutdown()
+                self.serverside_server.server_close()
             else:
                 # Если клиент
-                self.clientside_sender.send_event(EVENT_PLAYER_QUIT)
+                self.clientside_sender.send_event(EVENT_CLIENT_PLAYER_QUIT)
+                self.clientside_server.shutdown()
+                self.clientside_server.server_close()
         else:
             # Если одиночка
             pass

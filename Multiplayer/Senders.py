@@ -6,9 +6,19 @@ from Consts import SOCKET_DEBUG, MAPS
 from Files import get_script_dir
 
 EVENT_CLIENT_CONNECTED = "EVENT_CLIENT_CONNECTED"
+EVENT_CLIENT_PLAYER_QUIT = "EVENT_CLIENT_PLAYER_QUIT"
+EVENT_CLIENT_READY = "EVENT_CLIENT_READY"
 EVENT_SERVER_GAME_STARTED = "EVENT_SERVER_GAME_STARTED"
 EVENT_SERVER_STOP = "EVENT_SERVER_STOP"
-EVENT_PLAYER_QUIT = "EVENT_PLAYER_QUIT"
+
+
+class Client:
+    ip_port_combo: str = None  # Запись ip адреса и порта клиента
+    ready: bool = None  # Флаг готовности клиента
+
+    def __init__(self, ip_port_combo):
+        self.ip_port_combo = ip_port_combo
+        self.ready = False
 
 
 class DataSenderServerSide:
@@ -16,7 +26,7 @@ class DataSenderServerSide:
     Данный класс отправляет клиентам необходимые данные
     """
     parent_game = None
-    clients: List[str] = None  # Список "ip:порт" клиентов
+    clients: List[Client] = None  # Список клиентов
     clients_player_id: dict = None  # Словарь "ip:порт - id_игрока"
 
     last_free_player_id: int = None  # Последний свободный id игрока
@@ -44,7 +54,7 @@ class DataSenderServerSide:
         data_dict = dict()
         data_dict["type"] = "load_world"
         data_dict["world_id"] = world_id
-        data_dict["world"] = open(get_script_dir()+MAPS[world_id], "r").read()
+        data_dict["world"] = open(get_script_dir() + MAPS[world_id], "r").read()
         data = json.dumps(data_dict)
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.sendto(data.encode(), (host, port))
@@ -52,8 +62,8 @@ class DataSenderServerSide:
             print("Sent:     {}".format(data))
 
     def send_changes(self):
-        for client_ip in self.clients:
-            host, port = client_ip.split(":")
+        for client in self.clients:
+            host, port = client.ip_port_combo.split(":")
             data_dict = dict()
             data_dict["type"] = "changes"
             changes = dict()
@@ -72,8 +82,8 @@ class DataSenderServerSide:
         """
         Отправляет клиентам какой-то event-сигнал
         """
-        for client_ip in self.clients:
-            host, port = client_ip.split(":")
+        for client in self.clients:
+            host, port = client.ip_port_combo.split(":")
             data_dict = dict()
             data_dict["type"] = "event"
             data_dict["event_type"] = event_type
