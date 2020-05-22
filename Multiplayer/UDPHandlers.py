@@ -71,7 +71,7 @@ def add_disconnected_from_server_popupbox(game):
 
 def remove_disconnected_from_server_popupbox_and_return_to_menu(game):
     game.any_popup_box = None
-    game.return_to_menu()
+    game.return_to_menu(send_to_server=False)
 
 
 # Всплывающее окошка "Ожидайте начала игры"

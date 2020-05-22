@@ -104,7 +104,8 @@ class Game:
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
                         self.stop_game()
-            self.serverside_sender.send_event(EVENT_SERVER_GAME_STARTED)
+            if self.game_started:
+                self.serverside_sender.send_event(EVENT_SERVER_GAME_STARTED)
             # Как только к нам подключились, спавним игрока и центруем на нём камеру
             # self.world.spawn_player()
             # self.world.center_camera_on_player()
