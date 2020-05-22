@@ -17,7 +17,6 @@ def main():
     while True:
         menu = Menu(window_surface)
         result = menu.main_cycle()
-
         if result["result"] == "start":
             if result["multi"]:
                 # Если сетевая игра
@@ -29,7 +28,8 @@ def main():
                 else:
                     # Если запускается сервер
                     game = Game(window_surface, is_server=True,
-                                multi=True, server_ip=result["server_ip"])  # Создание игры
+                                multi=True, server_ip=result["server_ip"],
+                                dedicated=result["dedicated"])  # Создание игры
             else:
                 # Если одиночная игра
                 game = Game(window_surface, is_server=False, multi=False)  # Создание игры

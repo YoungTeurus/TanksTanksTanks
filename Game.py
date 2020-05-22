@@ -1,6 +1,5 @@
 import socketserver
 import threading
-from time import sleep
 
 import pygame
 from pygame.surface import Surface
@@ -41,7 +40,7 @@ class Game:
 
     def __init__(self, window_surface, is_server, multi, start_map_id: int = None,
                  connect_to_ip: str = None, server_ip: str = None, client_ip: str = None,
-                 client_port: int = None):
+                 client_port: int = None, dedicated: bool = None):
         """
         Если multi = False, значит никакой работы с сервером и клиентом проводиться не будет.
         Елси multi = True:
@@ -93,7 +92,7 @@ class Game:
             self.world.load_world_map(start_map_id)
             self.world.spawn_player()
             self.world.center_camera_on_player()
-            self.game_started = True  #TODO: Временно
+            self.game_started = True  # TODO: Временно
 
         self.server_button_pressed = False  # Флаг для однократной отработки нажатия кнопки подключения
 
