@@ -2,13 +2,15 @@ import socketserver
 import threading
 
 import pygame
+from pygame.surface import Surface
 
 from Consts import targetFPS, DARK_GREY, BLACK, MOVE_RIGHT, SHOOT, MOVE_LEFT, MOVE_DOWN, MOVE_UP, \
     CHANGES_DEBUG
 from Files import ImageLoader
 from Images.Tileset import Tileset
 from Menu.MenuObjects.PopupBox import PopupBox
-from Multiplayer.Senders import DataSenderServerSide, DataSenderClientSide, EVENT_SERVER_STOP, EVENT_PLAYER_QUIT
+from Multiplayer.Senders import DataSenderServerSide, DataSenderClientSide, EVENT_SERVER_STOP, EVENT_PLAYER_QUIT, \
+    EVENT_SERVER_GAME_STARTED
 from Multiplayer.UDPHandlers import MyUDPHandlerClientSide, MyUDPHandlerServerSide
 from World.World import World
 
@@ -19,12 +21,13 @@ class Game:
     clientside_server: socketserver.UDPServer = None
     serverside_server: socketserver.UDPServer = None
 
-    window_surface = None  # Основная поверхность
+    window_surface: Surface = None  # Основная поверхность
 
     is_server: bool = None
     is_connected: bool = None  # Подключён ли клиент к серверу
-    multi = None  # Сетевой режим или нет?
-    game_running = None  # Флаг запущенной игры
+    multi: bool = None  # Сетевой режим или нет?
+    game_started: bool = None  # Флаг начала игры
+    game_running: bool = None  # Флаг запущенной игры
 
     connect_to_ip: str = None  # Адрес, к которому будет пытаться подключиться клиент
     client_ip: str = None  # Адрес, на котором расположен клиент
@@ -32,7 +35,7 @@ class Game:
     server_ip: str = None  # Адрес, на котором расположен сервер
 
     any_popup_box: PopupBox = None  # PopupBox должен быть здесь
-    need_to_return_to_menu: bool = False  # Уставнока этого флага позволяет вернуться в меню после завершения игры
+    need_to_return_to_menu: bool = False  # Установка этого флага позволяет вернуться в меню после завершения игры
 
     def __init__(self, window_surface, is_server, multi, start_map_id: int = None,
                  connect_to_ip: str = None, server_ip: str = None, client_ip: str = None,
@@ -78,12 +81,14 @@ class Game:
             self.create_clientside_server()
             self.connect_to_ip = connect_to_ip
             self.is_connected = False
+            self.game_started = False
 
         if not multi:
             # Запуск одиночки
             self.world.load_world_map(start_map_id)
             self.world.spawn_player()
             self.world.center_camera_on_player()
+            self.game_started = True  #TODO: Временно
 
         self.server_button_pressed = False  # Флаг для однократной отработки нажатия кнопки подключения
 
@@ -99,6 +104,7 @@ class Game:
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
                         self.stop_game()
+            self.serverside_sender.send_event(EVENT_SERVER_GAME_STARTED)
             # Как только к нам подключились, спавним игрока и центруем на нём камеру
             # self.world.spawn_player()
             # self.world.center_camera_on_player()
@@ -212,7 +218,6 @@ class Game:
             # Тестовая попытка подключиться к серверу:
             if not self.is_server and not self.is_connected and self.multi:
                 self.clientside_sender.ask_for_ok(self.connect_to_ip)
-                self.is_connected = True
 
             # if not self.world.check_if_player_is_alive():
             #     self.game_over(0)
@@ -220,7 +225,8 @@ class Game:
             # if not self.world.check_if_base_is_alive():
             #     self.game_over(1)
 
-            self.world.draw()
+            if self.game_started:
+                self.world.draw()
 
             if self.is_server or not self.multi:
                 self.world.act()
@@ -277,6 +283,6 @@ class Game:
             pass
         self.game_running = False
 
-    def return_to_menu(self):
+    def return_to_menu(self, send_to_server=False):
         self.need_to_return_to_menu = True
-        self.stop_game(send_to_server=False)
+        self.stop_game(send_to_server)

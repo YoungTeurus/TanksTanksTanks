@@ -10,10 +10,12 @@ from Menu.Menu import MAIN_MENU_BACKGROUND_COLOR, BUTTON_YELLOW, MENU_WHITE
 from Menu.MenuObjects.ButtonTrigger import ButtonTrigger
 from Menu.MenuObjects.Label import Label
 from Menu.MenuObjects.PopupBox import PopupBox
-from Multiplayer.Senders import EVENT_SERVER_STOP, EVENT_PLAYER_QUIT
+from Multiplayer.Senders import EVENT_SERVER_STOP, EVENT_PLAYER_QUIT, EVENT_SERVER_GAME_STARTED, EVENT_CLIENT_CONNECTED
 
 
+# Всплывающее окошка "Сервер закрыт"
 def add_disconnected_from_server_popupbox(game):
+    game.any_popup_box = None
     # Всплывающее окно "Сервер закрыт":
     popupbox = PopupBox(game.window_surface, pos=(game.window_surface.get_width() / 2 - 100,
                                                   game.window_surface.get_height() / 2 - 50, 200, 100),
@@ -52,7 +54,8 @@ def add_disconnected_from_server_popupbox(game):
                                       text="Нажмите ESC!", text_color=BLACK,
                                       font_size=16, font="main_menu")
     buttontrigger_popupbox_quit_esc = ButtonTrigger(key=pygame.K_ESCAPE,
-                                                    function_list=[remove_disconnected_from_server_popupbox_and_return_to_menu],
+                                                    function_list=[
+                                                        remove_disconnected_from_server_popupbox_and_return_to_menu],
                                                     args_list=[game])
 
     popupbox.add_object(buttontrigger_popupbox_quit_esc)
@@ -69,6 +72,72 @@ def add_disconnected_from_server_popupbox(game):
 def remove_disconnected_from_server_popupbox_and_return_to_menu(game):
     game.any_popup_box = None
     game.return_to_menu()
+
+
+# Всплывающее окошка "Ожидайте начала игры"
+def add_wait_for_start_popupbox(game):
+    game.any_popup_box = None
+    # Всплывающее окно "Ожидайте начала игры":
+    popupbox = PopupBox(game.window_surface, pos=(game.window_surface.get_width() / 2 - 150,
+                                                  game.window_surface.get_height() / 2 - 75, 300, 150),
+                        color=MAIN_MENU_BACKGROUND_COLOR)
+    label_popupbox_title = Label(game.window_surface,
+                                 pos=(popupbox.rect.x + popupbox.rect.w / 2,
+                                      popupbox.rect.y + 15,
+                                      0, 0),
+                                 text="Вы подключёны к серверу", text_color=MENU_WHITE,
+                                 font_size=20, font="main_menu")
+    label_popupbox_title_shadow = Label(game.window_surface,
+                                        pos=(popupbox.rect.x + popupbox.rect.w / 2 + 2,
+                                             popupbox.rect.y + 17, 0, 0),
+                                        text="Вы подключёны к серверу", text_color=BLACK,
+                                        font_size=20, font="main_menu")
+    label_popupbox_title2 = Label(game.window_surface,
+                                  pos=(popupbox.rect.x + popupbox.rect.w / 2,
+                                       popupbox.rect.y + 45,
+                                       0, 0),
+                                  text="Ожидайте начала игры", text_color=BUTTON_YELLOW,
+                                  font_size=28, font="main_menu")
+    label_popupbox_title2_shadow = Label(game.window_surface,
+                                         pos=(popupbox.rect.x + popupbox.rect.w / 2 + 2,
+                                              popupbox.rect.y + 47, 0, 0),
+                                         text="Ожидайте начала игры", text_color=BLACK,
+                                         font_size=28, font="main_menu")
+    label_popupbox_esc = Label(game.window_surface,
+                               pos=(popupbox.rect.x + popupbox.rect.w / 2,
+                                    popupbox.rect.y + 125,
+                                    0, 0),
+                               text="Нажмите ESC, чтобы отключиться", text_color=BUTTON_YELLOW,
+                               font_size=16, font="main_menu")
+    label_popupbox_esc_shadow = Label(game.window_surface,
+                                      pos=(popupbox.rect.x + popupbox.rect.w / 2 + 2,
+                                           popupbox.rect.y + 127, 0, 0),
+                                      text="Нажмите ESC, чтобы отключиться", text_color=BLACK,
+                                      font_size=16, font="main_menu")
+    buttontrigger_popupbox_quit_esc = ButtonTrigger(key=pygame.K_ESCAPE,
+                                                    function_list=[
+                                                        remove_wait_popupbox_and_return_to_menu],
+                                                    args_list=[game])
+
+    popupbox.add_object(buttontrigger_popupbox_quit_esc)
+    popupbox.add_object(label_popupbox_title_shadow)
+    popupbox.add_object(label_popupbox_title)
+    popupbox.add_object(label_popupbox_title2_shadow)
+    popupbox.add_object(label_popupbox_title2)
+    popupbox.add_object(label_popupbox_esc_shadow)
+    popupbox.add_object(label_popupbox_esc)
+
+    game.any_popup_box = popupbox
+
+
+def remove_wait_popupbox_for_start_popupbox(game):
+    game.any_popup_box = None
+    game.game_started = True
+
+
+def remove_wait_popupbox_and_return_to_menu(game):
+    game.any_popup_box = None
+    game.return_to_menu(send_to_server=True)
 
 
 class MyUDPHandlerClientSide(socketserver.BaseRequestHandler):
@@ -112,6 +181,13 @@ class MyUDPHandlerClientSide(socketserver.BaseRequestHandler):
                 # Отключаем клиент
                 add_disconnected_from_server_popupbox(self.parent_game)
                 # self.parent_game.stop_game()
+            elif data_dict["event_type"] == EVENT_SERVER_GAME_STARTED:
+                # Если пришёл event начала игры
+                remove_wait_popupbox_for_start_popupbox(self.parent_game)
+            elif data_dict["event_type"] == EVENT_CLIENT_CONNECTED:
+                # Если пришёл event, что мы подключились
+                self.parent_game.is_connected = True  # Устанавливаем флаг подключения
+                add_wait_for_start_popupbox(self.parent_game)
 
 
 class MyUDPHandlerServerSide(socketserver.BaseRequestHandler):
@@ -132,21 +208,22 @@ class MyUDPHandlerServerSide(socketserver.BaseRequestHandler):
             # Если клиент спрашивает об OK-ее
             self.parent_game.serverside_sender.send_ok(data_dict["ip"], data_dict["port"])  # Отправляем ему OK
         elif data_dict["type"] == "connect":
+            ip_port_combo = "{}:{}".format(data_dict["ip"], data_dict["port"])
             # Если клиент хочет подключиться
-            if self.client_address[0] not in self.parent_game.serverside_sender.clients:
+            if ip_port_combo not in self.parent_game.serverside_sender.clients:
                 # Если этого IP ещё не было, заносим его в список клиентов
                 # Заносим IP-шник и порт отправителю
-                ip_port_combo = "{}:{}".format(data_dict["ip"], data_dict["port"])
                 self.parent_game.serverside_sender.clients.append(ip_port_combo)
                 # Присваиваем ip-шнику id игрока
                 self.parent_game.serverside_sender.clients_player_id[
                     ip_port_combo] = self.parent_game.serverside_sender.last_free_player_id
                 self.parent_game.serverside_sender.last_free_player_id += 1
-            # Говорим клиенту подгрузить такую-то карту
-            self.parent_game.serverside_sender.send_load_world(data_dict["ip"], data_dict["port"],
-                                                               self.parent_game.world.world_map.map_id)
-            self.parent_game.world.spawn_player()  # Спавн нового игрока
-            self.parent_game.world.center_camera_on_player()
+                # Говорим клиенту подгрузить такую-то карту
+                self.parent_game.serverside_sender.send_event(EVENT_CLIENT_CONNECTED)
+                self.parent_game.serverside_sender.send_load_world(data_dict["ip"], data_dict["port"],
+                                                                   self.parent_game.world.world_map.map_id)
+                self.parent_game.world.spawn_player()  # Спавн нового игрока
+                self.parent_game.world.center_camera_on_player()
         elif data_dict["type"] == "key":
             ip_port_combo = "{}:{}".format(data_dict["ip"], data_dict["port"])
             player_id = self.parent_game.serverside_sender.clients_player_id[ip_port_combo]
