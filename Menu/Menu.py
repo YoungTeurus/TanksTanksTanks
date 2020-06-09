@@ -353,6 +353,18 @@ class Menu:
         self.objects.append(buttontrigger_esc)
 
     def start_multi_game_client(self):
+        def get_and_check_port():
+            while True:
+                port = randint(9999, 60000)
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                try:
+                    sock.bind((self.result["client_ip"], port))
+                except OSError:
+                    continue
+                finally:
+                    sock.close()
+                break
+            return port
         self.is_running = False
         self.result["result"] = "start"
         self.result["mode"] = "client"
@@ -360,7 +372,7 @@ class Menu:
         if "client_ip" not in self.result:
             self.result["client_ip"] = socket.gethostbyname(socket.getfqdn())
         if "client_port" not in self.result:
-            self.result["client_port"] = randint(9999, 60000)
+            self.result["client_port"] = get_and_check_port()
 
     def load_start_multi_group(self):
         """

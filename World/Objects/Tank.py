@@ -209,6 +209,9 @@ class Vector2:
 # TODO: разнести эти классы в разные места. Как-то.
 
 class PlayerTank(Tank):
+
+    last_pressed_direction: str = None  # Последнее направление, в которое двигались
+
     def __init__(self, world):
         super().__init__(world)
 

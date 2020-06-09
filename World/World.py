@@ -1,3 +1,5 @@
+from typing import List
+
 from Consts import DEFAULT_DELAY_BETWEEN_ENEMY_SPAWN, MAX_ENEMIES_ON_ONE_MOMENT, DEFAULT_ENEMIES_ON_LEVEL
 from World.Camera import Camera
 from World.Map import Map
@@ -5,7 +7,7 @@ import random
 
 from World.Objects.Collisionable import remove_if_exists_in
 from World.Objects.RotatableWorldObject import RotatableWorldObject
-from World.Objects.Tank import PlayerTank, EnemyTank, Bullet
+from World.Objects.Tank import PlayerTank, EnemyTank, Bullet, Tank
 from World.Timer import Timer
 
 
@@ -13,12 +15,12 @@ class World:
     """
     Класс, содеражащий в себе информацию об отображаемой карте и всех объектах на ней.
     """
-    camera = None  # Камера
-    players = []  # Игрок
+    camera: Camera = None  # Камера
+    players: List[PlayerTank] = []  # Игрок
     parent_surface = None  # Та поверхность, на которой будет происходить отрисовка всего мира
     parent_tileset = None
 
-    all_tanks = []  # Все танки, которые необходимо отрисовывать
+    all_tanks: List[Tank] = []  # Все танки, которые необходимо отрисовывать
     all_bullets = []  # Все пули, которые необходимо отрисовывать
     all_tiles = []  # Все тайлы, которые необходимо отрисовывать (тайлы заносятся сюда в .set_tile() )
     collisionable_objects = []  # Все объекты, с которыми нужно проверять столкновение

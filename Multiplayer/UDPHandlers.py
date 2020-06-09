@@ -104,13 +104,16 @@ class MyUDPHandlerServerSide(socketserver.BaseRequestHandler):
             ip_port_combo = "{}:{}".format(data_dict["ip"], data_dict["port"])
             player_id = self.parent_game.serverside_sender.clients_player_id[ip_port_combo]
             if data_dict["button_id"] == "MOVE_UP":
-                self.parent_game.world.move_player_to(player_id, "UP", )
+                self.parent_game.world.move_player_to(player_id, "UP")
             elif data_dict["button_id"] == "MOVE_DOWN":
                 self.parent_game.world.move_player_to(player_id, "DOWN")
+                # self.parent_game.button_move_player(direction="DOWN", remote=False, player_id=player_id)
             elif data_dict["button_id"] == "MOVE_LEFT":
                 self.parent_game.world.move_player_to(player_id, "LEFT")
+                # self.parent_game.button_move_player(direction="LEFT", remote=False, player_id=player_id)
             elif data_dict["button_id"] == "MOVE_RIGHT":
                 self.parent_game.world.move_player_to(player_id, "RIGHT")
+                # self.parent_game.button_move_player(direction="RIGHT", remote=False, player_id=player_id)
             elif data_dict["button_id"] == "SHOOT":
                 self.parent_game.world.create_bullet(self.parent_game.world.players[player_id])
         elif data_dict["type"] == "event":
