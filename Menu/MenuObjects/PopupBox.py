@@ -25,7 +25,6 @@ class PopupBox(MenuObject):
     --------------------------------------
     """
 
-    box_surface: Surface = None  # Поверхность всплывшего окошка
     dark_background: Surface = None  # Полупрозрачный фон (для одноразового создания поверхности)
 
     rect: Rect = None
@@ -35,7 +34,11 @@ class PopupBox(MenuObject):
     is_running: bool = None  # Показывается ли сейчас окошко
     need_to_darken_background: bool = None  # Нужно ли затемнять остальное окно
 
-    def __init__(self, window_surface: Surface, pos: tuple = None, color: tuple = None, darken_background: bool = None):
+    blocking: bool = None  # Блокирует ли PopupBox остальные input-ы
+    fill: bool = None  # Нужно ли заливать PopupBox цветом color
+
+    def __init__(self, window_surface: Surface, pos: tuple = None, color: tuple = None, darken_background: bool = None,
+                 blocking: bool = True, fill: bool = True):
         self.window_surface = window_surface
         self.box_objects = []
 
@@ -47,12 +50,15 @@ class PopupBox(MenuObject):
         if color is not None:
             self.color = color
         else:
-            self.color = GREY  # Стандартный цвет кнопки
+            self.color = GREY  # Стандартный цвет заливки PopupBox-а.
 
         if darken_background is not None:
             self.need_to_darken_background = darken_background
         else:
             self.need_to_darken_background = True
+
+        self.blocking = blocking
+        self.fill = fill
 
     def add_object(self, obj: MenuObject):
         """
@@ -68,10 +74,12 @@ class PopupBox(MenuObject):
                 self.dark_background.fill(HALF_BLACK)
             # Наложение полупрозрачного чёрного фона на картинку
             self.window_surface.blit(self.dark_background, (0, 0))
-        # Отрисовка тени:
-        self.window_surface.fill(BLACK, (self.rect.x + 2, self.rect.y + 2, self.rect.width, self.rect.height))
-        # Отрисовка самого PopupBox-а
-        self.window_surface.fill(self.color, self.rect)
+
+        if self.fill:
+            # Отрисовка тени:
+            self.window_surface.fill(BLACK, (self.rect.x + 2, self.rect.y + 2, self.rect.width, self.rect.height))
+            # Отрисовка самого PopupBox-а
+            self.window_surface.fill(self.color, self.rect)
 
         for obj in self.box_objects:
             obj.draw()

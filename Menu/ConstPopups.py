@@ -10,8 +10,10 @@ from Menu.MenuObjects.ButtonTrigger import ButtonTrigger
 from Menu.MenuObjects.Label import Label
 from Menu.MenuObjects.PopupBox import PopupBox
 
-
 # Всплывающее окошко "Сервер закрыт"
+from Menu.MenuObjects.TextBox import TextBox
+
+
 def add_disconnected_from_server_popupbox(game):
     game.any_popup_box = None
     # Всплывающее окно "Сервер закрыт":
@@ -201,3 +203,51 @@ def remove_server_started_popupbox_and_return_to_menu(game):
 
 def remove_server_started_popupbox(game):
     game.any_popup_box = None
+
+
+# Всплывающее окошко "чат"
+def add_chat(game):
+    def send_msg():
+        message = textbox_message.text_str
+        if len(message) > 0:
+            game.send_chat_message(message)
+        remove_chat(game)
+
+    game.any_popup_box = None
+
+    popupbox = PopupBox(game.window_surface, pos=(0, 0, 0, 0),
+                        fill=False, darken_background=True)
+
+    textbox_width = game.window_surface.get_width() / 2
+    textbox_height = 40
+
+    textbox_message = TextBox(game.window_surface,
+                              pos=(0, 0, textbox_width, textbox_height),
+                              empty_text="Введите сюда своё сообщение...",
+                              font="main_menu", font_size=18,
+                              function_onEnter=send_msg)
+
+    buttontrigger_popupbox_quit_esc = ButtonTrigger(key=pygame.K_ESCAPE,
+                                                    function_list=[remove_chat],
+                                                    args_list=[game])
+    buttontrigger_send_message_enter = ButtonTrigger(key=pygame.K_RETURN,
+                                                     function_list=[send_msg],
+                                                     args_list=[None])
+
+    popupbox.add_object(buttontrigger_popupbox_quit_esc)
+    popupbox.add_object(buttontrigger_send_message_enter)
+    popupbox.add_object(textbox_message)
+
+    game.any_popup_box = popupbox
+
+
+def remove_chat(game):
+    game.any_popup_box = None
+
+
+# Чат-лог
+def add_chatlog(game):
+    popupbox = PopupBox(game.window_surface, pos=(0, 0, 0, 0),
+                        fill=False, darken_background=False)
+
+    game.chatlog_popup_box = popupbox

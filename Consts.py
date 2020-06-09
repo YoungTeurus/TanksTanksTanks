@@ -67,6 +67,7 @@ MOVE_LEFT = pygame.K_LEFT
 MOVE_UP = pygame.K_UP
 MOVE_DOWN = pygame.K_DOWN
 SHOOT = pygame.K_SPACE
+CHAT_BUTTON = pygame.K_t
 
 # Сообщения для сервера:
 CREATE_STRING = "create {object_type} {x} {y} {width} {height} {image_name} {start_angle} {world_id}"

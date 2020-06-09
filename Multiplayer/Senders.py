@@ -10,6 +10,7 @@ EVENT_CLIENT_PLAYER_QUIT = "EVENT_CLIENT_PLAYER_QUIT"
 EVENT_CLIENT_READY = "EVENT_CLIENT_READY"
 EVENT_SERVER_GAME_STARTED = "EVENT_SERVER_GAME_STARTED"
 EVENT_SERVER_STOP = "EVENT_SERVER_STOP"
+EVENT_CLIENT_SEND_CHAT_MESSAGE = "EVENT_CLIENT_SEND_CHAT_MESSAGE"
 
 
 class Client:
@@ -144,7 +145,7 @@ class DataSenderClientSide:
         if SOCKET_DEBUG:
             print("Sent:     {}".format(data))
 
-    def send_event(self, event_type: str):
+    def send_event(self, event_type: str, event_data: str = None):
         """
         Отправляет серверу какой-то event-сигнал
         """
@@ -154,6 +155,8 @@ class DataSenderClientSide:
         data_dict["ip"] = self.parent_game.client_ip
         data_dict["port"] = self.parent_game.client_port
         data_dict["event_type"] = event_type
+        if event_data is not None:
+            data_dict["event_data"] = event_data
         data = json.dumps(data_dict)
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.sendto(data.encode(), (host, port))
