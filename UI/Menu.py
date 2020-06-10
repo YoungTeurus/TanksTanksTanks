@@ -27,6 +27,20 @@ TITLE_FONT_SIZE = 48
 FONT_SIZE = 38
 
 
+def get_and_check_port(ip: str):
+    while True:
+        port = randint(9999, 60000)
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            sock.bind((ip, port))
+        except OSError:
+            continue
+        finally:
+            sock.close()
+        break
+    return port
+
+
 class Menu:
     is_running: bool = None  # Флаг запущенного меню
 
@@ -348,18 +362,6 @@ class Menu:
         self.objects.append(buttontrigger_esc)
 
     def start_multi_game_client(self):
-        def get_and_check_port():
-            while True:
-                port = randint(9999, 60000)
-                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                try:
-                    sock.bind((self.result["client_ip"], port))
-                except OSError:
-                    continue
-                finally:
-                    sock.close()
-                break
-            return port
         self.is_running = False
         self.result["result"] = "start"
         self.result["mode"] = "client"
@@ -367,7 +369,7 @@ class Menu:
         if "client_ip" not in self.result:
             self.result["client_ip"] = socket.gethostbyname(socket.getfqdn())
         if "client_port" not in self.result:
-            self.result["client_port"] = get_and_check_port()
+            self.result["client_port"] = get_and_check_port(self.result["client_ip"])
 
     def load_start_multi_group(self):
         """
@@ -580,7 +582,7 @@ class Menu:
         if "client_ip" not in self.result:
             self.result["client_ip"] = socket.gethostbyname(socket.getfqdn())
         if "client_port" not in self.result:
-            self.result["client_port"] = randint(9999, 60000)
+            self.result["client_port"] = get_and_check_port(self.result["client_ip"])
         server_finders.append(ServerFinder(self.result["client_ip"], self.result["client_port"]))
 
         servers: List[ServerRecord] = []  # Список кнопок с ip-адресами серверов
@@ -880,7 +882,7 @@ class Menu:
                                             text_color=BLACK, font_size=FONT_SIZE, font="main_menu")
         button_multi_settings = Button(self.window_surface, pos=(
             self.size[0] / 2 - BUTTON_WIDTH / 2, self.size[1] / 10 * 3, BUTTON_WIDTH, BUTTON_HEIGHT),
-                                       text="Настройки подключения",
+                                       text="Настройки сетевой игры",
                                        transparent=True, text_color=BUTTON_YELLOW,
                                        selected_text_color=BUTTON_SELECTED_YELLOW,
                                        font_size=FONT_SIZE, font="main_menu",
@@ -889,7 +891,7 @@ class Menu:
                                        function_onHover=self.play_sound, arg_onHover="select")
         label_multi_settings_shadow = Label(self.window_surface, pos=(
             self.size[0] / 2 - BUTTON_WIDTH / 2 + 2, self.size[1] / 10 * 3 + 2, BUTTON_WIDTH, BUTTON_HEIGHT),
-                                            text="Настройки подключения",
+                                            text="Настройки сетевой игры",
                                             text_color=BLACK, font_size=FONT_SIZE, font="main_menu")
         label_menu_name = Label(self.window_surface, pos=(self.size[0] / 2, self.size[1] / 10 * 1, AUTO_W, AUTO_H),
                                 text="НАСТРОЙКИ",
@@ -955,11 +957,74 @@ class Menu:
         self.objects.append(label_menu_name)
         self.objects.append(buttontrigger_esc)
 
-    is_client_ip_local = None
-
     def load_multi_settings_group(self):
         """
-        Загружает элементы подменю "Настройки подключения"
+        Загружает элементы подменю "Настройки сетевой игры"
+        """
+        self.objects.clear()
+
+        button_ip_settings = Button(self.window_surface, pos=(
+            self.size[0] / 2 - BUTTON_WIDTH / 2, self.size[1] / 10 * 2, BUTTON_WIDTH, BUTTON_HEIGHT),
+                                    text="IP адрес клиента",
+                                    transparent=True, text_color=BUTTON_YELLOW,
+                                    selected_text_color=BUTTON_SELECTED_YELLOW,
+                                    font_size=FONT_SIZE, font="main_menu",
+                                    function_onClick_list=[self.play_sound, self.load_ip_settings_group],
+                                    args_list=["press", None],
+                                    function_onHover=self.play_sound, arg_onHover="select")
+        label_ip_settings_shadow = Label(self.window_surface, pos=(
+            self.size[0] / 2 - BUTTON_WIDTH / 2 + 2, self.size[1] / 10 * 2 + 2, BUTTON_WIDTH, BUTTON_HEIGHT),
+                                         text="IP адрес клиента",
+                                         text_color=BLACK, font_size=FONT_SIZE, font="main_menu")
+        button_name_settings = Button(self.window_surface, pos=(
+            self.size[0] / 2 - BUTTON_WIDTH / 2, self.size[1] / 10 * 3, BUTTON_WIDTH, BUTTON_HEIGHT),
+                                      text="Выбор никнейма",
+                                      transparent=True, text_color=BUTTON_YELLOW,
+                                      selected_text_color=BUTTON_SELECTED_YELLOW,
+                                      font_size=FONT_SIZE, font="main_menu",
+                                      function_onClick_list=[self.play_sound, self.load_name_settings_group],
+                                      args_list=["press", None],
+                                      function_onHover=self.play_sound, arg_onHover="select")
+        label_name_settings_shadow = Label(self.window_surface, pos=(
+            self.size[0] / 2 - BUTTON_WIDTH / 2 + 2, self.size[1] / 10 * 3 + 2, BUTTON_WIDTH, BUTTON_HEIGHT),
+                                           text="Выбор никнейма",
+                                           text_color=BLACK, font_size=FONT_SIZE, font="main_menu")
+        label_menu_name = Label(self.window_surface, pos=(self.size[0] / 2, self.size[1] / 10 * 1, AUTO_W, AUTO_H),
+                                text="Настройки сетевой игры".upper(),
+                                text_color=MENU_WHITE, font_size=TITLE_FONT_SIZE, font="main_menu")
+        label_menu_name_shadow = Label(self.window_surface,
+                                       pos=(self.size[0] / 2 + 2, self.size[1] / 10 * 1 + 2, AUTO_W, AUTO_H),
+                                       text="Настройки сетевой игры".upper(),
+                                       text_color=BLACK, font_size=TITLE_FONT_SIZE, font="main_menu")
+        buttontrigger_esc = ButtonTrigger(key=pygame.K_ESCAPE,
+                                          function_list=[self.play_sound, self.load_settings_group],
+                                          args_list=["press", None], )
+        button_return = Button(self.window_surface, pos=(
+            self.size[0] / 5 - BUTTON_WIDTH, self.size[1] / 10 * 8, BUTTON_WIDTH, BUTTON_HEIGHT), text="Назад",
+                               transparent=True, text_color=BUTTON_YELLOW, selected_text_color=BUTTON_SELECTED_YELLOW,
+                               font_size=FONT_SIZE, font="main_menu",
+                               function_onClick_list=[self.play_sound, self.load_settings_group],
+                               args_list=["press", None],
+                               function_onHover=self.play_sound, arg_onHover="select")
+        label_return_shadow = Label(self.window_surface, pos=(
+            self.size[0] / 5 - BUTTON_WIDTH + 2, self.size[1] / 10 * 8 + 2, BUTTON_WIDTH, BUTTON_HEIGHT), text="Назад",
+                                    text_color=BLACK, font_size=FONT_SIZE, font="main_menu")
+
+        self.objects.append(label_ip_settings_shadow)
+        self.objects.append(button_ip_settings)
+        self.objects.append(label_name_settings_shadow)
+        self.objects.append(button_name_settings)
+        self.objects.append(label_return_shadow)
+        self.objects.append(button_return)
+        self.objects.append(label_menu_name_shadow)
+        self.objects.append(label_menu_name)
+        self.objects.append(buttontrigger_esc)
+
+    is_client_ip_local = None  # Используется в "load_ip_settings_group"
+
+    def load_ip_settings_group(self):
+        """
+        Загружает элементы подменю "IP адрес клиента"
         """
 
         regex_str = r"((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)"
@@ -1048,20 +1113,20 @@ class Menu:
                                                             BUTTON_WIDTH, BUTTON_HEIGHT), text="Сохранить",
                                   text_color=BLACK, font_size=FONT_SIZE, font="main_menu")
         label_menu_name = Label(self.window_surface, pos=(self.size[0] / 2, self.size[1] / 10 * 1, AUTO_W, AUTO_H),
-                                text="НАСТРОЙКИ ПОДКЛЮЧЕНИЯ",
+                                text="Настройки сетевой игры".upper(),
                                 text_color=MENU_WHITE, font_size=TITLE_FONT_SIZE, font="main_menu")
         label_menu_name_shadow = Label(self.window_surface,
                                        pos=(self.size[0] / 2 + 2, self.size[1] / 10 * 1 + 2, AUTO_W, AUTO_H),
-                                       text="НАСТРОЙКИ ПОДКЛЮЧЕНИЯ",
+                                       text="Настройки сетевой игры".upper(),
                                        text_color=BLACK, font_size=TITLE_FONT_SIZE, font="main_menu")
         buttontrigger_esc = ButtonTrigger(key=pygame.K_ESCAPE,
-                                          function_list=[self.play_sound, self.load_settings_group],
+                                          function_list=[self.play_sound, self.load_multi_settings_group],
                                           args_list=["press", None], )
         button_return = Button(self.window_surface, pos=(
             self.size[0] / 5 - BUTTON_WIDTH, self.size[1] / 10 * 8, BUTTON_WIDTH, BUTTON_HEIGHT), text="Назад",
                                transparent=True, text_color=BUTTON_YELLOW, selected_text_color=BUTTON_SELECTED_YELLOW,
                                font_size=FONT_SIZE, font="main_menu",
-                               function_onClick_list=[self.play_sound, self.load_settings_group],
+                               function_onClick_list=[self.play_sound, self.load_multi_settings_group],
                                args_list=["press", None],
                                function_onHover=self.play_sound, arg_onHover="select")
         label_return_shadow = Label(self.window_surface, pos=(
@@ -1085,6 +1150,88 @@ class Menu:
             self.objects.append(textbox_client_ip)
             self.objects.append(label_client_ip_shadow)
             self.objects.append(label_client_ip)
+
+    def load_name_settings_group(self):
+        """
+        Загружает элементы подменю "Выбор никнейма"
+        """
+
+        def save_client_name():
+            if len(textbox_client_name.text_str) > 0:
+                self.result["client_name"] = textbox_client_name.text_str
+            else:
+                self.objects.append(label_empty_name_shadow)
+                self.objects.append(label_empty_name)
+
+        self.objects.clear()
+
+        label_empty_name = Label(self.window_surface, pos=(self.size[0] / 2 - BUTTON_WIDTH / 2,
+                                                           self.size[1] / 10 * 5, BUTTON_WIDTH, BUTTON_HEIGHT,
+                                                           BUTTON_WIDTH, BUTTON_HEIGHT),
+                                 text="Имя не может быть пустым!",
+                                 text_color=(224, 24, 24), font_size=int(FONT_SIZE * 0.75), font="main_menu")
+        label_empty_name_shadow = Label(self.window_surface, pos=(self.size[0] / 2 - BUTTON_WIDTH / 2 + 2,
+                                                                  self.size[1] / 10 * 5 + 2, BUTTON_WIDTH,
+                                                                  BUTTON_HEIGHT),
+                                        text="Имя не может быть пустым!",
+                                        text_color=BLACK, font_size=int(FONT_SIZE * 0.75), font="main_menu")
+
+        label_client_name = Label(self.window_surface, pos=(
+            self.size[0] / 2 - BUTTON_WIDTH / 2, self.size[1] / 10 * 3, BUTTON_WIDTH, BUTTON_HEIGHT),
+                                  text="IP клиента:",
+                                  text_color=BUTTON_YELLOW, font_size=FONT_SIZE, font="main_menu")
+        label_client_name_shadow = Label(self.window_surface, pos=(
+            self.size[0] / 2 - BUTTON_WIDTH / 2 + 2, self.size[1] / 10 * 3 + 2, BUTTON_WIDTH, BUTTON_HEIGHT),
+                                         text="IP клиента:",
+                                         text_color=BLACK, font_size=FONT_SIZE, font="main_menu")
+        textbox_client_name = TextBox(self.window_surface,
+                                      pos=(self.size[0] / 2 - BUTTON_WIDTH,
+                                           self.size[1] / 10 * 4, BUTTON_WIDTH * 2, BUTTON_HEIGHT * 1.5),
+                                      font="main_menu",
+                                      start_text="Player",
+                                      empty_text="Введите никнейм...", font_size=FONT_SIZE)
+        button_save = Button(self.window_surface, pos=(self.size[0] / 2 - BUTTON_WIDTH / 2,
+                                                       self.size[1] / 10 * 6,
+                                                       BUTTON_WIDTH, BUTTON_HEIGHT), text="Сохранить",
+                             transparent=True, text_color=BUTTON_YELLOW, selected_text_color=BUTTON_SELECTED_YELLOW,
+                             font_size=FONT_SIZE, font="main_menu",
+                             function_onClick_list=[self.play_sound, save_client_name],
+                             args_list=["press", None],
+                             function_onHover=self.play_sound, arg_onHover="select")
+        label_save_shadow = Label(self.window_surface, pos=(self.size[0] / 2 - BUTTON_WIDTH / 2 + 2,
+                                                            self.size[1] / 10 * 6 + 2,
+                                                            BUTTON_WIDTH, BUTTON_HEIGHT), text="Сохранить",
+                                  text_color=BLACK, font_size=FONT_SIZE, font="main_menu")
+        label_menu_name = Label(self.window_surface, pos=(self.size[0] / 2, self.size[1] / 10 * 1, AUTO_W, AUTO_H),
+                                text="Настройки сетевой игры".upper(),
+                                text_color=MENU_WHITE, font_size=TITLE_FONT_SIZE, font="main_menu")
+        label_menu_name_shadow = Label(self.window_surface,
+                                       pos=(self.size[0] / 2 + 2, self.size[1] / 10 * 1 + 2, AUTO_W, AUTO_H),
+                                       text="Настройки сетевой игры".upper(),
+                                       text_color=BLACK, font_size=TITLE_FONT_SIZE, font="main_menu")
+        buttontrigger_esc = ButtonTrigger(key=pygame.K_ESCAPE,
+                                          function_list=[self.play_sound, self.load_multi_settings_group],
+                                          args_list=["press", None], )
+        button_return = Button(self.window_surface, pos=(
+            self.size[0] / 5 - BUTTON_WIDTH, self.size[1] / 10 * 8, BUTTON_WIDTH, BUTTON_HEIGHT), text="Назад",
+                               transparent=True, text_color=BUTTON_YELLOW, selected_text_color=BUTTON_SELECTED_YELLOW,
+                               font_size=FONT_SIZE, font="main_menu",
+                               function_onClick_list=[self.play_sound, self.load_multi_settings_group],
+                               args_list=["press", None],
+                               function_onHover=self.play_sound, arg_onHover="select")
+        label_return_shadow = Label(self.window_surface, pos=(
+            self.size[0] / 5 - BUTTON_WIDTH + 2, self.size[1] / 10 * 8 + 2, BUTTON_WIDTH, BUTTON_HEIGHT), text="Назад",
+                                    text_color=BLACK, font_size=FONT_SIZE, font="main_menu")
+
+        self.objects.append(label_is_local_shadow)
+        self.objects.append(button_is_local)
+        self.objects.append(label_return_shadow)
+        self.objects.append(button_return)
+        self.objects.append(label_menu_name_shadow)
+        self.objects.append(label_menu_name)
+        self.objects.append(buttontrigger_esc)
+        self.objects.append(label_save_shadow)
+        self.objects.append(button_save)
 
     def main_cycle(self):
         while self.is_running:
@@ -1120,11 +1267,11 @@ class Menu:
         return self.result
 
 
-def get_all_maps_names():
+def get_all_maps_names() -> list:
     """
     Возвращает список названий карт.
     """
-    return_tuple = []
+    return_list = []
     script_dir = get_script_dir()
     # files = listdir(script_dir + "\\assets\\maps")
     for (i, map_id) in enumerate(MAPS):
@@ -1136,10 +1283,10 @@ def get_all_maps_names():
                     if current_line[0] == "#":
                         mini_dict = current_line[1:-1].split("=")
                         if mini_dict[0] == "title":
-                            return_tuple.append((map_id, mini_dict[1]))
+                            return_list.append((map_id, mini_dict[1]))
                             has_read_title = True
                 if not has_read_title:
-                    return_tuple.append((map_id, "Map {}".format(i)))
+                    return_list.append((map_id, "Map {}".format(i)))
         except FileNotFoundError:
             print("There was an attempt to open a file but it does not exist: {}".format(filename))
-    return return_tuple
+    return return_list

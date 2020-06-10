@@ -205,12 +205,12 @@ def remove_server_started_popupbox(game):
     game.any_popup_box = None
 
 
-chat_textbox_width = window_w / 4  # Ширина строки для отправки сообщения
+chat_textbox_width = window_w / 3  # Ширина строки для отправки сообщения
 chat_textbox_height = 40  # Высота строки для отправки сообщения
 chat_textbox_margin = 5  # Значение отступа для строки для отправки сообщения
 chat_textbox_x = 0 + chat_textbox_margin  # Положение строки для отправки сообщения по X
 chat_textbox_y = window_h - chat_textbox_height - chat_textbox_margin  # Положение строки для отправки сообщения по Y
-chat_font_size = 18
+chat_font_size = 22
 
 
 # Всплывающее окошко "чат"

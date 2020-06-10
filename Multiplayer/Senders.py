@@ -17,10 +17,12 @@ EVENT_SERVER_SEND_CHAT_MESSAGE = "EVENT_SERVER_SEND_CHAT_MESSAGE"
 class Client:
     ip_port_combo: str = None  # Запись ip адреса и порта клиента
     ready: bool = None  # Флаг готовности клиента
+    player_name: str = None  # Имя игрока в чате
 
-    def __init__(self, ip_port_combo):
+    def __init__(self, ip_port_combo, player_name):
         self.ip_port_combo = ip_port_combo
         self.ready = False
+        self.player_name = player_name
 
 
 class DataSenderServerSide:
@@ -105,6 +107,8 @@ class DataSenderClientSide:
     parent_game = None
     server = None
 
+    player_name = "Player"
+
     def __init__(self, parent_game):
         self.parent_game = parent_game
 
@@ -129,6 +133,7 @@ class DataSenderClientSide:
         data_dict["type"] = "connect"
         data_dict["ip"] = self.parent_game.client_ip
         data_dict["port"] = self.parent_game.client_port
+        data_dict["player_name"] = self.player_name
         data = json.dumps(data_dict)
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.sendto(data.encode(), (host, port))

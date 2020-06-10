@@ -92,8 +92,8 @@ class MyUDPHandlerServerSide(socketserver.BaseRequestHandler):
                     # Этот IP уже есть
                     return
             # Если этого IP ещё не было, заносим его в список клиентов
-            # Заносим IP-шник и порт отправителю
-            temp_client = Client(ip_port_combo)
+            # Заносим IP-шник, порт и имя отправителю
+            temp_client = Client(ip_port_combo, data_dict["player_name"])
             self.parent_game.serverside_sender.clients.append(temp_client)
             # Присваиваем ip-шнику id игрока
             self.parent_game.serverside_sender.clients_player_id[
@@ -133,7 +133,11 @@ class MyUDPHandlerServerSide(socketserver.BaseRequestHandler):
                 self.parent_game.serverside_sender.clients[player_id].ready = True
             elif data_dict["event_type"] == EVENT_CLIENT_SEND_CHAT_MESSAGE:
                 # Если клиент прислал сообщение...
-                message = data_dict["event_data"]
+                ip_port_combo = "{}:{}".format(data_dict["ip"], data_dict["port"])
+                player_id = self.parent_game.serverside_sender.clients_player_id[ip_port_combo]
+
+                message: str = f"[{self.parent_game.serverside_sender.clients[player_id].player_name}]" +\
+                               data_dict["event_data"]  # Добавляем в начало сообщения имя игрока
                 self.parent_game.chat_history.add_message(message)
                 # Разсылаем клиентам это сообщение:
                 self.parent_game.serverside_sender.send_event(EVENT_SERVER_SEND_CHAT_MESSAGE, message)

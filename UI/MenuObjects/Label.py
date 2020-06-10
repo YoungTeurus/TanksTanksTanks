@@ -3,10 +3,8 @@ from pygame.font import Font
 from pygame.rect import Rect
 from pygame.surface import Surface
 
-from Consts import BLACK
-from UI.MenuObjects.MenuObjectWithText import MenuObjectWithText
-
-CLICKED_LINK_COLOR = (128, 0, 128)
+from Consts import BLACK, CLICKED_LINK_COLOR
+from UI.MenuObjects.MenuObjectWithText import MenuObjectWithText, ALIGNMENTS, LEFT_ALIGNMENT
 
 
 class Label(MenuObjectWithText):
@@ -20,10 +18,13 @@ class Label(MenuObjectWithText):
     text_surf: Surface = None  # Отрисовываемый текст
     text_size: tuple = None  # Размер места, занимаемого текстом
 
+    alignment: str = None  # Выравнивание текста
+
     has_text_changed = None  # Изменился ли текст, чтобы его нужно было вновь render-ить?
 
     def __init__(self, window_surface: Surface, pos: tuple = None, text: str = None,
-                 text_color: tuple = None, function=None, font_size: int = None, font: str = None):
+                 text_color: tuple = None, function=None, font_size: int = None, font: str = None,
+                 alignment: str = None):
         self.window_surface = window_surface
         self.rect = Rect(0, 0, 100, 50)  # Стандартные размер и положение кнопки
         if pos is not None:
@@ -49,6 +50,9 @@ class Label(MenuObjectWithText):
             self.set_font_size(font_size)
         else:
             self.set_font_size(16)
+
+        if alignment is not None and alignment in ALIGNMENTS:
+            self.alignment = alignment
 
         # Работа с текстом:
         self.set_font(self.font_size, font)  # Стандартный шрифт
@@ -78,9 +82,16 @@ class Label(MenuObjectWithText):
                 self.set_text_color(CLICKED_LINK_COLOR)
 
     def draw(self):
-        self.window_surface.blit(self.text_surf,
-                                 (self.rect.x + (self.rect.w / 2) - (self.text_size[0] / 2),
-                                  self.rect.y + (self.rect.h / 2) - (self.text_size[1] / 2)))
+        if not self.alignment:
+            self.window_surface.blit(self.text_surf,
+                                     (self.rect.x + (self.rect.w / 2) - (self.text_size[0] / 2),
+                                      self.rect.y + (self.rect.h / 2) - (self.text_size[1] / 2)))
+        else:
+            if self.alignment == LEFT_ALIGNMENT:
+                # Выравнивание по левому краю
+                self.window_surface.blit(self.text_surf,
+                                         (self.rect.x,
+                                          self.rect.y + (self.rect.h / 2) - (self.text_size[1] / 2)))
 
     def update(self):
         """

@@ -8,6 +8,9 @@ fonts = {
     'main_menu': '\\assets\\fonts\\main_menu.ttf'
 }
 
+LEFT_ALIGNMENT = "LEFT_ALIGNMENT"
+ALIGNMENTS = [LEFT_ALIGNMENT]
+
 
 class MenuObjectWithText(MenuObjectClickable):
     font: Font = None  # Шрифт, используемый для отрисовки текста
@@ -22,13 +25,14 @@ class MenuObjectWithText(MenuObjectClickable):
         self.text_size = self.font.size(text_str)
         self.has_text_changed = False
 
-    def adjust_size(self):
+    def adjust_size(self, dont_change_width=False):
         """
         Размеры кнопки всегда соответствуют размеру текста
         """
-        if (difference := self.text_size[0] - self.rect.width) != 0:  # Если ширина надписи больше кнопки
-            self.rect.width = self.text_size[0]
-            self.rect.x -= (difference / 2)
+        if not dont_change_width:
+            if (difference := self.text_size[0] - self.rect.width) != 0:  # Если ширина надписи больше кнопки
+                self.rect.width = self.text_size[0]
+                self.rect.x -= (difference / 2)
         if (difference := self.text_size[1] - self.rect.height) != 0:  # Если высота надписи больше кнопки
             self.rect.height = self.text_size[1]
             self.rect.y -= (difference / 2)

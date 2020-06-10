@@ -2,6 +2,7 @@ from Consts import GREY, BUTTON_YELLOW, BLACK
 from UI.ConstPopups import chat_textbox_x, chat_textbox_y, chat_textbox_height, chat_textbox_margin, chat_textbox_width, \
     chat_font_size
 from UI.MenuObjects.Label import Label
+from UI.MenuObjects.MenuObjectWithText import LEFT_ALIGNMENT
 from UI.MenuObjects.PopupBox import PopupBox
 
 one_message_height = chat_textbox_height  # Высота одного сообщения
@@ -20,7 +21,8 @@ class GUI(PopupBox):
     is_chatlog_folded: bool = None  # Свёрнут ли чатлог?
 
     # TODO: Может, сделать такую штуку для любой кнопки?
-    is_change_chatlog_action_button_pressed: bool = False  # Флаг нажатия клавиши (для предотвращения складывания/раскладывания чатлога)
+    is_change_chatlog_action_button_pressed: bool = False  # Флаг нажатия клавиши (для предотвращения
+    # складывания/раскладывания чатлога)
 
     def __init__(self, parent_game):
         self.parent_game = parent_game
@@ -49,12 +51,12 @@ class GUI(PopupBox):
                                            pos=(chat_textbox_x, temp_message_y,
                                                 chatlog_width, one_message_height),
                                            text=message, font_size=chat_font_size, text_color=BUTTON_YELLOW,
-                                           font="main_menu")
+                                           font="main_menu", alignment=LEFT_ALIGNMENT)
                 temp_label_message_shadow = Label(self.parent_game.window_surface,
                                                   pos=(chat_textbox_x + 2, temp_message_y + 2,
                                                        chatlog_width, one_message_height),
                                                   text=message, font_size=chat_font_size, text_color=BLACK,
-                                                  font="main_menu")
+                                                  font="main_menu", alignment=LEFT_ALIGNMENT)
 
                 self.chatlog.add_object(temp_label_message_shadow)
                 self.chatlog.add_object(temp_label_message)
