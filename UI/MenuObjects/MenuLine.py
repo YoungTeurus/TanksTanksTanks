@@ -4,7 +4,7 @@ import pygame
 from pygame.surface import Surface
 
 from Consts import WHITE
-from Menu.MenuObjects.MenuObject import MenuObject
+from UI.MenuObjects.MenuObject import MenuObject
 
 
 class MenuLine(MenuObject):

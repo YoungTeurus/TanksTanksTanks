@@ -2,7 +2,7 @@ from pygame.font import Font
 from pygame.surface import Surface
 
 from Files import get_script_dir
-from Menu.MenuObjects.MenuObjectClickable import MenuObjectClickable
+from UI.MenuObjects.MenuObjectClickable import MenuObjectClickable
 
 fonts = {
     'main_menu': '\\assets\\fonts\\main_menu.ttf'

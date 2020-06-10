@@ -3,7 +3,7 @@ from typing import Optional
 import pygame
 from pygame.rect import Rect
 from pygame.surface import Surface
-from Menu.MenuObjects.MenuObject import MenuObject
+from UI.MenuObjects.MenuObject import MenuObject
 
 
 class MenuRect(MenuObject):

@@ -1,6 +1,6 @@
 from pygame.rect import Rect
 
-from Menu.MenuObjects.MenuObject import MenuObject
+from UI.MenuObjects.MenuObject import MenuObject
 
 
 class MenuObjectClickable(MenuObject):

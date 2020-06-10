@@ -2,7 +2,7 @@ from pygame import MOUSEMOTION, MOUSEBUTTONUP
 from pygame import Rect, Surface
 
 from Consts import GREY, BLACK, WHITE
-from Menu.MenuObjects.MenuObjectWithText import MenuObjectWithText
+from UI.MenuObjects.MenuObjectWithText import MenuObjectWithText
 
 
 class Button(MenuObjectWithText):

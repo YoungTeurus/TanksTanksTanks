@@ -6,11 +6,13 @@ import pygame
 from pygame.surface import Surface
 
 from Consts import targetFPS, DARK_GREY, BLACK, MOVE_RIGHT, SHOOT, MOVE_LEFT, MOVE_DOWN, MOVE_UP, \
-    CHANGES_DEBUG, CHAT_BUTTON
+    CHANGES_DEBUG, CHAT_BUTTON, FOLD_UNFOLD_CHATLOG
 from Files import ImageLoader
 from Images.Tileset import Tileset
-from Menu.ConstPopups import add_server_started_popupbox, remove_server_started_popupbox, add_chat
-from Menu.MenuObjects.PopupBox import PopupBox
+from Multiplayer.ChatHistory import ChatHistory
+from UI.ConstPopups import add_server_started_popupbox, remove_server_started_popupbox, add_chat
+from UI.Ingame_GUI import GUI
+from UI.MenuObjects.PopupBox import PopupBox
 from Multiplayer.Senders import DataSenderServerSide, DataSenderClientSide, EVENT_SERVER_STOP, EVENT_CLIENT_PLAYER_QUIT, \
     EVENT_SERVER_GAME_STARTED, EVENT_CLIENT_SEND_CHAT_MESSAGE
 from Multiplayer.UDPHandlers import MyUDPHandlerClientSide, MyUDPHandlerServerSide
@@ -36,13 +38,13 @@ class Game:
     client_port: int = None  # Порт клиента
     server_ip: str = None  # Адрес, на котором расположен сервер
 
-    any_popup_box: PopupBox = None  # Любой PopupBox (кроме лога чата) должен быть здесь
-    chatlog_popup_box: PopupBox = None  # PopupBox лога чата должен быть здесь
+    any_popup_box: PopupBox = None  # Любой PopupBox должен быть здесь
+    gui: GUI = None  # Весь GUI игры находится здесь.
     need_to_return_to_menu: bool = False  # Установка этого флага позволяет вернуться в меню после завершения игры
 
     button_actions: Dict[str, tuple] = None  # Словарь "кнопка - дейсвтие", который используется в process_inputs
 
-    last_moved_direction = None
+    chat_history: ChatHistory = None  # История чата
 
     def __init__(self, window_surface, is_server, multi, start_map_id: int = None,
                  connect_to_ip: str = None, server_ip: str = None, client_ip: str = None,
@@ -67,6 +69,9 @@ class Game:
         self.clock = pygame.time.Clock()
         self.imageloader = ImageLoader()
         self.tileset = Tileset(64, 64, self.imageloader.get_image_by_name("tileset.png"))
+
+        self.chat_history = ChatHistory()
+        self.gui = GUI(self)
 
         self.game_running = True
 
@@ -190,6 +195,8 @@ class Game:
                                           None)
             self.button_actions[CHAT_BUTTON] = ((lambda: add_chat(self)),
                                                 None)
+            self.button_actions[FOLD_UNFOLD_CHATLOG] = (self.gui.change_chatlog_action,
+                                                        self.gui.reset_button)
 
     def process_inputs(self) -> None:
         """
@@ -321,9 +328,9 @@ class Game:
 
             self.window_surface.blit(self.game_surface, self.game_rect)
 
-            if self.chatlog_popup_box is not None:
-                self.chatlog_popup_box.draw()
-                self.chatlog_popup_box.update()
+            if self.gui is not None:
+                self.gui.draw()
+                self.gui.update()
 
             # Отрисовка и обновление popupBox-а:
             if self.any_popup_box is not None:

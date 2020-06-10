@@ -1,6 +1,6 @@
 from pygame.constants import KEYDOWN
 
-from Menu.MenuObjects.MenuObjectClickable import MenuObjectClickable
+from UI.MenuObjects.MenuObjectClickable import MenuObjectClickable
 
 
 class ButtonTrigger(MenuObjectClickable):

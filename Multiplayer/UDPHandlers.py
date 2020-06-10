@@ -4,10 +4,10 @@ import socketserver
 
 from Consts import SOCKET_DEBUG, MAPS
 from Files import get_script_dir
-from Menu.ConstPopups import add_disconnected_from_server_popupbox, remove_wait_popupbox_for_start_popupbox, \
+from UI.ConstPopups import add_disconnected_from_server_popupbox, remove_wait_popupbox_for_start_popupbox, \
     add_wait_for_start_popupbox
 from Multiplayer.Senders import EVENT_SERVER_STOP, EVENT_CLIENT_PLAYER_QUIT, EVENT_SERVER_GAME_STARTED, \
-    EVENT_CLIENT_CONNECTED, EVENT_CLIENT_READY, Client
+    EVENT_CLIENT_CONNECTED, EVENT_CLIENT_READY, Client, EVENT_CLIENT_SEND_CHAT_MESSAGE, EVENT_SERVER_SEND_CHAT_MESSAGE
 
 
 class MyUDPHandlerClientSide(socketserver.BaseRequestHandler):
@@ -61,6 +61,10 @@ class MyUDPHandlerClientSide(socketserver.BaseRequestHandler):
                     # TODO: каждый клиент ловит этот пакет, нужно подумать, стоит ли это изменить
                     self.parent_game.is_connected = True  # Устанавливаем флаг подключения
                     add_wait_for_start_popupbox(self.parent_game)
+            elif data_dict["event_type"] == EVENT_SERVER_SEND_CHAT_MESSAGE:
+                # Если пришло сообщение в чат от сервера...
+                message = data_dict["event_data"]
+                self.parent_game.chat_history.add_message(message)
 
 
 class MyUDPHandlerServerSide(socketserver.BaseRequestHandler):
@@ -127,3 +131,9 @@ class MyUDPHandlerServerSide(socketserver.BaseRequestHandler):
                 player_id = self.parent_game.serverside_sender.clients_player_id[ip_port_combo]
 
                 self.parent_game.serverside_sender.clients[player_id].ready = True
+            elif data_dict["event_type"] == EVENT_CLIENT_SEND_CHAT_MESSAGE:
+                # Если клиент прислал сообщение...
+                message = data_dict["event_data"]
+                self.parent_game.chat_history.add_message(message)
+                # Разсылаем клиентам это сообщение:
+                self.parent_game.serverside_sender.send_event(EVENT_SERVER_SEND_CHAT_MESSAGE, message)

@@ -2,7 +2,7 @@ import pygame
 
 from Consts import window_w, window_h
 from Game import Game
-from Menu.Menu import Menu
+from UI.Menu import Menu
 
 
 def main():

@@ -24,6 +24,11 @@ BLACK = (0, 0, 0)
 DARK_GREY = (64, 64, 64)
 GREY = (192, 192, 192)
 WHITE = (255, 255, 255)
+MAIN_MENU_BACKGROUND_COLOR = (27, 35, 44)
+MAIN_MENU_DARK_BACKGROUND_COLOR = (19, 28, 32)
+BUTTON_YELLOW = (224, 154, 24)
+BUTTON_SELECTED_YELLOW = (237, 210, 7)
+MENU_WHITE = (240, 240, 240)
 
 # Некоторые константные значения в игре
 DEFAULT_PLAYER_BASE_HP = 3
@@ -68,6 +73,7 @@ MOVE_UP = pygame.K_UP
 MOVE_DOWN = pygame.K_DOWN
 SHOOT = pygame.K_SPACE
 CHAT_BUTTON = pygame.K_t
+FOLD_UNFOLD_CHATLOG = pygame.K_TAB
 
 # Сообщения для сервера:
 CREATE_STRING = "create {object_type} {x} {y} {width} {height} {image_name} {start_angle} {world_id}"

@@ -5,7 +5,7 @@ from pygame.surface import Surface
 
 from Consts import BLACK, WHITE, DARK_GREY
 from Files import get_script_dir
-from Menu.MenuObjects.MenuObjectWithText import MenuObjectWithText, fonts
+from UI.MenuObjects.MenuObjectWithText import MenuObjectWithText, fonts
 
 VERY_LIGHT_GREY = (210, 210, 210)
 LIGHT_GREY = (160, 160, 160)
@@ -24,7 +24,7 @@ class TextBox(MenuObjectWithText):
 
     def __init__(self, window_surface: Surface, pos: tuple = None, start_text: str = None,
                  empty_text: str = None, active: bool = None, selected: bool = None,
-                 function_onEnter=None, arg_onEnter: str = None, font_size: int = None, font: str = None):
+                 function_onEnter=None, arg_onEnter: object = None, font_size: int = None, font: str = None):
         self.window_surface = window_surface
 
         self.rect = Rect(0, 0, 100, 50)  # Стандартные размер и положение TextBox

@@ -5,24 +5,19 @@ from typing import List
 
 import pygame
 
-from Consts import targetFPS, SOUNDS_VOLUME, MAPS, BLACK
+from Consts import targetFPS, SOUNDS_VOLUME, MAPS, BLACK, BUTTON_SELECTED_YELLOW, MENU_WHITE, BUTTON_YELLOW, \
+    MAIN_MENU_BACKGROUND_COLOR, MAIN_MENU_DARK_BACKGROUND_COLOR
 from Files import get_script_dir
-from Menu.MenuObjects.Button import Button
-from Menu.MenuObjects.ButtonTrigger import ButtonTrigger
-from Menu.MenuObjects.Label import Label
-from Menu.MenuObjects.MenuLine import MenuLine
-from Menu.MenuObjects.MenuObject import SKIP_EVENT
-from Menu.MenuObjects.MenuRect import MenuRect
-from Menu.MenuObjects.PopupBox import PopupBox
-from Menu.MenuObjects.TextBox import TextBox
-from Menu.MenuObjects.Timer import Timer
+from UI.MenuObjects.Button import Button
+from UI.MenuObjects.ButtonTrigger import ButtonTrigger
+from UI.MenuObjects.Label import Label
+from UI.MenuObjects.MenuLine import MenuLine
+from UI.MenuObjects.MenuObject import SKIP_EVENT
+from UI.MenuObjects.MenuRect import MenuRect
+from UI.MenuObjects.PopupBox import PopupBox
+from UI.MenuObjects.TextBox import TextBox
+from UI.MenuObjects.Timer import Timer
 from Multiplayer.ServerFinder import ServerFinder
-
-MAIN_MENU_BACKGROUND_COLOR = (27, 35, 44)
-MAIN_MENU_DARK_BACKGROUND_COLOR = (19, 28, 32)
-BUTTON_YELLOW = (224, 154, 24)
-BUTTON_SELECTED_YELLOW = (237, 210, 7)
-MENU_WHITE = (240, 240, 240)
 
 BUTTON_WIDTH = 140
 BUTTON_HEIGHT = 30

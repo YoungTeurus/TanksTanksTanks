@@ -1,6 +1,6 @@
 import pygame
 
-from Menu.MenuObjects.MenuObject import MenuObject
+from UI.MenuObjects.MenuObject import MenuObject
 
 
 class Timer(MenuObject):

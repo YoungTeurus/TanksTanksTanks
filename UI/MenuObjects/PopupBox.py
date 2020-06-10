@@ -5,7 +5,7 @@ from pygame.surface import Surface
 from typing import List
 
 from Consts import GREY, BLACK, DARK_GREY
-from Menu.MenuObjects.MenuObject import MenuObject, SKIP_EVENT
+from UI.MenuObjects.MenuObject import MenuObject, SKIP_EVENT
 
 HALF_BLACK = (0, 0, 0, 64)
 
@@ -65,6 +65,12 @@ class PopupBox(MenuObject):
         :param obj: Объект, переданный таким образом всё ещё будет принимать event-ы, даже при запущенном меню
         """
         self.box_objects.append(obj)
+
+    def clear(self) -> None:
+        """
+        Удаляеет все объекты в PopubBox-е.
+        """
+        self.box_objects.clear()
 
     def draw(self):
         if self.need_to_darken_background:

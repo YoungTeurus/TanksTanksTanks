@@ -4,7 +4,7 @@ from pygame.rect import Rect
 from pygame.surface import Surface
 
 from Consts import BLACK
-from Menu.MenuObjects.MenuObjectWithText import MenuObjectWithText
+from UI.MenuObjects.MenuObjectWithText import MenuObjectWithText
 
 CLICKED_LINK_COLOR = (128, 0, 128)
 

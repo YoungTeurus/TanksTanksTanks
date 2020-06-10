@@ -11,6 +11,7 @@ EVENT_CLIENT_READY = "EVENT_CLIENT_READY"
 EVENT_SERVER_GAME_STARTED = "EVENT_SERVER_GAME_STARTED"
 EVENT_SERVER_STOP = "EVENT_SERVER_STOP"
 EVENT_CLIENT_SEND_CHAT_MESSAGE = "EVENT_CLIENT_SEND_CHAT_MESSAGE"
+EVENT_SERVER_SEND_CHAT_MESSAGE = "EVENT_SERVER_SEND_CHAT_MESSAGE"
 
 
 class Client:
@@ -79,7 +80,7 @@ class DataSenderServerSide:
             if SOCKET_DEBUG:
                 print("Sent:     {}".format(data))
 
-    def send_event(self, event_type: str):
+    def send_event(self, event_type: str, event_data: str = None):
         """
         Отправляет клиентам какой-то event-сигнал
         """
@@ -88,6 +89,8 @@ class DataSenderServerSide:
             data_dict = dict()
             data_dict["type"] = "event"
             data_dict["event_type"] = event_type
+            if event_data is not None:
+                data_dict["event_data"] = event_data
             data = json.dumps(data_dict)
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             sock.sendto(data.encode(), (host, int(port)))
