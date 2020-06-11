@@ -50,6 +50,7 @@ DEFAULT_DELAY_BETWEEN_ENEMY_TRY_TO_CHANGE_STATE = 500
 EPSILON = 0.15
 
 # Все доступные стандартные карты и пути к ним
+START_MAP_ID = 0  # ID стандартно-первой карты
 MAPS = {
     0: "\\assets\\maps\\map0.txt",
     1: "\\assets\\maps\\map1.txt"

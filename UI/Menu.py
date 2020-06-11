@@ -5,8 +5,8 @@ from typing import List
 
 import pygame
 
-from Consts import targetFPS, SOUNDS_VOLUME, MAPS, BLACK, BUTTON_SELECTED_YELLOW, MENU_WHITE, BUTTON_YELLOW, \
-    MAIN_MENU_BACKGROUND_COLOR, MAIN_MENU_DARK_BACKGROUND_COLOR
+from Consts import targetFPS, SOUNDS_VOLUME, BLACK, BUTTON_SELECTED_YELLOW, MENU_WHITE, BUTTON_YELLOW, \
+    MAIN_MENU_BACKGROUND_COLOR, MAIN_MENU_DARK_BACKGROUND_COLOR, START_MAP_ID
 from Files import get_script_dir
 from UI.MenuObjects.Button import Button
 from UI.MenuObjects.ButtonTrigger import ButtonTrigger
@@ -18,6 +18,7 @@ from UI.MenuObjects.PopupBox import PopupBox
 from UI.MenuObjects.TextBox import TextBox
 from UI.MenuObjects.Timer import Timer
 from Multiplayer.ServerFinder import ServerFinder
+from World.Map import Map, MapLoader
 
 BUTTON_WIDTH = 140
 BUTTON_HEIGHT = 30
@@ -47,6 +48,17 @@ class Menu:
     objects = None  # Массив объектов меню
 
     result: dict = None  # Словарь, содержащий результат работы меню
+    # Все поля на данный момент:
+    # result - запустить игру или выйти: "quit" или "start"
+    # mode - режим: "client" или "server"
+    # multi - многопользовательская: True или False
+    # client_map - карта для одиночной игры: объект типа Map
+    # client_ip - IP клиента для мультиплеера: объект типа str
+    # client_port - порт клиента для мультиплеера: объект типа str
+    # server_ip - IP сервера для мультиплеера: объект типа str
+    # server_map - карта для мультиплеера: объект типа Map
+    # dedicated - является ли сервер выделенным: True или False
+    # client_name - никнейм игрока для мультиплеера: объект типа str
 
     sounds: dict = None
 
@@ -233,13 +245,14 @@ class Menu:
         self.objects.append(label_title_shadow)
         self.objects.append(label_title)
 
+    # Одиночная игра
     def start_solo_game(self):
         self.is_running = False
         self.result["result"] = "start"
         self.result["mode"] = "client"
         self.result["multi"] = False
-        if "map_id" not in self.result:
-            self.result["map_id"] = 0
+        if "client_map" not in self.result:
+            self.result["client_map"] = None
 
     def load_start_solo_group(self):
         """
@@ -307,16 +320,18 @@ class Menu:
         self.objects.append(label_menu_name)
         self.objects.append(buttontrigger_esc)
 
+    def set_result_client_map(self, map: Map):
+        self.result["client_map"] = map
+
     def load_select_level_group(self):
         """
         Загружает элементы подменю "Выбор уровня"
         """
 
-        def set_result_level(map_id: int):
-            self.result["map_id"] = map_id
-            self.start_solo_game()
-
         self.objects.clear()
+
+        map_loader: MapLoader = MapLoader()  # Подгрузка карт с диска
+        map_loader.load_maps()
 
         label_menu_name = Label(self.window_surface, pos=(self.size[0] / 2, self.size[1] / 10 * 1, AUTO_W, AUTO_H),
                                 text="ВЫБРАТЬ УРОВЕНЬ",
@@ -338,18 +353,20 @@ class Menu:
         label_return_shadow = Label(self.window_surface, pos=(
             self.size[0] / 5 - BUTTON_WIDTH + 2, self.size[1] / 10 * 8 + 2, BUTTON_WIDTH, BUTTON_HEIGHT), text="Назад",
                                     text_color=BLACK, font_size=FONT_SIZE, font="main_menu")
-        for (i, map_tuple) in enumerate(get_all_maps_names()):
+        for (i, _map) in enumerate(map_loader.get_maps()):
             x = self.size[0] / 2 - BUTTON_WIDTH / 2
             y = self.size[1] / 10 * (2 + i)
-            button_map_name = Button(self.window_surface, pos=(x, y, BUTTON_WIDTH, BUTTON_HEIGHT), text=map_tuple[1],
+            button_map_name = Button(self.window_surface, pos=(x, y, BUTTON_WIDTH, BUTTON_HEIGHT),
+                                     text=_map.properties["title"],
                                      transparent=True, text_color=BUTTON_YELLOW,
                                      selected_text_color=BUTTON_SELECTED_YELLOW,
                                      font_size=FONT_SIZE, font="main_menu",
-                                     function_onClick_list=[self.play_sound, set_result_level],
-                                     args_list=["press", map_tuple[0]],
+                                     function_onClick_list=[self.play_sound, self.set_result_client_map,
+                                                            self.start_solo_game],
+                                     args_list=["press", _map, None],
                                      function_onHover=self.play_sound, arg_onHover="select")
             label_map_name_shadow = Label(self.window_surface, pos=(x + 2, y + 2, BUTTON_WIDTH, BUTTON_HEIGHT),
-                                          text=map_tuple[1],
+                                          text=_map.properties["title"],
                                           text_color=BLACK, font_size=FONT_SIZE, font="main_menu")
 
             self.objects.append(label_map_name_shadow)
@@ -361,11 +378,14 @@ class Menu:
         self.objects.append(label_menu_name)
         self.objects.append(buttontrigger_esc)
 
+    # Мультиплеер
     def start_multi_game_client(self):
         self.is_running = False
         self.result["result"] = "start"
         self.result["mode"] = "client"
         self.result["multi"] = True
+        if "client_name" not in self.result:
+            self.result["client_name"] = "Player"
         if "client_ip" not in self.result:
             self.result["client_ip"] = socket.gethostbyname(socket.getfqdn())
         if "client_port" not in self.result:
@@ -736,10 +756,20 @@ class Menu:
         self.objects.append(label_menu_name_shadow)
         self.objects.append(label_menu_name)
 
+    # start_multi_game_server внтури V V V
     def load_create_server_group(self):
         """
         Загружает элементы подменю "Создать сервер"
         """
+        if "server_map" not in self.result:
+            current_map: Map = Map(None)
+            current_map.load_by_id(START_MAP_ID)
+            self.result["server_map"] = current_map
+        else:
+            current_map = self.result["server_map"]
+
+        if "dedicated" not in self.result:
+            self.result["dedicated"] = True
 
         def start_multi_game_server():
             self.is_running = False
@@ -749,7 +779,6 @@ class Menu:
 
         regex_str = r"((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)"
         regex = re.compile(regex_str)
-        self.result["dedicated"] = True
 
         def create_server():
             if textbox_server_ip.text_str.__len__() == 0:
@@ -767,6 +796,9 @@ class Menu:
 
         def change_dedicated():
             self.result["dedicated"] = not self.result["dedicated"]
+            update_dedicated_label()
+
+        def update_dedicated_label():
             if self.result["dedicated"]:
                 button_dedicated.set_text("Выделенный: да")
                 label_dedicated_shadow.set_text("Выделенный: да")
@@ -803,7 +835,7 @@ class Menu:
         button_dedicated = Button(self.window_surface, pos=(self.size[0] / 2 - BUTTON_WIDTH / 2,
                                                             self.size[1] / 10 * 4.5,
                                                             BUTTON_WIDTH, BUTTON_HEIGHT),
-                                  text="Выделенный: да",
+                                  text="Выделенный:",
                                   transparent=True, text_color=BUTTON_YELLOW,
                                   selected_text_color=BUTTON_SELECTED_YELLOW,
                                   font_size=int(FONT_SIZE * 0.75), font="main_menu",
@@ -813,8 +845,23 @@ class Menu:
         label_dedicated_shadow = Label(self.window_surface, pos=(self.size[0] / 2 - BUTTON_WIDTH / 2 + 2,
                                                                  self.size[1] / 10 * 4.5 + 2,
                                                                  BUTTON_WIDTH, BUTTON_HEIGHT),
-                                       text="Выделенный: да",
+                                       text="Выделенный:",
                                        text_color=BLACK, font_size=int(FONT_SIZE * 0.75), font="main_menu")
+        button_map = Button(self.window_surface, pos=(self.size[0] / 2 - BUTTON_WIDTH / 2,
+                                                      self.size[1] / 10 * 5,
+                                                      BUTTON_WIDTH, BUTTON_HEIGHT),
+                            text="Уровень: {}".format(current_map.properties["title"]),
+                            transparent=True, text_color=BUTTON_YELLOW,
+                            selected_text_color=BUTTON_SELECTED_YELLOW,
+                            font_size=int(FONT_SIZE * 0.75), font="main_menu",
+                            function_onClick_list=[self.play_sound, self.load_change_multi_map],
+                            args_list=["press", None],
+                            function_onHover=self.play_sound, arg_onHover="select")
+        label_map_shadow = Label(self.window_surface, pos=(self.size[0] / 2 - BUTTON_WIDTH / 2 + 2,
+                                                           self.size[1] / 10 * 5 + 2,
+                                                           BUTTON_WIDTH, BUTTON_HEIGHT),
+                                 text="Уровень: {}".format(current_map.properties["title"]),
+                                 text_color=BLACK, font_size=int(FONT_SIZE * 0.75), font="main_menu")
         button_connect = Button(self.window_surface, pos=(self.size[0] / 2 - BUTTON_WIDTH / 2,
                                                           self.size[1] / 10 * 6,
                                                           BUTTON_WIDTH, BUTTON_HEIGHT), text="Создать",
@@ -849,10 +896,14 @@ class Menu:
                                        text="СОЗДАНИЕ СЕРВЕРА",
                                        text_color=BLACK, font_size=TITLE_FONT_SIZE, font="main_menu")
 
+        update_dedicated_label()
+
         self.objects.append(label_connect_shadow)
         self.objects.append(button_connect)
         self.objects.append(label_dedicated_shadow)
         self.objects.append(button_dedicated)
+        self.objects.append(label_map_shadow)
+        self.objects.append(button_map)
         self.objects.append(textbox_server_ip)
         self.objects.append(label_server_ip_shadow)
         self.objects.append(label_server_ip)
@@ -862,6 +913,68 @@ class Menu:
         self.objects.append(label_menu_name_shadow)
         self.objects.append(label_menu_name)
 
+    def set_result_server_map(self, map: Map):
+        self.result["server_map"] = map
+
+    def load_change_multi_map(self):
+        """
+        Подменю "Выбор карты" для сервера
+        :return:
+        """
+
+        self.objects.clear()
+
+        map_loader: MapLoader = MapLoader()  # Подгрузка карт с диска
+        map_loader.load_maps()
+
+        label_menu_name = Label(self.window_surface, pos=(self.size[0] / 2, self.size[1] / 10 * 1, AUTO_W, AUTO_H),
+                                text="ВЫБРАТЬ УРОВЕНЬ",
+                                text_color=MENU_WHITE, font_size=TITLE_FONT_SIZE, font="main_menu")
+        label_menu_name_shadow = Label(self.window_surface,
+                                       pos=(self.size[0] / 2 + 2, self.size[1] / 10 * 1 + 2, AUTO_W, AUTO_H),
+                                       text="ВЫБРАТЬ УРОВЕНЬ",
+                                       text_color=BLACK, font_size=TITLE_FONT_SIZE, font="main_menu")
+        buttontrigger_esc = ButtonTrigger(key=pygame.K_ESCAPE,
+                                          function_list=[self.play_sound, self.load_create_server_group],
+                                          args_list=["press", None], )
+        button_return = Button(self.window_surface, pos=(
+            self.size[0] / 5 - BUTTON_WIDTH, self.size[1] / 10 * 8, BUTTON_WIDTH, BUTTON_HEIGHT), text="Назад",
+                               transparent=True, text_color=BUTTON_YELLOW,
+                               selected_text_color=BUTTON_SELECTED_YELLOW,
+                               font_size=FONT_SIZE, font="main_menu",
+                               function_onClick_list=[self.play_sound, self.load_create_server_group],
+                               args_list=["press", None],
+                               function_onHover=self.play_sound, arg_onHover="select")
+        label_return_shadow = Label(self.window_surface, pos=(
+            self.size[0] / 5 - BUTTON_WIDTH + 2, self.size[1] / 10 * 8 + 2, BUTTON_WIDTH, BUTTON_HEIGHT),
+                                    text="Назад",
+                                    text_color=BLACK, font_size=FONT_SIZE, font="main_menu")
+        for (i, _map) in enumerate(map_loader.get_maps()):
+            x = self.size[0] / 2 - BUTTON_WIDTH / 2
+            y = self.size[1] / 10 * (2 + i)
+            button_map_name = Button(self.window_surface, pos=(x, y, BUTTON_WIDTH, BUTTON_HEIGHT),
+                                     text=_map.properties["title"],
+                                     transparent=True, text_color=BUTTON_YELLOW,
+                                     selected_text_color=BUTTON_SELECTED_YELLOW,
+                                     font_size=FONT_SIZE, font="main_menu",
+                                     function_onClick_list=[self.play_sound, self.set_result_server_map,
+                                                            self.load_create_server_group],
+                                     args_list=["press", _map, None],
+                                     function_onHover=self.play_sound, arg_onHover="select")
+            label_map_name_shadow = Label(self.window_surface, pos=(x + 2, y + 2, BUTTON_WIDTH, BUTTON_HEIGHT),
+                                          text=_map.properties["title"],
+                                          text_color=BLACK, font_size=FONT_SIZE, font="main_menu")
+
+            self.objects.append(label_map_name_shadow)
+            self.objects.append(button_map_name)
+
+        self.objects.append(label_return_shadow)
+        self.objects.append(button_return)
+        self.objects.append(label_menu_name_shadow)
+        self.objects.append(label_menu_name)
+        self.objects.append(buttontrigger_esc)
+
+    # Настройки
     def load_settings_group(self):
         """
         Загружает элементы подменю "Настройки"
@@ -1156,6 +1269,9 @@ class Menu:
         Загружает элементы подменю "Выбор никнейма"
         """
 
+        if "client_name" not in self.result:
+            self.result["client_name"] = "Player"
+
         def save_client_name():
             if len(textbox_client_name.text_str) > 0:
                 self.result["client_name"] = textbox_client_name.text_str
@@ -1189,7 +1305,7 @@ class Menu:
                                       pos=(self.size[0] / 2 - BUTTON_WIDTH,
                                            self.size[1] / 10 * 4, BUTTON_WIDTH * 2, BUTTON_HEIGHT * 1.5),
                                       font="main_menu",
-                                      start_text="Player",
+                                      start_text=self.result["client_name"],
                                       empty_text="Введите никнейм...", font_size=FONT_SIZE)
         button_save = Button(self.window_surface, pos=(self.size[0] / 2 - BUTTON_WIDTH / 2,
                                                        self.size[1] / 10 * 6,
@@ -1267,28 +1383,3 @@ class Menu:
             pygame.display.update()
 
         return self.result
-
-
-def get_all_maps_names() -> list:
-    """
-    Возвращает список названий карт.
-    """
-    return_list = []
-    script_dir = get_script_dir()
-    # files = listdir(script_dir + "\\assets\\maps")
-    for (i, map_id) in enumerate(MAPS):
-        filename = script_dir + MAPS[map_id]
-        try:
-            with open(filename, "r", encoding='utf-8') as f:
-                has_read_title = False
-                while (current_line := f.readline()).__len__() > 0:
-                    if current_line[0] == "#":
-                        mini_dict = current_line[1:-1].split("=")
-                        if mini_dict[0] == "title":
-                            return_list.append((map_id, mini_dict[1]))
-                            has_read_title = True
-                if not has_read_title:
-                    return_list.append((map_id, "Map {}".format(i)))
-        except FileNotFoundError:
-            print("There was an attempt to open a file but it does not exist: {}".format(filename))
-    return return_list

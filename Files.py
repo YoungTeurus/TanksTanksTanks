@@ -1,6 +1,7 @@
 import os
 import sys
 import inspect
+
 import pygame
 
 
@@ -25,6 +26,7 @@ class ImageLoader:
 
 
 script_dir = None
+
 
 # Возвращает путь до папки скрипта
 # НЕ ПЕРЕМЕЩАТЬ ДАННЫЙ КОД ИЗ КОРНЕВОЙ ПАПКИ!

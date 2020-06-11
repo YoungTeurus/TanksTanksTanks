@@ -6,7 +6,7 @@ import pygame
 from pygame.surface import Surface
 
 from Consts import targetFPS, DARK_GREY, BLACK, MOVE_RIGHT, SHOOT, MOVE_LEFT, MOVE_DOWN, MOVE_UP, \
-    CHANGES_DEBUG, CHAT_BUTTON, FOLD_UNFOLD_CHATLOG
+    CHANGES_DEBUG, CHAT_BUTTON, FOLD_UNFOLD_CHATLOG, START_MAP_ID
 from Files import ImageLoader
 from Images.Tileset import Tileset
 from Multiplayer.ChatHistory import ChatHistory
@@ -16,6 +16,7 @@ from UI.MenuObjects.PopupBox import PopupBox
 from Multiplayer.Senders import DataSenderServerSide, DataSenderClientSide, EVENT_SERVER_STOP, EVENT_CLIENT_PLAYER_QUIT, \
     EVENT_SERVER_GAME_STARTED, EVENT_CLIENT_SEND_CHAT_MESSAGE
 from Multiplayer.UDPHandlers import MyUDPHandlerClientSide, MyUDPHandlerServerSide
+from World.Map import Map
 from World.World import World
 
 
@@ -46,7 +47,7 @@ class Game:
 
     chat_history: ChatHistory = None  # История чата
 
-    def __init__(self, window_surface, is_server, multi, start_map_id: int = None,
+    def __init__(self, window_surface, is_server, multi, start_map: Map = None,
                  connect_to_ip: str = None, server_ip: str = None, client_ip: str = None,
                  client_port: int = None, dedicated: bool = None, client_name: str = None):
         """
@@ -79,6 +80,12 @@ class Game:
         self.multi = multi
 
         self.world = World(self.game_surface, self.tileset, True)
+
+        if start_map is not None:
+            start_map_id = start_map.map_id
+        else:
+            start_map_id = START_MAP_ID  # Стартовый ID карты
+
         if self.is_server and multi:
             # Запуск сервера для мультиплеера
             self.server_ip = server_ip
@@ -293,7 +300,7 @@ class Game:
                     add_server_started_popupbox(self)
                     self.server_waiting_started = True
                 # Пока сервер не стартанул
-                self.wait_for_players()
+                self.wait_for_players(int(self.world.world_map.properties["max_players"]))
 
             if self.game_started:
                 self.process_inputs()

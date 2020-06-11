@@ -213,6 +213,7 @@ chat_textbox_y = window_h - chat_textbox_height - chat_textbox_margin  # Пол�
 chat_font_size = 22
 
 
+# TODO: перенести в Ingame_GUI.
 # Всплывающее окошко "чат"
 def add_chat(game):
     class MessageSentState:
@@ -239,7 +240,7 @@ def add_chat(game):
                               empty_text="Введите сюда своё сообщение...",
                               font="main_menu", font_size=chat_font_size,
                               function_onEnter=send_msg,
-                              arg_onEnter=mss)
+                              arg_onEnter=mss, active=True)
 
     button_send_message_width = chat_textbox_width * 0.1
     button_send_message_x = chat_textbox_x + chat_textbox_width - button_send_message_width

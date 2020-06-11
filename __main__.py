@@ -30,10 +30,12 @@ def main():
                     # Если запускается сервер
                     game = Game(window_surface, is_server=True,
                                 multi=True, server_ip=result["server_ip"],
-                                dedicated=result["dedicated"])  # Создание игры
+                                dedicated=result["dedicated"],
+                                start_map=result["server_map"])  # Создание игры
             else:
                 # Если одиночная игра
-                game = Game(window_surface, is_server=False, multi=False)  # Создание игры
+                game = Game(window_surface, is_server=False, multi=False,
+                            start_map=result["client_map"])  # Создание игры
         elif result["result"] == "quit":
             return
         else:

@@ -1,6 +1,6 @@
 from typing import List
 
-from Consts import DEFAULT_DELAY_BETWEEN_ENEMY_SPAWN, MAX_ENEMIES_ON_ONE_MOMENT, DEFAULT_ENEMIES_ON_LEVEL
+from Consts import DEFAULT_DELAY_BETWEEN_ENEMY_SPAWN, MAX_ENEMIES_ON_ONE_MOMENT, DEFAULT_ENEMIES_ON_LEVEL, START_MAP_ID
 from World.Camera import Camera
 from World.Map import Map
 import random
@@ -59,7 +59,8 @@ class World:
     def load_world_map(self, map_id: int = None):
         if map_id is not None:
             self.load_map(map_id)
-        self.load_map(0)
+        else:
+            self.load_map(START_MAP_ID)  # На всякий случай
         # self.spawn_player()
         # self.center_camera_on_player()
 
@@ -69,6 +70,7 @@ class World:
 
     def load_map(self, map_id):
         self.world_map.load_by_id(map_id)
+        self.world_map.create_object_map()
         self.world_map.check()
 
     def spawn_player(self, player_id=None):
