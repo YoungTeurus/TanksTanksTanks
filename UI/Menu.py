@@ -1159,6 +1159,7 @@ class Menu:
         def save_client_name():
             if len(textbox_client_name.text_str) > 0:
                 self.result["client_name"] = textbox_client_name.text_str
+                self.load_multi_settings_group()
             else:
                 self.objects.append(label_empty_name_shadow)
                 self.objects.append(label_empty_name)
@@ -1178,11 +1179,11 @@ class Menu:
 
         label_client_name = Label(self.window_surface, pos=(
             self.size[0] / 2 - BUTTON_WIDTH / 2, self.size[1] / 10 * 3, BUTTON_WIDTH, BUTTON_HEIGHT),
-                                  text="IP клиента:",
+                                  text="Ваш никнейм: ",
                                   text_color=BUTTON_YELLOW, font_size=FONT_SIZE, font="main_menu")
         label_client_name_shadow = Label(self.window_surface, pos=(
             self.size[0] / 2 - BUTTON_WIDTH / 2 + 2, self.size[1] / 10 * 3 + 2, BUTTON_WIDTH, BUTTON_HEIGHT),
-                                         text="IP клиента:",
+                                         text="Ваш никнейм: ",
                                          text_color=BLACK, font_size=FONT_SIZE, font="main_menu")
         textbox_client_name = TextBox(self.window_surface,
                                       pos=(self.size[0] / 2 - BUTTON_WIDTH,
@@ -1223,8 +1224,9 @@ class Menu:
             self.size[0] / 5 - BUTTON_WIDTH + 2, self.size[1] / 10 * 8 + 2, BUTTON_WIDTH, BUTTON_HEIGHT), text="Назад",
                                     text_color=BLACK, font_size=FONT_SIZE, font="main_menu")
 
-        self.objects.append(label_is_local_shadow)
-        self.objects.append(button_is_local)
+        self.objects.append(label_client_name_shadow)
+        self.objects.append(label_client_name)
+        self.objects.append(textbox_client_name)
         self.objects.append(label_return_shadow)
         self.objects.append(button_return)
         self.objects.append(label_menu_name_shadow)

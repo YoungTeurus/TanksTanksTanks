@@ -24,7 +24,8 @@ def main():
                     # Если запускается клиент
                     game = Game(window_surface, is_server=False,
                                 multi=True, connect_to_ip=result["server_ip"],
-                                client_ip=result["client_ip"], client_port=result["client_port"])  # Создание игры
+                                client_ip=result["client_ip"], client_port=result["client_port"],
+                                client_name=result["client_name"])  # Создание игры
                 else:
                     # Если запускается сервер
                     game = Game(window_surface, is_server=True,

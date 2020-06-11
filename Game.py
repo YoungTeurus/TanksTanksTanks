@@ -48,7 +48,7 @@ class Game:
 
     def __init__(self, window_surface, is_server, multi, start_map_id: int = None,
                  connect_to_ip: str = None, server_ip: str = None, client_ip: str = None,
-                 client_port: int = None, dedicated: bool = None):
+                 client_port: int = None, dedicated: bool = None, client_name: str = None):
         """
         Если multi = False, значит никакой работы с сервером и клиентом проводиться не будет.
         Елси multi = True:
@@ -102,6 +102,8 @@ class Game:
             self.has_already_tried_to_connect = False
             self.server_button_pressed = False  # Флаг для однократной отработки нажатия кнопки подключения
             self.set_default_buttons(server=False)
+            if client_name is not None:
+                self.clientside_sender.player_name = client_name
         elif not multi:
             # Запуск одиночки
             self.world.load_world_map(start_map_id)
