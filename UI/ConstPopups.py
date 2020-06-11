@@ -132,7 +132,6 @@ def add_wait_for_start_popupbox(game):
 
 def remove_wait_popupbox_for_start_popupbox(game):
     game.any_popup_box = None
-    game.game_started = True
 
 
 def remove_wait_popupbox_and_return_to_menu(game):

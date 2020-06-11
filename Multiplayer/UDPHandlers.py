@@ -56,6 +56,7 @@ class MyUDPHandlerClientSide(socketserver.BaseRequestHandler):
             elif data_dict["event_type"] == EVENT_SERVER_GAME_STARTED:
                 # Если пришёл event начала игры
                 remove_wait_popupbox_for_start_popupbox(self.parent_game)
+                self.parent_game.game_started = True
             elif data_dict["event_type"] == EVENT_CLIENT_CONNECTED:
                 # Если пришёл event, что мы подключились
                 if not self.parent_game.is_connected:  # Если мы ЕЩЁ НЕ подключились...

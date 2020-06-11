@@ -123,6 +123,10 @@ class Game:
 
         self.main_cycle()  # Основной цикл
 
+    def send_changes_and_clear(self):
+        self.serverside_sender.send_changes()
+        self.world.clear_changes()
+
     def wait_for_players(self, num_of_player_to_start: int = 2):
 
         def check_players_ready():
@@ -138,11 +142,10 @@ class Game:
             # Пока игроки не будут готовы, ждём.
             return
         # Как только к нам подключилост достаточное количество игроков, спавним их и центруем камеру
-        self.serverside_sender.send_event(EVENT_SERVER_GAME_STARTED)
         for (i, player) in enumerate(self.serverside_sender.clients):
             self.world.spawn_player(i)
 
-        self.serverside_sender.send_changes()
+        self.send_changes_and_clear()  # Отправляем только сообщение о создании танков игроков
 
         # Отправка клиентам ID их танков, чтобы они могли сами центрировать камеры
         id_players_ip_combo: dict = dict()
@@ -151,6 +154,8 @@ class Game:
         self.serverside_sender.send_event(EVENT_SERVER_SEND_PLAYERS_TANKS_IDS, id_players_ip_combo)
 
         self.world.center_camera_on_player()
+
+        self.serverside_sender.send_event(EVENT_SERVER_GAME_STARTED)
 
         remove_server_started_popupbox(self)
         self.game_started = True
@@ -231,10 +236,9 @@ class Game:
         # Любое из действий может быть None!
         # Действие "NONE" может иметь только одно действие "при ненажатой".
 
-        if self.any_popup_box is not None:
-            if self.any_popup_box.blocking:
-                # Если есть блокирующий popup_box, ничего не делаем.
-                return
+        if self.any_popup_box is not None and self.any_popup_box.blocking:
+            # Если есть блокирующий popup_box, ничего не делаем.
+            return
 
         keyboard_pressed = pygame.key.get_pressed()
         any_pressed = False  # Была ли нажата хоть одна клавиша
