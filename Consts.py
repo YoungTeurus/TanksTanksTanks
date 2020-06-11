@@ -53,7 +53,8 @@ EPSILON = 0.15
 START_MAP_ID = 0  # ID стандартно-первой карты
 MAPS = {
     0: "\\assets\\maps\\map0.txt",
-    1: "\\assets\\maps\\map1.txt"
+    1: "\\assets\\maps\\map1.txt",
+    2: "\\assets\\maps\\map2.txt"
 }
 SERVER_MAPS = {
 

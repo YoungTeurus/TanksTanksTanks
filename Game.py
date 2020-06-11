@@ -14,7 +14,7 @@ from UI.ConstPopups import add_server_started_popupbox, remove_server_started_po
 from UI.Ingame_GUI import GUI
 from UI.MenuObjects.PopupBox import PopupBox
 from Multiplayer.Senders import DataSenderServerSide, DataSenderClientSide, EVENT_SERVER_STOP, EVENT_CLIENT_PLAYER_QUIT, \
-    EVENT_SERVER_GAME_STARTED, EVENT_CLIENT_SEND_CHAT_MESSAGE
+    EVENT_SERVER_GAME_STARTED, EVENT_CLIENT_SEND_CHAT_MESSAGE, EVENT_SERVER_SEND_PLAYERS_TANKS_IDS
 from Multiplayer.UDPHandlers import MyUDPHandlerClientSide, MyUDPHandlerServerSide
 from World.Map import Map
 from World.World import World
@@ -36,6 +36,8 @@ class Game:
 
     connect_to_ip: str = None  # Адрес, к которому будет пытаться подключиться клиент
     client_ip: str = None  # Адрес, на котором расположен клиент
+    # TODO: подумать, куда засунуть эту переменную V V V
+    client_world_object_id: int = None  # ID объекта, которым управляет данный клиент
     client_port: int = None  # Порт клиента
     server_ip: str = None  # Адрес, на котором расположен сервер
 
@@ -139,6 +141,15 @@ class Game:
         self.serverside_sender.send_event(EVENT_SERVER_GAME_STARTED)
         for (i, player) in enumerate(self.serverside_sender.clients):
             self.world.spawn_player(i)
+
+        self.serverside_sender.send_changes()
+
+        # Отправка клиентам ID их танков, чтобы они могли сами центрировать камеры
+        id_players_ip_combo: dict = dict()
+        for (i, client) in enumerate(self.serverside_sender.clients):
+            id_players_ip_combo[client.ip_port_combo] = self.world.players[client.player_id].world_id
+        self.serverside_sender.send_event(EVENT_SERVER_SEND_PLAYERS_TANKS_IDS, id_players_ip_combo)
+
         self.world.center_camera_on_player()
 
         remove_server_started_popupbox(self)
@@ -189,17 +200,21 @@ class Game:
             # TODO: Избавиться от этой переменной и класса.
             class MoveVar:
                 direction: str = None
+
             move_var = MoveVar()  # Переменная для хранения текущего направления движения танка
 
             # Если задаём для клиента
             self.button_actions[MOVE_RIGHT] = ((lambda: self.button_move_player("RIGHT", True, local_var=move_var)),
-                                    (lambda: self.reset_move_player_direction("RIGHT", True, local_var=move_var)))
+                                               (lambda: self.reset_move_player_direction("RIGHT", True,
+                                                                                         local_var=move_var)))
             self.button_actions[MOVE_LEFT] = ((lambda: self.button_move_player("LEFT", True, local_var=move_var)),
-                                    (lambda: self.reset_move_player_direction("LEFT", True, local_var=move_var)))
+                                              (lambda: self.reset_move_player_direction("LEFT", True,
+                                                                                        local_var=move_var)))
             self.button_actions[MOVE_UP] = ((lambda: self.button_move_player("UP", True, local_var=move_var)),
-                                    (lambda: self.reset_move_player_direction("UP", True, local_var=move_var)))
+                                            (lambda: self.reset_move_player_direction("UP", True, local_var=move_var)))
             self.button_actions[MOVE_DOWN] = ((lambda: self.button_move_player("DOWN", True, local_var=move_var)),
-                                    (lambda: self.reset_move_player_direction("DOWN", True, local_var=move_var)))
+                                              (lambda: self.reset_move_player_direction("DOWN", True,
+                                                                                        local_var=move_var)))
             self.button_actions[SHOOT] = ((lambda: self.clientside_sender.send_button("SHOOT")),
                                           None)
             self.button_actions[CHAT_BUTTON] = ((lambda: add_chat(self)),
@@ -304,6 +319,11 @@ class Game:
 
             if self.game_started:
                 self.process_inputs()
+
+                # TODO: подумать, куда засунуть это V V V
+                if self.multi and not self.is_server:
+                    # Центируемся на своём танке
+                    self.world.camera.smart_center_on(self.world.objects_id_dict[self.client_world_object_id])
 
             # Попытка подключиться к серверу при запуске клиента:
             if not self.is_server and not self.is_connected and self.multi and not self.has_already_tried_to_connect:

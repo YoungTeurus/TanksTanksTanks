@@ -39,7 +39,7 @@ class World:
     changes = []  # Различия, произошедшие за текущий такт игры. Содержит команды, которые необходимо выполнить.
     last_id = None  # Последний свободный id
 
-    objects_id_dict = None  # Словарь ВСЕХ объектов по их ID
+    objects_id_dict: dict = None  # Словарь ВСЕХ объектов по их ID
 
     def __init__(self, parent_surface, tileset, is_server):
         self.parent_surface = parent_surface
@@ -218,6 +218,7 @@ class World:
             world_id = int(arguments[1])
             bullet_direction = arguments[2]
             self.objects_id_dict[world_id].get_hit(bullet_direction)
-        elif arguments[0] == "camera":
-            camera_x, camera_y = int(arguments[2]), int(arguments[3])
-            self.camera.set_coords(camera_x, camera_y)
+        # elif arguments[0] == "camera":
+        #     camera_x, camera_y = int(arguments[2]), int(arguments[3])
+        #     self.camera.set_coords(camera_x, camera_y)
+        #     self.camera.center_on()

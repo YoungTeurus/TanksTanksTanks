@@ -1,6 +1,7 @@
 from pygame import Rect
 
 from Consts import sprite_w, sprite_h
+from World.Objects.WorldObject import WorldObject
 
 
 class Camera:
@@ -21,8 +22,8 @@ class Camera:
 
     def set_coords(self, x, y):
         self.visible_rect.x, self.visible_rect.y = x, y
-        if self.parent_world.need_to_log_changes:  # Для сервера
-            self.parent_world.changes.append("camera {}". format(self.__str__()))
+        # if self.parent_world.need_to_log_changes:  # Для сервера
+        #     self.parent_world.changes.append("camera {}". format(self.__str__()))
 
     def get_size(self):
         return self.visible_rect.size
@@ -45,7 +46,7 @@ class Camera:
         #    -game_object.float_x - game_object.object_rect.width / 2 + self.parent_world.parent_surface.get_width() / 2,
         #    -game_object.float_y - game_object.object_rect.height / 2 + self.parent_world.parent_surface.get_height() / 2)
 
-    def smart_center_on(self, game_object):
+    def smart_center_on(self, game_object: WorldObject):
         (new_camera_x, new_camera_y) = self.get_coords_if_would_be_centered_on(game_object)  # Конечное положение камеры
         was_x_corrected = was_y_corrected = False  # Была ли одна из координат изменена
         world_w, world_h = self.parent_world.world_map.size_w, self.parent_world.world_map.size_h
@@ -103,7 +104,7 @@ class Camera:
         # После всего этого устанавливаем координаты камеры
         self.set_coords(new_camera_x, new_camera_y)
 
-    def get_coords_if_would_be_centered_on(self, game_object):
+    def get_coords_if_would_be_centered_on(self, game_object: WorldObject):
         """
         Возвращает координаты камеры, если бы она была отцентрована на определённом объекте
         :param game_object: Объект, на котороый нужно отцентроваться

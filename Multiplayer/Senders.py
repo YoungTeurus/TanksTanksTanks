@@ -1,6 +1,6 @@
 import json
 import socket
-from typing import List
+from typing import List, Optional
 
 from Consts import SOCKET_DEBUG, MAPS
 from Files import get_script_dir
@@ -12,17 +12,20 @@ EVENT_SERVER_GAME_STARTED = "EVENT_SERVER_GAME_STARTED"
 EVENT_SERVER_STOP = "EVENT_SERVER_STOP"
 EVENT_CLIENT_SEND_CHAT_MESSAGE = "EVENT_CLIENT_SEND_CHAT_MESSAGE"
 EVENT_SERVER_SEND_CHAT_MESSAGE = "EVENT_SERVER_SEND_CHAT_MESSAGE"
+EVENT_SERVER_SEND_PLAYERS_TANKS_IDS = "EVENT_SERVER_SEND_PLAYERS_TANKS_IDS"
 
 
 class Client:
     ip_port_combo: str = None  # Запись ip адреса и порта клиента
+    player_id: int = None  # id_игрока
     ready: bool = None  # Флаг готовности клиента
     player_name: str = None  # Имя игрока в чате
 
-    def __init__(self, ip_port_combo, player_name):
+    def __init__(self, ip_port_combo, player_name, player_id):
         self.ip_port_combo = ip_port_combo
         self.ready = False
         self.player_name = player_name
+        self.player_id = player_id
 
 
 class DataSenderServerSide:
@@ -31,14 +34,14 @@ class DataSenderServerSide:
     """
     parent_game = None
     clients: List[Client] = None  # Список клиентов
-    clients_player_id: dict = None  # Словарь "ip:порт - id_игрока"
+    # clients_player_id: dict = None  # Словарь "ip:порт - id_игрока"
 
     last_free_player_id: int = None  # Последний свободный id игрока
 
     def __init__(self, parent_game):
         self.parent_game = parent_game
         self.clients = []
-        self.clients_player_id = dict()
+        # self.clients_player_id = dict()
         self.last_free_player_id = 0
 
     def send_ok(self, ip, port):
@@ -82,7 +85,7 @@ class DataSenderServerSide:
             if SOCKET_DEBUG:
                 print("Sent:     {}".format(data))
 
-    def send_event(self, event_type: str, event_data: str = None):
+    def send_event(self, event_type: str, event_data: object = None):
         """
         Отправляет клиентам какой-то event-сигнал
         """
@@ -98,6 +101,12 @@ class DataSenderServerSide:
             sock.sendto(data.encode(), (host, int(port)))
             if SOCKET_DEBUG:
                 print("Sent:     {}".format(data))
+
+    def get_client_by_ip_port_combo(self, ip_port_combo: str) -> Optional[Client]:
+        for client in self.clients:
+            if client.ip_port_combo == ip_port_combo:
+                return client
+        return None
 
 
 class DataSenderClientSide:
@@ -153,7 +162,7 @@ class DataSenderClientSide:
         if SOCKET_DEBUG:
             print("Sent:     {}".format(data))
 
-    def send_event(self, event_type: str, event_data: str = None):
+    def send_event(self, event_type: str, event_data: object = None):
         """
         Отправляет серверу какой-то event-сигнал
         """
