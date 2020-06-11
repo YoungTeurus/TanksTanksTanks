@@ -68,8 +68,8 @@ class World:
         self.last_id += 1
         return self.last_id - 1
 
-    def load_map(self, map_id):
-        self.world_map.load_by_id(map_id)
+    def load_map(self, map_id, server_map: bool = False):
+        self.world_map.load_by_id(map_id, server_map)
         self.world_map.create_object_map()
         self.world_map.check()
 

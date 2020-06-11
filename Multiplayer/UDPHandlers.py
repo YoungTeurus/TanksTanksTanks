@@ -2,7 +2,7 @@ import json
 import os
 import socketserver
 
-from Consts import SOCKET_DEBUG, MAPS
+from Consts import SOCKET_DEBUG, MAPS, SERVER_MAPS
 from Files import get_script_dir
 from UI.ConstPopups import add_disconnected_from_server_popupbox, remove_wait_popupbox_for_start_popupbox, \
     add_wait_for_start_popupbox
@@ -37,10 +37,10 @@ class MyUDPHandlerClientSide(socketserver.BaseRequestHandler):
             except OSError:
                 # Если папка уже создана
                 pass
-            MAPS[world_id] = "\\assets\\maps\\downloaded\\map{}.txt".format(world_id)
-            with open(get_script_dir() + MAPS[world_id], "w") as world_file:
+            SERVER_MAPS[world_id] = "\\assets\\maps\\downloaded\\map{}.txt".format(world_id)
+            with open(get_script_dir() + SERVER_MAPS[world_id], "w") as world_file:
                 world_file.write(data_dict["world"])
-            self.parent_game.world.load_map(world_id)  # Грузим карту
+            self.parent_game.world.load_map(world_id, server_map=True)  # Грузим карту
             self.parent_game.world.is_server = False  # Говорим миру, что он больше не сервер
             self.parent_game.clientside_sender.send_event(EVENT_CLIENT_READY)  # Говорим серверу, что мы готовы
         elif data_dict["type"] == "changes":

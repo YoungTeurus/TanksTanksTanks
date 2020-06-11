@@ -1,7 +1,7 @@
 import logging
 from typing import Dict, List
 
-from Consts import MAPS
+from Consts import MAPS, SERVER_MAPS
 from Files import get_script_dir
 from World.Objects.WorldTile import WorldTile
 
@@ -87,13 +87,20 @@ class Map:
         else:
             logging.error("There was an attempt to create objects for a world by it was not loaded.")
 
-    def load_by_id(self, map_id: int) -> None:
+    def load_by_id(self, map_id: int, server_map: bool = False) -> None:
         """
         Загрузка мира по ID.
         :param map_id: ID мира из Consts.
         """
         self.map_id = map_id
-        if map_id in MAPS:
+
+        if server_map:
+            # Если грузим серверную карту
+            map_dict = SERVER_MAPS
+        else:
+            map_dict = MAPS
+
+        if map_id in map_dict:
             # Очистка перед загрузкой
             self.text_map.clear()
             self.player_spawn_places.clear()
@@ -101,7 +108,7 @@ class Map:
             self.size_w = None
             self.size_h = None
 
-            self.load_from_file(MAPS[map_id])
+            self.load_from_file(map_dict[map_id])
         else:
             logging.error("There was an attempt to load a world by id but it does not exist: {}".format(map_id))
 

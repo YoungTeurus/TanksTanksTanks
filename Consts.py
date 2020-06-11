@@ -55,6 +55,9 @@ MAPS = {
     0: "\\assets\\maps\\map0.txt",
     1: "\\assets\\maps\\map1.txt"
 }
+SERVER_MAPS = {
+
+}
 
 # Все тайлы, используемые в tileset.png
 TILES = {
