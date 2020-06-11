@@ -12,8 +12,6 @@ def main():
     window_surface = pygame.display.set_mode((window_w, window_h))  # Основная поверхность
     pygame.display.set_caption("TANK! TANK! TANK!")
 
-    need_to_restart = False
-
     while True:
         menu = Menu(window_surface)
         result = menu.main_cycle()

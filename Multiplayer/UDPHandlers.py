@@ -2,7 +2,7 @@ import json
 import os
 import socketserver
 
-from Consts import SOCKET_DEBUG, MAPS, SERVER_MAPS
+from Consts import SOCKET_DEBUG, SERVER_MAPS
 from Files import get_script_dir
 from UI.ConstPopups import add_disconnected_from_server_popupbox, remove_wait_popupbox_for_start_popupbox, \
     add_wait_for_start_popupbox
