@@ -46,6 +46,8 @@ class GUI(PopupBox):
             self.chatlog.clear()  # Очистка всех сообщений
 
             for (i, message) in enumerate(self.parent_game.chat_history.read_messages()):
+                if i > max_messages_in_chatlog:
+                    break
                 temp_message_y = chatlog_y + chatlog_height - (one_message_height * (i + 1))
 
                 temp_label_message = Label(self.parent_game.window_surface,
