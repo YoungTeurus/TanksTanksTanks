@@ -37,8 +37,13 @@ class PopupBox(MenuObject):
     blocking: bool = None  # Блокирует ли PopupBox остальные input-ы
     fill: bool = None  # Нужно ли заливать PopupBox цветом color
 
+    transparent_background_shadow: Surface = None  # Полупрозрачный фон для тени fill-а
+    transparent_background: Surface = None  # Полупрозрачный фон для fill-а
+    transparent: bool = None  # Использует ли цвет заливки прозрачность
+    transparent_alpha: int = None  # Сила alpha-канала цвета фона
+
     def __init__(self, window_surface: Surface, pos: tuple = None, color: tuple = None, darken_background: bool = None,
-                 blocking: bool = True, fill: bool = True):
+                 blocking: bool = True, fill: bool = True, transparent: bool = False, alpha_color: int = 0):
         self.window_surface = window_surface
         self.box_objects = []
 
@@ -57,6 +62,10 @@ class PopupBox(MenuObject):
         else:
             self.need_to_darken_background = True
 
+        self.transparent = transparent
+        if self.transparent:
+            self.transparent_alpha = alpha_color
+
         self.blocking = blocking
         self.fill = fill
 
@@ -73,6 +82,7 @@ class PopupBox(MenuObject):
         self.box_objects.clear()
 
     def draw(self):
+        # Затемнение фона
         if self.need_to_darken_background:
             if self.dark_background is None:
                 self.dark_background = Surface((self.window_surface.get_width(), self.window_surface.get_height()),
@@ -81,11 +91,27 @@ class PopupBox(MenuObject):
             # Наложение полупрозрачного чёрного фона на картинку
             self.window_surface.blit(self.dark_background, (0, 0))
 
+        # Заливка rect-а.
         if self.fill:
-            # Отрисовка тени:
-            self.window_surface.fill(BLACK, (self.rect.x + 2, self.rect.y + 2, self.rect.width, self.rect.height))
-            # Отрисовка самого PopupBox-а
-            self.window_surface.fill(self.color, self.rect)
+            if self.transparent:
+                # Если прозрачный цвет заливки
+                if self.transparent_background is None:
+                    self.transparent_background = Surface((self.rect.w, self.rect.h), SRCALPHA)
+                    self.transparent_background.fill((self.color[0], self.color[1],
+                                                      self.color[2], self.transparent_alpha))
+                if self.transparent_background_shadow is None:
+                    self.transparent_background_shadow = Surface((self.rect.w, self.rect.h), SRCALPHA)
+                    self.transparent_background_shadow.fill(HALF_BLACK)
+                # Отрисовка тени:
+                self.window_surface.blit(self.transparent_background_shadow, (self.rect.x + 2, self.rect.y + 2))
+                # Отрисовка самого PopupBox-а
+                self.window_surface.blit(self.transparent_background, (self.rect.x, self.rect.y))
+            else:
+                # Если непрозрачный цвет заливки
+                # Отрисовка тени:
+                self.window_surface.fill(BLACK, (self.rect.x + 2, self.rect.y + 2, self.rect.width, self.rect.height))
+                # Отрисовка самого PopupBox-а
+                self.window_surface.fill(self.color, self.rect)
 
         for obj in self.box_objects:
             obj.draw()

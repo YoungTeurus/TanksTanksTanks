@@ -32,7 +32,8 @@ class GUI(PopupBox):
         self.chatlog = PopupBox(parent_game.window_surface,
                                 pos=(chatlog_x, chatlog_y,
                                      chatlog_width, chatlog_height),
-                                color=GREY, darken_background=False, blocking=False)
+                                color=GREY, darken_background=False, blocking=False,
+                                transparent=True, alpha_color=80)
 
         self.is_chatlog_folded = True
 
