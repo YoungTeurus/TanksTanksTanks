@@ -1,6 +1,4 @@
-import pygame
-
-from Consts import image_w, image_h, TILES
+from Consts import image_w, image_h
 from World.Timer import Timer
 
 

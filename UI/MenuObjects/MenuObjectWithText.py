@@ -8,7 +8,7 @@ fonts = {
     'main_menu': '\\assets\\fonts\\main_menu.ttf'
 }
 
-LEFT_ALIGNMENT = "LEFT_ALIGNMENT"
+LEFT_ALIGNMENT = 1
 ALIGNMENTS = [LEFT_ALIGNMENT]
 
 

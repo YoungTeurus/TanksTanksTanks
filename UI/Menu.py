@@ -7,10 +7,12 @@ import pygame
 
 from Consts import targetFPS, SOUNDS_VOLUME, BLACK, BUTTON_SELECTED_YELLOW, MENU_WHITE, BUTTON_YELLOW, \
     MAIN_MENU_BACKGROUND_COLOR, MAIN_MENU_DARK_BACKGROUND_COLOR, START_MAP_ID
-from Files import get_script_dir
+from Files import get_script_dir, ImageLoader
+from UI.MenuBackgroundImage import MenuBackgroundImage
 from UI.MenuObjects.Button import Button
 from UI.MenuObjects.ButtonTrigger import ButtonTrigger
 from UI.MenuObjects.Label import Label
+from UI.MenuObjects.MenuImage import MenuImage, ALIGNMENT_CENTER, FILL
 from UI.MenuObjects.MenuLine import MenuLine
 from UI.MenuObjects.MenuObject import SKIP_EVENT
 from UI.MenuObjects.MenuRect import MenuRect
@@ -65,6 +67,8 @@ class Menu:
     # TODO: придумать способ избавить от этого:
     any_popup: PopupBox = None  # Ужасный костыль. Если эта ссылка не None, значит данный объект должен первым получить
 
+    image_loader = None  # TODO: временно. Вынести отсюда нафиг. И совместить Game и Menu под одним началом.
+
     # любой event и при этом отрисовываться последним.
 
     def __init__(self, window_surface):
@@ -86,6 +90,8 @@ class Menu:
 
         self.sounds['select'].set_volume(SOUNDS_VOLUME)
         self.sounds['press'].set_volume(SOUNDS_VOLUME)
+
+        self.image_loader = ImageLoader()
 
         self.load_title_group()
 
@@ -154,6 +160,9 @@ class Menu:
                                            BUTTON_WIDTH, BUTTON_HEIGHT),
                                       text="Настройки",
                                       text_color=BLACK, font_size=FONT_SIZE, font="main_menu")
+        buttontrigger_esc = ButtonTrigger(key=pygame.K_ESCAPE,
+                                          function_list=[self.play_sound, add_quit_popup],
+                                          args_list=["press", None])
         button_quit = Button(self.window_surface, pos=(
             self.size[0] / 2 - BUTTON_WIDTH / 2, self.size[1] / 10 * 8, BUTTON_WIDTH, BUTTON_HEIGHT),
                              text="Выйти из игры",
@@ -167,6 +176,11 @@ class Menu:
             self.size[0] / 2 - BUTTON_WIDTH / 2 + 2, self.size[1] / 10 * 8 + 2, BUTTON_WIDTH, BUTTON_HEIGHT),
                                   text="Выйти из игры",
                                   text_color=BLACK, font_size=FONT_SIZE, font="main_menu")
+        image_title = MenuImage(self.window_surface, pos=(self.size[0] / 4, self.size[1] / 10 * 1.5, 164, 164),
+                                image=self.image_loader.get_image_by_name("main_icon.png"), shadow=True,
+                                alignment=ALIGNMENT_CENTER)
+        image_backfill = MenuBackgroundImage(self.window_surface, size=(self.size[0], self.size[1]), speed=0.5,
+                                             image=self.image_loader.get_image_by_name("lines3.png"))
         label_title = Label(self.window_surface, pos=(self.size[0] / 2, self.size[1] / 10 * 1, AUTO_W, AUTO_H),
                             text="TANK! TANK! TANK!",
                             text_color=MENU_WHITE, font_size=TITLE_FONT_SIZE, font="main_menu")
@@ -234,12 +248,15 @@ class Menu:
         popupbox_quit.add_object(label_popupbox_quit_title_shadow)
         popupbox_quit.add_object(label_popupbox_quit_title)
 
+        self.objects.append(image_backfill)
+        self.objects.append(image_title)
         self.objects.append(label_start_solo_shadow)
         self.objects.append(button_start_solo)
         self.objects.append(label_start_milti_shadow)
         self.objects.append(button_start_multi)
         self.objects.append(label_settings_shadow)
         self.objects.append(button_settings)
+        self.objects.append(buttontrigger_esc)
         self.objects.append(label_quit_shadow)
         self.objects.append(button_quit)
         self.objects.append(label_title_shadow)

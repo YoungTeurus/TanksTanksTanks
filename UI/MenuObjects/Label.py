@@ -18,13 +18,13 @@ class Label(MenuObjectWithText):
     text_surf: Surface = None  # Отрисовываемый текст
     text_size: tuple = None  # Размер места, занимаемого текстом
 
-    alignment: str = None  # Выравнивание текста
+    alignment: int = None  # Выравнивание текста
 
     has_text_changed = None  # Изменился ли текст, чтобы его нужно было вновь render-ить?
 
     def __init__(self, window_surface: Surface, pos: tuple = None, text: str = None,
                  text_color: tuple = None, function=None, font_size: int = None, font: str = None,
-                 alignment: str = None):
+                 alignment: int = None):
         self.window_surface = window_surface
         self.rect = Rect(0, 0, 100, 50)  # Стандартные размер и положение кнопки
         if pos is not None:

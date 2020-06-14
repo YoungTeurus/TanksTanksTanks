@@ -17,7 +17,7 @@ class ImageLoader:
         image_files_list = os.listdir(path_to_images)
         for image_file in image_files_list:
             path_to_image = path_to_images + image_file
-            self.loaded_images.update({image_file: pygame.image.load(path_to_image).convert_alpha()})
+            self.loaded_images[image_file] = pygame.image.load(path_to_image).convert_alpha()
 
     def get_image_by_name(self, name):
         if name in self.loaded_images:
