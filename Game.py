@@ -7,7 +7,7 @@ from pygame.surface import Surface
 
 from Consts import targetFPS, DARK_GREY, BLACK, MOVE_RIGHT, SHOOT, MOVE_LEFT, MOVE_DOWN, MOVE_UP, \
     CHANGES_DEBUG, CHAT_BUTTON, FOLD_UNFOLD_CHATLOG, START_MAP_ID
-from Files import ImageLoader
+from Files import ImageLoader, SoundLoader
 from Images.Tileset import Tileset
 from Multiplayer.ChatHistory import ChatHistory
 from UI.ConstPopups import add_server_started_popupbox, remove_server_started_popupbox, add_chat
@@ -28,6 +28,10 @@ class Game:
 
     window_surface: Surface = None  # Основная поверхность
 
+    image_loader: ImageLoader = None  # Загрузчик изображений
+    sound_loader: SoundLoader = None  # Загрузчик звуков
+
+    is_dedicated: bool = None  # Является ли выделенным сервером?
     is_server: bool = None
     is_connected: bool = None  # Подключён ли клиент к серверу
     multi: bool = None  # Сетевой режим или нет?
@@ -49,9 +53,10 @@ class Game:
 
     chat_history: ChatHistory = None  # История чата
 
-    def __init__(self, window_surface, is_server, multi, start_map: Map = None,
+    def __init__(self, window_surface, is_server, multi, image_loader: ImageLoader, sound_loader: SoundLoader,
+                 start_map: Map = None,
                  connect_to_ip: str = None, server_ip: str = None, client_ip: str = None,
-                 client_port: int = None, dedicated: bool = None, client_name: str = None):
+                 client_port: int = None, dedicated: bool = False, client_name: str = None):
         """
         Если multi = False, значит никакой работы с сервером и клиентом проводиться не будет.
         Елси multi = True:
@@ -70,8 +75,9 @@ class Game:
                                      minimal_dimention, minimal_dimention)
 
         self.clock = pygame.time.Clock()
-        self.imageloader = ImageLoader()
-        self.tileset = Tileset(64, 64, self.imageloader.get_image_by_name("tileset.png"))
+        self.imageloader = image_loader
+        self.sound_loader = sound_loader
+        self.tileset = Tileset(64, 64, self.imageloader.get_image_by_name("tileset"))
 
         self.chat_history = ChatHistory()
         self.gui = GUI(self)
@@ -80,6 +86,7 @@ class Game:
 
         self.is_server = is_server
         self.multi = multi
+        self.is_dedicated = dedicated
 
         self.world = World(self.game_surface, self.tileset, True)
 

@@ -1,47 +1,9 @@
-import pygame
-
-from Consts import window_w, window_h
-from Game import Game
-from UI.Menu import Menu
+from MainClass import MainClass
 
 
 def main():
-    # Инициализация PyGame и констант
-    pygame.init()
-
-    window_surface = pygame.display.set_mode((window_w, window_h))  # Основная поверхность
-    pygame.display.set_caption("TANK! TANK! TANK!")
-
-    while True:
-        menu = Menu(window_surface)
-        result = menu.main_cycle()
-        if result["result"] == "start":
-            if result["multi"]:
-                # Если сетевая игра
-                if result["mode"] == "client":
-                    # Если запускается клиент
-                    game = Game(window_surface, is_server=False,
-                                multi=True, connect_to_ip=result["server_ip"],
-                                client_ip=result["client_ip"], client_port=result["client_port"],
-                                client_name=result["client_name"])  # Создание игры
-                else:
-                    # Если запускается сервер
-                    game = Game(window_surface, is_server=True,
-                                multi=True, server_ip=result["server_ip"],
-                                dedicated=result["dedicated"],
-                                start_map=result["server_map"])  # Создание игры
-            else:
-                # Если одиночная игра
-                game = Game(window_surface, is_server=False, multi=False,
-                            start_map=result["client_map"])  # Создание игры
-        elif result["result"] == "quit":
-            return
-        else:
-            return
-        game.main_cycle()
-        if not game.need_to_return_to_menu:
-            # Если игру не нужно перезапускать, то прекращаем выполнение программы
-            break
+    m = MainClass()
+    m.run()
 
 
 if __name__ == "__main__":

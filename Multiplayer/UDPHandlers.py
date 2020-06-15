@@ -67,6 +67,7 @@ class MyUDPHandlerClientSide(socketserver.BaseRequestHandler):
                 # Если пришло сообщение в чат от сервера...
                 message = data_dict["event_data"]
                 self.parent_game.chat_history.add_message(message)
+                self.parent_game.sound_loader.play_sound("Chat")
             elif data_dict["event_type"] == EVENT_SERVER_SEND_PLAYERS_TANKS_IDS:
                 # Если пришло сообщение с id-шником нашего игрового танка...
                 event_data: dict = data_dict["event_data"]  # dict[ip_combo, world_id]
@@ -169,5 +170,7 @@ class MyUDPHandlerServerSide(socketserver.BaseRequestHandler):
                 message: str = f"[{self.parent_game.serverside_sender.clients[player_id].player_name}]" +\
                                data_dict["event_data"]  # Добавляем в начало сообщения имя игрока
                 self.parent_game.chat_history.add_message(message)
+                if self.parent_game.is_dedicated:
+                    self.parent_game.sound_loader.play_sound("Chat")
                 # Разсылаем клиентам это сообщение:
                 self.parent_game.serverside_sender.send_event(EVENT_SERVER_SEND_CHAT_MESSAGE, message)
