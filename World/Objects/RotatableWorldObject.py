@@ -4,7 +4,7 @@ import pygame
 from pygame import transform
 from pygame.rect import Rect
 
-from Consts import ID_DEBUG
+from Consts import ID_DEBUG, CHANGE_COLOR_STRING
 from World.Objects.WorldObject import WorldObject
 
 ANGLE = {
@@ -51,7 +51,7 @@ class RotatableWorldObject(WorldObject):
             rect_to_draw = Rect.copy(self.object_rect)  # TODO: подумать, можно ли избежать здесь ненужного копирования
             if self.image.get_size() != self.object_rect.size:
                 # Если размер изображения не совпадает с размером объекта
-                surface_to_draw = transform.scale(self.image.get_current(),
+                surface_to_draw = transform.scale(surface_to_draw,
                                                   (self.object_rect.width, self.object_rect.height))
             if self.current_angle != "UP":
                 surface_to_draw = transform.rotate(surface_to_draw, ANGLE[self.current_angle])
@@ -67,6 +67,20 @@ class RotatableWorldObject(WorldObject):
                 self.test_text = self.test_font.render("id={}".format(self.world_id), 0, (255, 255, 255))
                 self.parent_world.parent_surface.blit(self.test_text, (self.object_rect.x + camera.get_coords()[0],
                                                                        self.object_rect.y + camera.get_coords()[1]))
+
+    def add_color(self, color: tuple) -> None:
+        """
+        Добавляет цвет к объекту.
+        :param color: Добавляемый цвет
+        """
+        self.image.add_color(color, 128)
+        if self.parent_world.need_to_log_changes:  # Для сервера
+            self.parent_world.changes.append(CHANGE_COLOR_STRING.format(
+                world_id=self.world_id,
+                R=color[0],
+                G=color[1],
+                B=color[2]
+            ))
 
     def __str__(self):
         return "{0} {1} {2} {3} {4} {5} {8} {6} {7}".format(

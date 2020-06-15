@@ -6,9 +6,8 @@ import pygame
 from pygame.surface import Surface
 
 from Consts import targetFPS, DARK_GREY, BLACK, MOVE_RIGHT, SHOOT, MOVE_LEFT, MOVE_DOWN, MOVE_UP, \
-    CHANGES_DEBUG, CHAT_BUTTON, FOLD_UNFOLD_CHATLOG, START_MAP_ID
+    CHANGES_DEBUG, CHAT_BUTTON, FOLD_UNFOLD_CHATLOG, START_MAP_ID, PLAYER_TANKS_COLORS
 from Files import ImageLoader, SoundLoader
-from Images.Tileset import Tileset
 from Multiplayer.ChatHistory import ChatHistory
 from UI.ConstPopups import add_server_started_popupbox, remove_server_started_popupbox, add_chat
 from UI.Ingame_GUI import GUI
@@ -30,6 +29,8 @@ class Game:
 
     image_loader: ImageLoader = None  # Загрузчик изображений
     sound_loader: SoundLoader = None  # Загрузчик звуков
+
+    world: World = None  # Мир
 
     is_dedicated: bool = None  # Является ли выделенным сервером?
     is_server: bool = None
@@ -77,12 +78,10 @@ class Game:
                                      minimal_dimention, minimal_dimention)
 
         self.clock = pygame.time.Clock()
-        self.imageloader = image_loader
+        self.image_loader = image_loader
         self.sound_loader = sound_loader
-        self.tileset = Tileset(64, 64, self.imageloader.get_image_by_name("tileset"))
 
         self.chat_history = ChatHistory()
-        self.gui = GUI(self)
 
         self.game_running = True
 
@@ -90,7 +89,7 @@ class Game:
         self.multi = multi
         self.is_dedicated = dedicated
 
-        self.world = World(self.game_surface, self.tileset, True)
+        self.world = World(self.game_surface, self.image_loader, True)
 
         if start_map is not None:
             start_map_id = start_map.map_id
@@ -99,6 +98,8 @@ class Game:
 
         if self.is_server and multi:
             # Запуск сервера для мультиплеера
+            if not self.is_dedicated:
+                self.gui = GUI(self)
             self.server_ip = server_ip
             self.world.set_ready_for_server()
             self.serverside_sender = DataSenderServerSide(self)
@@ -110,6 +111,7 @@ class Game:
             self.set_default_buttons(is_server=True)
         elif not self.is_server and self.multi:
             # Запуск клиента для мультиплеера
+            self.gui = GUI(self)
             self.clientside_sender = DataSenderClientSide(self)
             self.client_ip = client_ip
             self.client_port = client_port
@@ -124,8 +126,10 @@ class Game:
                 self.clientside_sender.player_name = client_name
         elif not multi:
             # Запуск одиночки
+            self.gui = GUI(self)
             self.world.load_world_map(start_map_id)
             self.world.spawn_player()
+            self.world.players[0].add_color(PLAYER_TANKS_COLORS[0])
             self.world.center_camera_on_player()
             self.game_started = True  # TODO: Временно
             self.set_default_buttons(is_server=True)
@@ -157,6 +161,7 @@ class Game:
         # Как только к нам подключилост достаточное количество игроков, спавним их и центруем камеру
         for (i, player) in enumerate(self.serverside_sender.clients):
             self.world.spawn_player(i)
+            self.world.players[i].add_color(PLAYER_TANKS_COLORS[i])
 
         self.send_changes_and_clear()  # Отправляем только сообщение о создании танков игроков
 
@@ -372,14 +377,15 @@ class Game:
             # if not self.world.check_if_base_is_alive():
             #     self.game_over(1)
 
-            if self.game_started and (not self.multi or not self.is_server or not self.is_dedicated):
+            # if self.game_started and (not self.multi or not self.is_server or not self.is_dedicated):
+            if self.game_started:
                 # Отрисовка происходит только, когда игра началась И
                 #  либо игра одиночная
                 #  либо игра - клиент
                 #  либо игра - не выделенный сервер
                 self.world.draw()
 
-            if self.is_server or not self.multi:
+            if self.game_started and (self.is_server or not self.multi):
                 self.world.act()
                 # Спавн врагов:
                 if self.world.enemy_spawn_timer.is_ready() and self.world.enemies_remains > 0:
@@ -397,7 +403,7 @@ class Game:
 
             self.window_surface.blit(self.game_surface, self.game_rect)
 
-            if self.gui is not None:
+            if self.game_started and self.gui is not None:
                 self.gui.draw()
                 self.gui.update()
 

@@ -1,15 +1,21 @@
+from typing import List
+
+from pygame.surface import Surface
+
+
 class Tileset:
     """
     Класс, хранящий группу изображений в виде сетки
     """
 
-    grid = []
+    grid: List[List[Surface]] = None
     width = 0
     height = 0
     size_x = 0
     size_y = 0
 
-    def __init__(self, width, height, image):
+    def __init__(self, width, height, image: Surface):
+        self.grid = []
         self.width = width
         self.height = height
         image_width, image_height = image.get_size()

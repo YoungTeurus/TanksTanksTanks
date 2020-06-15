@@ -4,6 +4,8 @@ import random
 from Consts import TANK_DEFAULT_HP, EPSILON, TANK_DEFAULT_DELAY_BEFORE_FIRE, TANK_DEFAULT_DELAY_BETWEEN_FRAMES, \
     DEFAULT_DELAY_BETWEEN_ENEMY_TRY_TO_ROTATE, DEFAULT_DELAY_BETWEEN_ENEMY_TRY_TO_SHOOT, \
     DEFAULT_DELAY_BETWEEN_ENEMY_TRY_TO_CHANGE_STATE, MOVE_STRING, DESTROY_STRING, CREATE_STRING
+from Images.AnimatedImage import AnimatedImage
+from World.Objects.RotatableWorldObject import RotatableWorldObject
 from World.Timer import Timer
 from Consts import TANK_DEFAULT_SPEED_PER_SECOND, sprite_w, sprite_h
 from World.Objects.Actable import Actable
@@ -26,9 +28,6 @@ class Tank(Collisionable, Actable):
     is_destroyed = None  # Уничтожен ли танк
 
     fire_timer = None
-
-    # delay_before_fire = PLAYER_DEFAULT_DELAY_BEFORE_FIRE
-    # current_delay_before_fire = 0
 
     def __init__(self, world):
         super().__init__(world)
@@ -62,14 +61,15 @@ class Tank(Collisionable, Actable):
     def decrease_hp(self, dmg):
         self.current_hp -= dmg
         if self.current_hp <= 0:
-            self.destroy()
+            self.destroy(cinematic=True)
 
     def act(self):
         self.fire_timer.tick()
 
-    def destroy(self):
+    def destroy(self, cinematic: bool = False):
         """
         Данный метод удаляет танк из нужных массивов
+        :param cinematic: Нужно ли создать взрыв после уничтожения танка.
         :return:
         """
         remove_if_exists_in(self, self.parent_world.all_tanks)
@@ -79,6 +79,10 @@ class Tank(Collisionable, Actable):
         if self.parent_world.need_to_log_changes:  # Для сервера
             self.parent_world.changes.append(DESTROY_STRING.format(world_id=self.world_id,
                                                                    object_type="RotatableWorldObject"))
+        if cinematic:
+            explode = TankExplosion(self.parent_world)
+            explode.setup_in_world(self.object_rect.x + self.object_rect.w / 2,
+                                   self.object_rect.y + self.object_rect.h / 2)
 
     def move_to_direction(self, direction):
         if direction in DIRECTIONS:
@@ -177,7 +181,8 @@ class Tank(Collisionable, Actable):
                                         - (self.float_x + (self.object_rect.width / 2))
                     distance_vector.y = g_obj.float_y + (g_obj.object_rect.height / 2) \
                                         - (self.float_y + (self.object_rect.height / 2))
-                    if abs(distance_vector.x * g_obj.object_rect.height) > abs(distance_vector.y * g_obj.object_rect.width):
+                    if abs(distance_vector.x * g_obj.object_rect.height) > abs(
+                            distance_vector.y * g_obj.object_rect.width):
                         # Если x больше y, значит пересекает горизонтальную грань
                         if distance_vector.x > 0:
                             # Если x больше 0, значит пересекает ЛЕВУЮ грань
@@ -209,17 +214,20 @@ class Vector2:
 # TODO: разнести эти классы в разные места. Как-то.
 
 class PlayerTank(Tank):
-
+    lifes: int = None  # Количество жизней игрока
     last_pressed_direction: str = None  # Последнее направление, в которое двигались
 
     def __init__(self, world):
         super().__init__(world)
 
+    def decrease_life(self):
+        self.lifes = max(0, self.lifes - 1)
+
     def act(self):
         super().act()
 
-    def destroy(self):
-        super().destroy()
+    def destroy(self, cinematic: bool = False):
+        super().destroy(cinematic)
         remove_if_exists_in(self, self.parent_world.players)
 
     def setup_in_world(self, x, y):
@@ -242,7 +250,6 @@ class PlayerTank(Tank):
                 start_angle=self.current_angle,
                 world_id=self.world_id
             ))
-        # self.last_direction = "UP"
 
 
 class EnemyTank(Tank):
@@ -292,13 +299,14 @@ class EnemyTank(Tank):
         self.shoot_timer.tick()
         self.change_state_timer.tick()
 
-    def destroy(self):
-        super().destroy()
+    def destroy(self, cinematic: bool = False):
+        super().destroy(cinematic)
         self.parent_world.current_amount_of_enemies -= 1
 
     def setup_in_world(self, x, y):
         super().setup_in_world(x, y)
-        self.set_image("ENEMY_TANK_0")
+        self.set_image("PLAYER_TANK")
+        # self.set_image("ENEMY_TANK_0")
         self.image.add_timer(TANK_DEFAULT_DELAY_BETWEEN_FRAMES)
         # self.last_direction = "DOWN"
         self.set_angle("DOWN")
@@ -552,3 +560,50 @@ def bullet_collision(bullet, obj):
             if not obj.is_passable_for_bullets:
                 bullet.destroy()
                 bullet.parent_tank.fire_timer.set(min(bullet.parent_tank.fire_timer.current_delay, 10))
+
+
+class TankExplosion(RotatableWorldObject, Actable):
+    """
+    Класс взрыва танка - небольшой анимации, воспроизводящейся после уничтожения танка.
+    """
+    explosion_sprite_size = (96, 96)  # Размер кадра взрыва в файле
+
+    explosion_world_size = (sprite_w * 1.5, sprite_h * 1.5)  # Размер кадра взрыва на экране
+
+    t = 0  # Отсчёт количества пройденных кадров
+
+    def __init__(self, world):
+        RotatableWorldObject.__init__(self, world)
+        # super().__init__(world)
+
+    def setup_in_world(self, x_center, y_center) -> None:
+        """
+        Настройка взрыва: задание картинки и координат.
+        :param x_center: Координата центра взрыва.
+        :param y_center: Координата центра взрыва.
+        """
+        # Задание координат:
+        self.set_pos(x_center - self.explosion_world_size[0]/2, y_center - self.explosion_world_size[1]/2)
+        self.set_size(self.explosion_world_size[0], self.explosion_world_size[1])
+        # Задание изображений:
+        self.image = AnimatedImage()
+        self.image.set_size(self.explosion_world_size)
+        for i in range(len(self.parent_world.explosion_tileset.grid)):
+            self.image.add_frame(self.parent_world.explosion_tileset.get_image(i, 0))
+        self.set_animated()
+        self.image.add_timer(TANK_DEFAULT_DELAY_BETWEEN_FRAMES)
+
+        self.parent_world.all_tanks.append(self)
+        self.parent_world.actable_object.append(self)
+
+    def act(self):
+        if self.image.current_frame == len(self.image.frames):
+            self.destroy()
+
+    def destroy(self):
+        super().destroy()
+        remove_if_exists_in(self, self.parent_world.all_tanks)
+        remove_if_exists_in(self, self.parent_world.actable_object)
+        if self.parent_world.need_to_log_changes:  # Для сервера
+            self.parent_world.changes.append(DESTROY_STRING.format(world_id=self.world_id,
+                                                                   object_type="RotatableWorldObject"))

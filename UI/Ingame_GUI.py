@@ -1,7 +1,10 @@
-from Consts import GREY, BUTTON_YELLOW, BLACK
+from typing import List
+
+from Consts import GREY, BUTTON_YELLOW, BLACK, MAX_PLAYER_TANK_HP
 from UI.ConstPopups import chat_textbox_x, chat_textbox_y, chat_textbox_height, chat_textbox_margin, chat_textbox_width, \
     chat_font_size
 from UI.MenuObjects.Label import Label
+from UI.MenuObjects.MenuImage import MenuImage
 from UI.MenuObjects.MenuObjectWithText import LEFT_ALIGNMENT
 from UI.MenuObjects.PopupBox import PopupBox
 
@@ -17,6 +20,8 @@ chatlog_y = chat_textbox_y - chatlog_height - chat_textbox_margin  # Y чато�
 class GUI(PopupBox):
     parent_game = None  # Игра, в которой отображается данный GUI
     chatlog: PopupBox = None  # Чатлог
+
+    lifes: List[MenuImage] = None  # Жизни игрока
 
     is_chatlog_folded: bool = None  # Свёрнут ли чатлог?
 
@@ -36,6 +41,12 @@ class GUI(PopupBox):
                                 transparent=True, alpha_color=80)
 
         self.is_chatlog_folded = True
+
+        self.lifes = []
+        for i in range(MAX_PLAYER_TANK_HP):
+            image_life = MenuImage(parent_game.window_surface, (chatlog_x + 48*i, chatlog_y - 64, 48, 48),
+                                   parent_game.image_loader.get_image_by_name("life"), shadow=True)
+            self.lifes.append(image_life)
 
     def update_chatlog(self) -> None:
         """
@@ -84,7 +95,16 @@ class GUI(PopupBox):
     def reset_button(self):
         self.is_change_chatlog_action_button_pressed = False
 
-
+    def set_lifes(self, new_lifes: int) -> None:
+        """
+        Устанавливает количество видимых значков жизни.
+        :param new_lifes: Целочисленное значение от 0 до MAX_PLAYER_TANK_HP.
+        """
+        lifes = max(min(MAX_PLAYER_TANK_HP, new_lifes), 0)  # 0 <= new_lifes <= MAX_PLAYER_TANK_HP
+        for life in self.lifes[lifes:]:
+            life.active = False
+        for life in self.lifes[:lifes]:
+            life.active = True
 
     def draw(self):
         if self.is_chatlog_folded:
@@ -92,6 +112,8 @@ class GUI(PopupBox):
         else:
             # Отрисовка чатлога
             self.chatlog.draw()
+        for life in self.lifes:
+            life.draw()
 
     def update(self):
         self.update_chatlog()  # Апдейт чатлога

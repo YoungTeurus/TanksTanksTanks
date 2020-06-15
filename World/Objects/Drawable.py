@@ -1,9 +1,9 @@
 import pygame.sprite
 from pygame import Rect
 
-from Consts import image_w, image_h, TILES
-from Files import get_script_dir
+from Consts import TILES
 from Images.AnimatedImage import AnimatedImage
+from Images.Tileset import Tileset
 
 
 class Drawable(pygame.sprite.Sprite):
@@ -13,11 +13,11 @@ class Drawable(pygame.sprite.Sprite):
     float_x = 0
     float_y = 0
     object_rect = None  # Прямоугольник, хранящий позицию и размеры спрайта объекта
-    image = None  # Отображаемая картинка
+    image: AnimatedImage = None  # Отображаемая картинка
     image_name = None  # Название отображаемой картинки
     # animated_image = None
     # parent_imageloader = None  # Загрузчик картинок
-    parent_tileset = None  # Тайлсет для картинок
+    parent_tileset: Tileset = None  # Тайлсет для картинок
     need_to_animate = False
 
     def __init__(self, tileset):
@@ -37,18 +37,16 @@ class Drawable(pygame.sprite.Sprite):
         self.object_rect.x = int(self.float_x)
         self.object_rect.y = int(self.float_y)
 
-    def set_image(self, image_name):
+    def set_image(self, image_name: str) -> None:
+        """
+        Устанавливает image по названию текстуры из Consts.
+        :param image_name: Название текстуры в Consts.
+        """
         if image_name in TILES:
             self.image = AnimatedImage()
             for pair_of_tile_coord in TILES[image_name]:
                 self.image.add_frame(self.parent_tileset.get_image(pair_of_tile_coord[0], pair_of_tile_coord[1]))
             self.image_name = image_name
-        # self.image = self.parent_imageloader.get_image_by_name(image_name)
-
-    # def set_test_animation(self, tileset):
-    #     self.animated_image = AnimatedImage((image_w, image_h))
-    #     for i in range(4):
-    #        self.animated_image.add_frame(tileset.get_image(i, 0))
 
     def draw(self, surface):
         if self.image is not None:
@@ -66,10 +64,3 @@ class Drawable(pygame.sprite.Sprite):
             self.object_rect.width, self.object_rect.height,
             self.image_name
         )
-
-
-if __name__ == "__main__":
-    a = Drawable()
-    a.set_pos(50, 100)
-    a.set_size(34, 56)
-    a.set_image(get_script_dir() + "\\tank.png")

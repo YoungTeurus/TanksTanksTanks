@@ -1,6 +1,6 @@
 import pygame
 
-ID_DEBUG = False  # Нужно ли отрисовывать id-шники у каждого объекта
+ID_DEBUG = True  # Нужно ли отрисовывать id-шники у каждого объекта
 CHANGES_DEBUG = False  # Нужно ли выводить все изменения в мире
 SOCKET_DEBUG = True  # Нужно ли выводить все принятые и отправленные данные
 
@@ -30,16 +30,26 @@ BUTTON_YELLOW = (224, 154, 24)
 BUTTON_SELECTED_YELLOW = (237, 210, 7)
 MENU_WHITE = (240, 240, 240)
 CLICKED_LINK_COLOR = (128, 0, 128)
+PLAYER_TANKS_COLORS = (
+    (255, 255, 0),
+    (0, 255, 0),
+    (255, 0, 0),
+    (0, 0, 255),
+    (0, 200, 200),
+    (200, 0, 200),
+    (200, 200, 200)
+)
 
 # Некоторые константные значения в игре
 DEFAULT_PLAYER_BASE_HP = 3
+MAX_PLAYER_TANK_HP = 3  # Максимальное количество жизней у игрока
 TANK_DEFAULT_HP = 1
 TANK_DEFAULT_SPEED_PER_SECOND = 5 * (sprite_w / 64)
 TANK_DEFAULT_DELAY_BEFORE_FIRE = 90
 WATER_DEFAULT_DELAY_BETWEEN_FRAMES = 90
 TANK_DEFAULT_DELAY_BETWEEN_FRAMES = 5
 DEFAULT_DELAY_BETWEEN_ENEMY_SPAWN = 180
-MAX_ENEMIES_ON_ONE_MOMENT = 0
+MAX_ENEMIES_ON_ONE_MOMENT = 3
 DEFAULT_ENEMIES_ON_LEVEL = 10
 DEFAULT_DELAY_BETWEEN_ENEMY_TRY_TO_ROTATE = 20
 DEFAULT_DELAY_BETWEEN_ENEMY_TRY_TO_SHOOT = 100
@@ -83,6 +93,7 @@ FOLD_UNFOLD_CHATLOG = pygame.K_TAB
 
 # Сообщения для сервера:
 CREATE_STRING = "create {object_type} {x} {y} {width} {height} {image_name} {start_angle} {world_id}"
+CHANGE_COLOR_STRING = "change_color {world_id} {R} {G} {B}"
 MOVE_STRING = "move {world_id} {x} {y} {frame} {angle}"
 DESTROY_STRING = "destroy {object_type} {world_id}"
 GETHIT_STRING = "gethit {world_id} {bullet_direction}"

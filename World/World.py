@@ -1,6 +1,11 @@
 from typing import List
 
-from Consts import DEFAULT_DELAY_BETWEEN_ENEMY_SPAWN, MAX_ENEMIES_ON_ONE_MOMENT, DEFAULT_ENEMIES_ON_LEVEL, START_MAP_ID
+from pygame.surface import Surface
+
+from Consts import DEFAULT_DELAY_BETWEEN_ENEMY_SPAWN, MAX_ENEMIES_ON_ONE_MOMENT, DEFAULT_ENEMIES_ON_LEVEL, START_MAP_ID, \
+    image_w, image_h
+from Files import ImageLoader
+from Images.Tileset import Tileset
 from World.Camera import Camera
 from World.Map import Map
 import random
@@ -17,8 +22,9 @@ class World:
     """
     camera: Camera = None  # Камера
     players: List[PlayerTank] = []  # Игрок
-    parent_surface = None  # Та поверхность, на которой будет происходить отрисовка всего мира
-    parent_tileset = None
+    parent_surface: Surface = None  # Та поверхность, на которой будет происходить отрисовка всего мира
+    parent_image_loader: ImageLoader = None
+    parent_tileset: Tileset = None
 
     all_tanks: List[Tank] = []  # Все танки, которые необходимо отрисовывать
     all_bullets = []  # Все пули, которые необходимо отрисовывать
@@ -41,9 +47,13 @@ class World:
 
     objects_id_dict: dict = None  # Словарь ВСЕХ объектов по их ID
 
-    def __init__(self, parent_surface, tileset, is_server):
+    def __init__(self, parent_surface, image_loader: ImageLoader, is_server):
         self.parent_surface = parent_surface
-        self.parent_tileset = tileset
+        self.parent_image_loader = image_loader
+        self.tileset = Tileset(image_w, image_h, self.parent_image_loader.get_image_by_name("tileset"))
+        # TODO: СУПЕР-ВРЕМЕННОЕ решение:
+        self.explosion_tileset = Tileset(96, 96, self.parent_image_loader.get_image_by_name("explode_tileset"))
+
         self.enemy_spawn_timer = Timer(DEFAULT_DELAY_BETWEEN_ENEMY_SPAWN)
         self.current_amount_of_enemies = 0
         self.enemies_remains = DEFAULT_ENEMIES_ON_LEVEL
@@ -218,7 +228,7 @@ class World:
             world_id = int(arguments[1])
             bullet_direction = arguments[2]
             self.objects_id_dict[world_id].get_hit(bullet_direction)
-        # elif arguments[0] == "camera":
-        #     camera_x, camera_y = int(arguments[2]), int(arguments[3])
-        #     self.camera.set_coords(camera_x, camera_y)
-        #     self.camera.center_on()
+        elif arguments[0] == "change_color":
+            world_id = int(arguments[1])
+            color = [int(arguments[2]), int(arguments[3]), int(arguments[4])]  # RGB цвет
+            self.objects_id_dict[world_id].add_color(color)

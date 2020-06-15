@@ -21,6 +21,8 @@ class ImageLoader:
         path_to_images = get_script_dir() + "\\assets\\textures\\"
         image_files_list = os.listdir(path_to_images)
         for image_file in image_files_list:
+            if not image_file.endswith(".png"):
+                continue
             path_to_image = path_to_images + image_file
             image_file = image_file.split(".")[0]
             self.loaded_images[image_file] = pygame.image.load(path_to_image).convert_alpha()

@@ -12,7 +12,7 @@ class WorldObject(Drawable):
 
     def __init__(self, world):
         self.parent_world = world
-        super().__init__(self.parent_world.parent_tileset)
+        super().__init__(self.parent_world.tileset)
         if self.parent_world.is_server:
             self.world_id = self.parent_world.get_last_id()
             self.parent_world.objects_id_dict[self.world_id] = self

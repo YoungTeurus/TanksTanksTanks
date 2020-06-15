@@ -3,6 +3,8 @@ from pygame.constants import SRCALPHA
 from pygame.rect import Rect
 from pygame.surface import Surface
 
+from Consts import BLACK
+from Images.ImageMethods import fill_color
 from UI.MenuObjects.MenuObjectClickable import MenuObjectClickable
 
 ALIGNMENT_HIGH_LEFT = 0  # Нет "выравнивания". Переданные координаты - координаты верхнего левого угла.
@@ -12,27 +14,21 @@ NORMAL = 0  # Обычное изображение
 FILL = 1  # Изображение, заполняющее своими копиями предоставленное пространство
 
 
-def change_color(surface: Surface, color: tuple, max_alpha: int = 255):
-    w, h = surface.get_size()
-    r, g, b, _ = color
-    for x in range(w):
-        for y in range(h):
-            a = min(surface.get_at((x, y))[3], max_alpha)
-            surface.set_at((x, y), (r, g, b, a))
-
-
 class MenuImage(MenuObjectClickable):
     image: Surface = None  # Картинка для отображения
     shadow_image: Surface = None
+
+    active: bool = None  # Нужно ли отрисовывать изображение
 
     alignment: int = ALIGNMENT_HIGH_LEFT  # Тип выравнивания.
 
     def __init__(self, window_surface: Surface, pos: tuple, image: Surface,
                  shadow: bool = False, alignment: int = ALIGNMENT_HIGH_LEFT,
-                 type: int = NORMAL, one_image_size: tuple = None) -> None:
+                 type: int = NORMAL, one_image_size: tuple = None, active: bool = True) -> None:
         self.window_surface = window_surface
         self.rect = Rect((pos[0], pos[1], pos[2], pos[3]))
         self.image = image
+        self.active = active
 
         if type == NORMAL:
             # Поправка размеров
@@ -43,7 +39,7 @@ class MenuImage(MenuObjectClickable):
 
             if shadow:
                 self.shadow_image = self.image.copy()
-                change_color(self.shadow_image, (0, 0, 0, 0), max_alpha=128)
+                fill_color(self.shadow_image, BLACK, max_alpha=128)
         elif type == FILL:
             inserted_image = image
             if one_image_size is not None:
@@ -84,6 +80,7 @@ class MenuImage(MenuObjectClickable):
             self.rect.y = self.rect.y - self.image.get_height() / 2
 
     def draw(self) -> None:
-        if self.shadow_image:
-            self.window_surface.blit(self.shadow_image, (self.rect.x + 2, self.rect.y + 2))
-        self.window_surface.blit(self.image, (self.rect.x, self.rect.y))
+        if self.active:
+            if self.shadow_image:
+                self.window_surface.blit(self.shadow_image, (self.rect.x + 2, self.rect.y + 2))
+            self.window_surface.blit(self.image, (self.rect.x, self.rect.y))
