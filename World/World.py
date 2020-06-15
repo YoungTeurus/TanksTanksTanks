@@ -1,9 +1,9 @@
-from typing import List
+from typing import List, Dict
 
 from pygame.surface import Surface
 
-from Consts import DEFAULT_DELAY_BETWEEN_ENEMY_SPAWN, MAX_ENEMIES_ON_ONE_MOMENT, DEFAULT_ENEMIES_ON_LEVEL, START_MAP_ID, \
-    image_w, image_h
+from Consts import DEFAULT_DELAY_BETWEEN_ENEMY_SPAWN, MAX_ENEMIES_ON_ONE_MOMENT, DEFAULT_ENEMIES_ON_LEVEL,\
+    START_MAP_ID, TILESETS
 from Files import ImageLoader
 from Images.Tileset import Tileset
 from World.Camera import Camera
@@ -24,7 +24,8 @@ class World:
     players: List[PlayerTank] = []  # Игрок
     parent_surface: Surface = None  # Та поверхность, на которой будет происходить отрисовка всего мира
     parent_image_loader: ImageLoader = None
-    parent_tileset: Tileset = None
+
+    tilesets: Dict[str, Tileset] = None  # Словарь всех используемых тайлсетов
 
     all_tanks: List[Tank] = []  # Все танки, которые необходимо отрисовывать
     all_bullets = []  # Все пули, которые необходимо отрисовывать
@@ -50,9 +51,13 @@ class World:
     def __init__(self, parent_surface, image_loader: ImageLoader, is_server):
         self.parent_surface = parent_surface
         self.parent_image_loader = image_loader
-        self.tileset = Tileset(image_w, image_h, self.parent_image_loader.get_image_by_name("tileset"))
-        # TODO: СУПЕР-ВРЕМЕННОЕ решение:
-        self.explosion_tileset = Tileset(96, 96, self.parent_image_loader.get_image_by_name("explode_tileset"))
+
+        self.load_tilesets()
+        # self.tileset = Tileset("tileset_world", image_w, image_h,
+        #                        self.parent_image_loader.get_image_by_name("tileset_world"))
+        # # TODO: СУПЕР-ВРЕМЕННОЕ решение:
+        # self.explosion_tileset = Tileset("tileset_explosion", 96, 96,
+        #                                  self.parent_image_loader.get_image_by_name("tileset_explosion"))
 
         self.enemy_spawn_timer = Timer(DEFAULT_DELAY_BETWEEN_ENEMY_SPAWN)
         self.current_amount_of_enemies = 0
@@ -65,6 +70,16 @@ class World:
         self.objects_id_dict = dict()
         self.is_server = is_server
         self.last_id = 0
+
+    def load_tilesets(self) -> None:
+        """
+        Создаёт тайлсеты из всех файлов, начинающихся с tileset_...
+        """
+        self.tilesets = dict()
+        for tileset_name in TILESETS:
+            temp_tileset = Tileset(tileset_name, TILESETS[tileset_name], TILESETS[tileset_name],
+                                   self.parent_image_loader.get_image_by_name(tileset_name))
+            self.tilesets[tileset_name] = temp_tileset
 
     def load_world_map(self, map_id: int = None):
         if map_id is not None:
@@ -179,10 +194,8 @@ class World:
         self.changes.clear()
 
     def process_many_changes(self, changes):
-        # num_of_changes = changes.keys().__len__()
         for change in changes:
             self.process_change(changes[change])
-            # self.process_change(changes[(i-1).__str__()])
 
     def process_change(self, change):
         arguments = change.split(" ")
@@ -190,9 +203,10 @@ class World:
             if arguments[1] == "RotatableWorldObject":
                 coord_x, coord_y = int(arguments[2]), int(arguments[3])
                 width, height = int(arguments[4]), int(arguments[5])
-                image_name, start_angle = arguments[6], arguments[7]
-                world_id = int(arguments[8])
-                temp_object = RotatableWorldObject(self)
+                tileset_name = arguments[6]
+                image_name, start_angle = arguments[7], arguments[8]
+                world_id = int(arguments[9])
+                temp_object = RotatableWorldObject(self, tileset_name)
                 temp_object.set_pos(coord_x, coord_y)
                 temp_object.set_size(width, height)
                 temp_object.set_image(image_name)

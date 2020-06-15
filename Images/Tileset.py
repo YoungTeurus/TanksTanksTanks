@@ -9,12 +9,14 @@ class Tileset:
     """
 
     grid: List[List[Surface]] = None
+    name: str = None  # Название тайлсета
     width = 0
     height = 0
     size_x = 0
     size_y = 0
 
-    def __init__(self, width, height, image: Surface):
+    def __init__(self, name: str, width: int, height: int, image: Surface):
+        self.name = name
         self.grid = []
         self.width = width
         self.height = height

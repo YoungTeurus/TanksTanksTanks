@@ -1,6 +1,6 @@
 import pygame
 
-ID_DEBUG = True  # Нужно ли отрисовывать id-шники у каждого объекта
+ID_DEBUG = False  # Нужно ли отрисовывать id-шники у каждого объекта
 CHANGES_DEBUG = False  # Нужно ли выводить все изменения в мире
 SOCKET_DEBUG = True  # Нужно ли выводить все принятые и отправленные данные
 
@@ -70,7 +70,16 @@ SERVER_MAPS = {
 
 }
 
-# Все тайлы, используемые в tileset.png
+# Все тайлсеты, используемые в игре.
+# Словарь вида "название файла с тайлсетом" : "размер одного изображения".
+TILESET_WORLD = "tileset_world"
+TILESET_EXPLOSION = "tileset_explosion"
+TILESETS = {
+    TILESET_WORLD: image_w,
+    TILESET_EXPLOSION: 96
+}
+
+# Все тайлы, используемые в tileset_world.png
 TILES = {
     "PLAYER_TANK": [(0, 0), (1, 0), (2, 0), (3, 0)],
     "ENEMY_TANK_0": [(3, 2), (3, 3)],
@@ -79,7 +88,8 @@ TILES = {
     "WATER": [(2, 1), (3, 1)],
     "BUSH": [(0, 2)],
     "BASE": [(1, 2), (0, 3), (1, 3)],
-    "BULLET": [(2, 2)]
+    "BULLET": [(2, 2)],
+    "EXPLOSION": [(0, 0), (1, 0), (2, 0), (3, 0), (4, 0), (5, 0), (6, 0), (7, 0)]
 }
 
 # Кнопки для управления танком
@@ -92,7 +102,7 @@ CHAT_BUTTON = pygame.K_t
 FOLD_UNFOLD_CHATLOG = pygame.K_TAB
 
 # Сообщения для сервера:
-CREATE_STRING = "create {object_type} {x} {y} {width} {height} {image_name} {start_angle} {world_id}"
+CREATE_STRING = "create {object_type} {x} {y} {width} {height} {tileset_name} {image_name} {start_angle} {world_id}"
 CHANGE_COLOR_STRING = "change_color {world_id} {R} {G} {B}"
 MOVE_STRING = "move {world_id} {x} {y} {frame} {angle}"
 DESTROY_STRING = "destroy {object_type} {world_id}"

@@ -1,3 +1,5 @@
+from typing import Optional
+
 import pygame.sprite
 from pygame import Rect
 
@@ -20,7 +22,7 @@ class Drawable(pygame.sprite.Sprite):
     parent_tileset: Tileset = None  # Тайлсет для картинок
     need_to_animate = False
 
-    def __init__(self, tileset):
+    def __init__(self, tileset: Tileset):
         pygame.sprite.Sprite.__init__(self)
         self.object_rect = Rect(0, 0, 0, 0)
         self.parent_tileset = tileset
@@ -37,7 +39,7 @@ class Drawable(pygame.sprite.Sprite):
         self.object_rect.x = int(self.float_x)
         self.object_rect.y = int(self.float_y)
 
-    def set_image(self, image_name: str) -> None:
+    def set_image(self, image_name: Optional[str]) -> None:
         """
         Устанавливает image по названию текстуры из Consts.
         :param image_name: Название текстуры в Consts.

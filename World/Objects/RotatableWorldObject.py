@@ -4,7 +4,7 @@ import pygame
 from pygame import transform
 from pygame.rect import Rect
 
-from Consts import ID_DEBUG, CHANGE_COLOR_STRING
+from Consts import ID_DEBUG, CHANGE_COLOR_STRING, CREATE_STRING
 from World.Objects.WorldObject import WorldObject
 
 ANGLE = {
@@ -26,13 +26,28 @@ class RotatableWorldObject(WorldObject):
     test_font = None
     test_text = None
 
-    def __init__(self, world):
-        super().__init__(world)
+    def __init__(self, world, tileset_name: str):
+        # super().__init__(world, tileset_name=tileset_name)
+        WorldObject.__init__(self, world, tileset_name)
         self.current_angle = "UP"
 
         # Тестовое:
         if ID_DEBUG:
             self.test_font = pygame.font.Font(None, 16)
+
+    def add_change_to_world(self):
+        if self.parent_world.need_to_log_changes:  # Для сервера
+            self.parent_world.changes.append(CREATE_STRING.format(
+                object_type="RotatableWorldObject",
+                x=self.object_rect.x,
+                y=self.object_rect.y,
+                tileset_name=self.parent_tileset.name,
+                width=self.object_rect.width,
+                height=self.object_rect.height,
+                image_name=self.image_name,
+                start_angle=self.current_angle,
+                world_id=self.world_id
+            ))
 
     def set_angle(self, angle):
         if angle in ANGLE:  # Поворачивать можно только на заранее обговоренные углы

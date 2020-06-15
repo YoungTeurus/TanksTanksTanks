@@ -1,7 +1,7 @@
 import logging
 
 from Consts import sprite_w, sprite_h, WATER_DEFAULT_DELAY_BETWEEN_FRAMES, DEFAULT_PLAYER_BASE_HP, DESTROY_STRING, \
-    GETHIT_STRING
+    GETHIT_STRING, TILESET_WORLD
 from World.Objects.Collisionable import Collisionable, remove_if_exists_in
 
 # название_текстуры is_solid is_passable_for_bullets is_destroyable
@@ -48,7 +48,7 @@ class WorldTile(Collisionable):
     # current_hitpoints = 0
 
     def __init__(self, world):
-        super().__init__(world)
+        super().__init__(world, TILESET_WORLD)
 
     def set_tile(self, tile_id, x, y):
         """

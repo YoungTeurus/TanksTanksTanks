@@ -19,6 +19,13 @@ class ImageLoader:
 
     def __init__(self):
         path_to_images = get_script_dir() + "\\assets\\textures\\"
+
+        # Рекурсивный обход, если нужен будет:
+        # for path, subdirs, files in os.walk(path_to_images):
+        #     print(path, subdirs, files)
+        #     # for name in files:
+        #     #     print("{name} - {path}".format(name=name, path=os.path.join(path, name)))
+
         image_files_list = os.listdir(path_to_images)
         for image_file in image_files_list:
             if not image_file.endswith(".png"):

@@ -3,8 +3,8 @@ import random
 
 from Consts import TANK_DEFAULT_HP, EPSILON, TANK_DEFAULT_DELAY_BEFORE_FIRE, TANK_DEFAULT_DELAY_BETWEEN_FRAMES, \
     DEFAULT_DELAY_BETWEEN_ENEMY_TRY_TO_ROTATE, DEFAULT_DELAY_BETWEEN_ENEMY_TRY_TO_SHOOT, \
-    DEFAULT_DELAY_BETWEEN_ENEMY_TRY_TO_CHANGE_STATE, MOVE_STRING, DESTROY_STRING, CREATE_STRING
-from Images.AnimatedImage import AnimatedImage
+    DEFAULT_DELAY_BETWEEN_ENEMY_TRY_TO_CHANGE_STATE, MOVE_STRING, TILESET_WORLD, \
+    TILESET_EXPLOSION
 from World.Objects.RotatableWorldObject import RotatableWorldObject
 from World.Timer import Timer
 from Consts import TANK_DEFAULT_SPEED_PER_SECOND, sprite_w, sprite_h
@@ -30,7 +30,7 @@ class Tank(Collisionable, Actable):
     fire_timer = None
 
     def __init__(self, world):
-        super().__init__(world)
+        super().__init__(world, TILESET_WORLD)
         self.max_hp = self.current_hp = TANK_DEFAULT_HP
         self.damage = 1
         self.is_destroyed = False
@@ -58,6 +58,20 @@ class Tank(Collisionable, Actable):
         self.parent_world.collisionable_objects.append(self)
         self.parent_world.actable_object.append(self)
 
+        # self.add_change_to_world()
+        # if self.parent_world.need_to_log_changes:  # Для сервера
+        #     self.parent_world.changes.append(CREATE_STRING.format(
+        #         object_type="RotatableWorldObject",
+        #         x=self.object_rect.x,
+        #         y=self.object_rect.y,
+        #         tileset_name=self.parent_tileset.name,
+        #         width=self.object_rect.width,
+        #         height=self.object_rect.height,
+        #         image_name=self.image_name,
+        #         start_angle=self.current_angle,
+        #         world_id=self.world_id
+        #     ))
+
     def decrease_hp(self, dmg):
         self.current_hp -= dmg
         if self.current_hp <= 0:
@@ -72,13 +86,14 @@ class Tank(Collisionable, Actable):
         :param cinematic: Нужно ли создать взрыв после уничтожения танка.
         :return:
         """
+        super().destroy()
         remove_if_exists_in(self, self.parent_world.all_tanks)
         remove_if_exists_in(self, self.parent_world.collisionable_objects)
         remove_if_exists_in(self, self.parent_world.actable_object)
         self.is_destroyed = True
-        if self.parent_world.need_to_log_changes:  # Для сервера
-            self.parent_world.changes.append(DESTROY_STRING.format(world_id=self.world_id,
-                                                                   object_type="RotatableWorldObject"))
+        # if self.parent_world.need_to_log_changes:  # Для сервера
+        #     self.parent_world.changes.append(DESTROY_STRING.format(world_id=self.world_id,
+        #                                                            object_type="RotatableWorldObject"))
         if cinematic:
             explode = TankExplosion(self.parent_world)
             explode.setup_in_world(self.object_rect.x + self.object_rect.w / 2,
@@ -239,17 +254,20 @@ class PlayerTank(Tank):
 
         self.parent_world.players.append(self)
 
-        if self.parent_world.need_to_log_changes:  # Для сервера
-            self.parent_world.changes.append(CREATE_STRING.format(
-                object_type="RotatableWorldObject",
-                x=self.object_rect.x,
-                y=self.object_rect.y,
-                width=self.object_rect.width,
-                height=self.object_rect.height,
-                image_name=self.image_name,
-                start_angle=self.current_angle,
-                world_id=self.world_id
-            ))
+        self.add_change_to_world()
+
+        # if self.parent_world.need_to_log_changes:  # Для сервера
+        #     self.parent_world.changes.append(CREATE_STRING.format(
+        #         object_type="RotatableWorldObject",
+        #         x=self.object_rect.x,
+        #         y=self.object_rect.y,
+        #         tileset_name=self.parent_tileset.name,
+        #         width=self.object_rect.width,
+        #         height=self.object_rect.height,
+        #         image_name=self.image_name,
+        #         start_angle=self.current_angle,
+        #         world_id=self.world_id
+        #     ))
 
 
 class EnemyTank(Tank):
@@ -312,17 +330,20 @@ class EnemyTank(Tank):
         self.set_angle("DOWN")
         self.last_direction = "DOWN"
 
-        if self.parent_world.need_to_log_changes:  # Для сервера
-            self.parent_world.changes.append(CREATE_STRING.format(
-                object_type="RotatableWorldObject",
-                x=self.object_rect.x,
-                y=self.object_rect.y,
-                width=self.object_rect.width,
-                height=self.object_rect.height,
-                image_name=self.image_name,
-                start_angle=self.current_angle,
-                world_id=self.world_id
-            ))
+        self.add_change_to_world()
+
+        # if self.parent_world.need_to_log_changes:  # Для сервера
+        #     self.parent_world.changes.append(CREATE_STRING.format(
+        #         object_type="RotatableWorldObject",
+        #         x=self.object_rect.x,
+        #         y=self.object_rect.y,
+        #         tileset_name=self.parent_tileset.name,
+        #         width=self.object_rect.width,
+        #         height=self.object_rect.height,
+        #         image_name=self.image_name,
+        #         start_angle=self.current_angle,
+        #         world_id=self.world_id
+        #     ))
 
     def try_to_change_state(self):
         """
@@ -446,7 +467,7 @@ class Bullet(Collisionable, Actable):
     speed = TANK_DEFAULT_SPEED_PER_SECOND * 2
 
     def __init__(self, world, parent_tank):
-        super().__init__(world)
+        super().__init__(world, TILESET_WORLD)
         self.parent_tank = parent_tank
         self.on_collision = bullet_collision
         self.set_is_soild(True)  # Пуля - твёрдая
@@ -479,28 +500,32 @@ class Bullet(Collisionable, Actable):
         self.parent_world.collisionable_objects.append(self)
         self.parent_world.actable_object.append(self)
         self.parent_world.all_bullets.append(self)
-        if self.parent_world.need_to_log_changes:  # Для сервера
-            self.parent_world.changes.append(CREATE_STRING.format(
-                object_type="RotatableWorldObject",
-                x=self.object_rect.x,
-                y=self.object_rect.y,
-                width=self.object_rect.width,
-                height=self.object_rect.height,
-                image_name=self.image_name,
-                start_angle=self.current_angle,
-                world_id=self.world_id
-            ))
+
+        self.add_change_to_world()
+        # if self.parent_world.need_to_log_changes:  # Для сервера
+        #     self.parent_world.changes.append(CREATE_STRING.format(
+        #         object_type="RotatableWorldObject",
+        #         tileset_name=self.parent_tileset.name,
+        #         x=self.object_rect.x,
+        #         y=self.object_rect.y,
+        #         width=self.object_rect.width,
+        #         height=self.object_rect.height,
+        #         image_name=self.image_name,
+        #         start_angle=self.current_angle,
+        #         world_id=self.world_id
+        #     ))
 
     def destroy(self):
         """
         Данный метод удаляет пулю из нужных массивов
         """
+        super().destroy()
         remove_if_exists_in(self, self.parent_world.collisionable_objects)
         remove_if_exists_in(self, self.parent_world.actable_object)
         remove_if_exists_in(self, self.parent_world.all_bullets)
-        if self.parent_world.need_to_log_changes:  # Для сервера
-            self.parent_world.changes.append(DESTROY_STRING.format(world_id=self.world_id,
-                                                                   object_type="RotatableWorldObject"))
+        # if self.parent_world.need_to_log_changes:  # Для сервера
+        #     self.parent_world.changes.append(DESTROY_STRING.format(world_id=self.world_id,
+        #                                                            object_type="RotatableWorldObject"))
 
     def act(self):
         self.check_and_process_collisions(self.parent_world.collisionable_objects)  # Проверяем коллижены
@@ -573,7 +598,7 @@ class TankExplosion(RotatableWorldObject, Actable):
     t = 0  # Отсчёт количества пройденных кадров
 
     def __init__(self, world):
-        RotatableWorldObject.__init__(self, world)
+        RotatableWorldObject.__init__(self, world, TILESET_EXPLOSION)
         # super().__init__(world)
 
     def setup_in_world(self, x_center, y_center) -> None:
@@ -586,24 +611,29 @@ class TankExplosion(RotatableWorldObject, Actable):
         self.set_pos(x_center - self.explosion_world_size[0]/2, y_center - self.explosion_world_size[1]/2)
         self.set_size(self.explosion_world_size[0], self.explosion_world_size[1])
         # Задание изображений:
-        self.image = AnimatedImage()
-        self.image.set_size(self.explosion_world_size)
-        for i in range(len(self.parent_world.explosion_tileset.grid)):
-            self.image.add_frame(self.parent_world.explosion_tileset.get_image(i, 0))
+        self.set_image("EXPLOSION")
         self.set_animated()
         self.image.add_timer(TANK_DEFAULT_DELAY_BETWEEN_FRAMES)
 
         self.parent_world.all_tanks.append(self)
         self.parent_world.actable_object.append(self)
 
+        self.add_change_to_world()
+
     def act(self):
         if self.image.current_frame == len(self.image.frames):
             self.destroy()
+
+        if self.parent_world.need_to_log_changes:  # Для сервера
+            self.parent_world.changes.append(MOVE_STRING.format(
+                world_id=self.world_id,
+                x=self.object_rect.x,
+                y=self.object_rect.y,
+                frame=self.image.current_frame,
+                angle=self.current_angle
+            ))
 
     def destroy(self):
         super().destroy()
         remove_if_exists_in(self, self.parent_world.all_tanks)
         remove_if_exists_in(self, self.parent_world.actable_object)
-        if self.parent_world.need_to_log_changes:  # Для сервера
-            self.parent_world.changes.append(DESTROY_STRING.format(world_id=self.world_id,
-                                                                   object_type="RotatableWorldObject"))

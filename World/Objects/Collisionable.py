@@ -8,8 +8,8 @@ class Collisionable(Movable):
 
     on_collision = None  # Функция, которая выполняется с каждым пересечённым объектом
 
-    def __init__(self, world):
-        super().__init__(world)
+    def __init__(self, world, tileset_name: str):
+        super().__init__(world, tileset_name)
         self.is_solid = False
 
     def set_is_soild(self, is_solid):

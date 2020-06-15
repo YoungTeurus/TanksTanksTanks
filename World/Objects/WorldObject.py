@@ -1,6 +1,6 @@
 import pygame
 
-from Consts import sprite_w, sprite_h
+from Consts import sprite_w, sprite_h, DESTROY_STRING
 from World.Objects.Drawable import Drawable
 from pygame import Rect
 
@@ -10,9 +10,9 @@ class WorldObject(Drawable):
     parent_world = None  # Родительский мир, в котором будут отрисовываться объекты
     world_id = None  # Айди объекта для мультиплеера
 
-    def __init__(self, world):
+    def __init__(self, world, tileset_name: str):
         self.parent_world = world
-        super().__init__(self.parent_world.tileset)
+        super().__init__(self.parent_world.tilesets[tileset_name])
         if self.parent_world.is_server:
             self.world_id = self.parent_world.get_last_id()
             self.parent_world.objects_id_dict[self.world_id] = self
@@ -51,7 +51,11 @@ class WorldObject(Drawable):
         :return:
         """
         if self.parent_world.is_server:
-            self.parent_world.objects_id_dict.pop(self.world_id)
+            if self.world_id in self.parent_world.objects_id_dict:
+                self.parent_world.objects_id_dict.pop(self.world_id)
+        if self.parent_world.need_to_log_changes:  # Для сервера
+            self.parent_world.changes.append(DESTROY_STRING.format(world_id=self.world_id,
+                                                                   object_type="RotatableWorldObject"))
 
     def __str__(self):
         return "{0} {1} {2} {3} {4} {5} {6}".format(
