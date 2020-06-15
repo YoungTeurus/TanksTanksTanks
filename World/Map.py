@@ -24,7 +24,7 @@ class Map:
     size_w = None
     size_h = None
 
-    object_map = []  # Двумерный массив для хранения всех тайлов карты (для синхронизации)
+    object_map: list = []  # Двумерный массив для хранения всех тайлов карты (для синхронизации)
 
     property_map: bool = False  # Если данный флаг = True, данная карта не должна загружать мир,
     # она используется только для подгрузки свойств
@@ -71,6 +71,7 @@ class Map:
     def create_object_map(self) -> None:
         if self.property_map:
             return
+        self.object_map.clear()  # Отчистка object_map-а.
         if self.size_w is not None: # Если мир загружен (размер не пуст)
             tile_x = 0
             tile_y = 0

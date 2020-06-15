@@ -84,7 +84,6 @@ class MyUDPHandlerClientSide(socketserver.BaseRequestHandler):
                     print(f"Не нашли сами себя в EVENT_SERVER_SEND_PLAYERS_TANKS_IDS. Искали {our_ip_combo}")
 
 
-
 class MyUDPHandlerServerSide(socketserver.BaseRequestHandler):
     """
     Данный класс содержит handle, принимающий информацию отслылаемую сервером, то есть распарсивает полученный json и
@@ -161,16 +160,24 @@ class MyUDPHandlerServerSide(socketserver.BaseRequestHandler):
                 # Если клиент прислал сообщение...
                 ip_port_combo = "{}:{}".format(data_dict["ip"], data_dict["port"])
 
+                # Проверяем, не является ли сообщение командой...
+                msg: str = data_dict["event_data"]
+                if msg.startswith("!"):
+                    if msg[1:] == "quit":
+                        print("Stopping server...")
+                        self.parent_game.need_to_quit = True
+                        return
+
                 client: Client = self.parent_game.serverside_sender.get_client_by_ip_port_combo(ip_port_combo)
                 if client is None:
                     print(f"Player \"{ip_port_combo}\" doesn't exist!")
                     return
                 player_id = client.player_id
 
-                message: str = f"[{self.parent_game.serverside_sender.clients[player_id].player_name}]" +\
-                               data_dict["event_data"]  # Добавляем в начало сообщения имя игрока
-                self.parent_game.chat_history.add_message(message)
+                chat_message: str = f"[{self.parent_game.serverside_sender.clients[player_id].player_name}]" + \
+                                    msg  # Добавляем в начало сообщения имя игрока
+                self.parent_game.chat_history.add_message(chat_message)
                 if self.parent_game.is_dedicated:
                     self.parent_game.sound_loader.play_sound("Chat")
                 # Разсылаем клиентам это сообщение:
-                self.parent_game.serverside_sender.send_event(EVENT_SERVER_SEND_CHAT_MESSAGE, message)
+                self.parent_game.serverside_sender.send_event(EVENT_SERVER_SEND_CHAT_MESSAGE, chat_message)

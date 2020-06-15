@@ -53,10 +53,12 @@ class Game:
 
     chat_history: ChatHistory = None  # История чата
 
+    need_to_quit: bool = False  # Флаг необходимости выхода из игры TODO: попытаться избавиться от этого?
+
     def __init__(self, window_surface, is_server, multi, image_loader: ImageLoader, sound_loader: SoundLoader,
                  start_map: Map = None,
                  connect_to_ip: str = None, server_ip: str = None, client_ip: str = None,
-                 client_port: int = None, dedicated: bool = False, client_name: str = None):
+                 client_port: int = None, dedicated: bool = False, client_name: str = None) -> None:
         """
         Если multi = False, значит никакой работы с сервером и клиентом проводиться не будет.
         Елси multi = True:
@@ -105,7 +107,7 @@ class Game:
             self.world.clear_changes()
             self.server_waiting_started = False  # Флаг, который принимает значение True после первой
             # попытки ожидания клиентов.
-            self.set_default_buttons(server=True)
+            self.set_default_buttons(is_server=True)
         elif not self.is_server and self.multi:
             # Запуск клиента для мультиплеера
             self.clientside_sender = DataSenderClientSide(self)
@@ -117,7 +119,7 @@ class Game:
             self.game_started = False
             self.has_already_tried_to_connect = False
             self.server_button_pressed = False  # Флаг для однократной отработки нажатия кнопки подключения
-            self.set_default_buttons(server=False)
+            self.set_default_buttons(is_server=False)
             if client_name is not None:
                 self.clientside_sender.player_name = client_name
         elif not multi:
@@ -126,15 +128,19 @@ class Game:
             self.world.spawn_player()
             self.world.center_camera_on_player()
             self.game_started = True  # TODO: Временно
-            self.set_default_buttons(server=True)
+            self.set_default_buttons(is_server=True)
 
         self.main_cycle()  # Основной цикл
 
-    def send_changes_and_clear(self):
+    def send_changes_and_clear(self) -> None:
         self.serverside_sender.send_changes()
         self.world.clear_changes()
 
-    def wait_for_players(self, num_of_player_to_start: int = 2):
+    def wait_for_players(self, num_of_player_to_start: int = 2) -> None:
+        """
+        Реализует цикл ожидания игроков. Пока не наберётся num_of_player_to_start игроков, игра не начнётся.
+        :param num_of_player_to_start: Число игроков для начала.
+        """
 
         def check_players_ready():
             for client in self.serverside_sender.clients:
@@ -167,7 +173,10 @@ class Game:
         remove_server_started_popupbox(self)
         self.game_started = True
 
-    def create_clientside_server(self):
+    def create_clientside_server(self) -> None:
+        """
+        Запускает сервер на стороне клиента.
+        """
         class MyUDPHandlerClientSideWithObject(MyUDPHandlerClientSide):  # Костыль(?)
             parent_game = self  # Передаю ссылку на объект
             port = self.client_port
@@ -182,6 +191,9 @@ class Game:
         print("Clientside server was started")
 
     def create_serverside_server(self):
+        """
+        Запускает сервер на стороне сервера.
+        """
         class MyUDPHandlerServerSideWithObject(MyUDPHandlerServerSide):  # Костыль(?)
             parent_game = self  # Передаю ссылку на объект
 
@@ -194,9 +206,13 @@ class Game:
 
         print("Serverside server was started")
 
-    def set_default_buttons(self, server):
+    def set_default_buttons(self, is_server: bool) -> None:
+        """
+        Привязывает клавиши к event-ам, заполняя словарь.
+        :param is_server: Является ли текущий Game сервером.
+        """
         self.button_actions = dict()
-        if server:
+        if is_server:
             # Если задаём для сервера или одиночки
             self.button_actions[MOVE_RIGHT] = ((lambda: self.button_move_player("RIGHT", False)),
                                                (lambda: self.reset_move_player_direction("RIGHT", False)))
@@ -303,10 +319,17 @@ class Game:
             if self.world.players[player_id].last_pressed_direction == direction:
                 self.world.players[player_id].last_pressed_direction = None
 
-    def send_chat_message(self, msg_str: str):
+    def send_chat_message(self, msg_str: str) -> None:
+        """
+        Отправляет сообщение со стороны клиента.
+        :param msg_str: Сообщение для отправки.
+        """
         self.clientside_sender.send_event(EVENT_CLIENT_SEND_CHAT_MESSAGE, msg_str)
 
-    def main_cycle(self):
+    def main_cycle(self) -> None:
+        """
+        Главный цикл - здесь происходит отрисовка объектов, обработка событий и все проверки.
+        """
         while self.game_running:
             self.clock.tick(targetFPS)  # Требуемый FPS и соответствующая задержка
             self.window_surface.fill(DARK_GREY)
@@ -319,6 +342,8 @@ class Game:
                 # Обработка всплывающих окон:
                 if self.any_popup_box is not None:
                     self.any_popup_box.handle_event(event)
+            if self.need_to_quit:
+                self.stop_game()
             # keyboard_pressed = pygame.key.get_pressed()
 
             if self.is_server and not self.game_started:
@@ -347,7 +372,11 @@ class Game:
             # if not self.world.check_if_base_is_alive():
             #     self.game_over(1)
 
-            if self.game_started:
+            if self.game_started and (not self.multi or not self.is_server or not self.is_dedicated):
+                # Отрисовка происходит только, когда игра началась И
+                #  либо игра одиночная
+                #  либо игра - клиент
+                #  либо игра - не выделенный сервер
                 self.world.draw()
 
             if self.is_server or not self.multi:
