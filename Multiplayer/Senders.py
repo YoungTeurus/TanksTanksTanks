@@ -70,6 +70,19 @@ class DataSenderServerSide:
         if SOCKET_DEBUG:
             print("Sent:     {}".format(data))
 
+    def send_reload_world(self, world_id):
+        for client in self.clients:
+            host, port = client.ip_port_combo.split(":")
+            data_dict = dict()
+            data_dict["type"] = "reload_world"
+            data_dict["world_id"] = world_id
+            data_dict["world"] = open(get_script_dir() + MAPS[world_id]["path"], "r").read()
+            data = json.dumps(data_dict)
+            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            sock.sendto(data.encode(), (host, int(port)))
+            if SOCKET_DEBUG:
+                print("Sent:     {}".format(data))
+
     def send_changes(self):
         for client in self.clients:
             host, port = client.ip_port_combo.split(":")

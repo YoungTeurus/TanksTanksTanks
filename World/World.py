@@ -47,7 +47,8 @@ class World:
 
     world_map = None
 
-    is_server = None
+    auto_id_set = None  # Если данную переменную установить в True, то World будет присваивать id каждому tile
+    # и объекту самостоятельно.
     need_to_log_changes = None  # Нужно ли отслеживать изменения. Только в мультиплеере.
     changes: list = None  # Различия, произошедшие за текущий такт игры. Содержит команды, которые необходимо выполнить.
     last_id: int = None  # Последний свободный id
@@ -84,7 +85,7 @@ class World:
         self.camera = Camera(self)
         self.need_to_log_changes = False
         self.objects_id_dict = dict()
-        self.is_server = is_server
+        self.auto_id_set = is_server
         self.last_id = 0
 
     def load_tilesets(self) -> None:
@@ -113,13 +114,19 @@ class World:
         return self.last_id - 1
 
     def load_map(self, map_id, server_map: bool = False):
+        """
+        Загружает карту из файла по указанному map_id, а также создаёт object_map.
+        :param server_map: Если True, то карта грузится из папки downloades.
+        :param map_id: ID карты для загрузки.
+        """
         self.world_map.load_by_id(map_id, server_map)
         self.world_map.create_object_map()
         self.world_map.check()
 
-    def reload_map(self, map_id, server_map: bool = False):
-        num_of_players = self.players.__len__()
-
+    def clear(self) -> None:
+        """
+        Очищает все поля значащие поля класса.
+        """
         self.objects_id_dict.clear()
         self.all_enemies.clear()
         self.all_tanks.clear()
@@ -133,9 +140,30 @@ class World:
         self.last_id = 0
         self.enemies_remains = DEFAULT_ENEMIES_ON_LEVEL
 
-        self.load_map(map_id, server_map)
-        for i in range(num_of_players):
-            self.spawn_player()
+    def reload_map(self, map_id, server_map: bool = False) -> None:
+        """
+        Сбрасывает старую карту и загружает новую. Если сервер - отсылает клиентам сообщение о необходимости сделать
+         то же самое.
+        """
+        if self.parent_game.multi and self.parent_game.is_server:
+            # Сброс готовности игроков:
+            self.clear()
+            for client in self.parent_game.serverside_sender.clients:
+                client.ready = False
+            self.load_map(map_id, server_map)
+
+            # self.parent_game.wait_for_players() <- выполнится в main_cycle
+            self.parent_game.serverside_sender.send_reload_world(map_id)
+
+            self.parent_game.game_started = False
+        else:
+            num_of_players = self.players.__len__()
+
+            self.clear()
+
+            self.load_map(map_id, server_map)
+            for i in range(num_of_players):
+                self.spawn_player()
 
     def spawn_player(self, player_id=None, start_lifes: int = MAX_PLAYER_TANK_HP,
                      send_ids_to_players: bool = False):

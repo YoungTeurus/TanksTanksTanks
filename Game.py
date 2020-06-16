@@ -10,7 +10,7 @@ from Consts import targetFPS, DARK_GREY, BLACK, MOVE_RIGHT, SHOOT, MOVE_LEFT, MO
 from Files import ImageLoader, SoundLoader, MapLoader
 from Multiplayer.ChatHistory import ChatHistory
 from UI.ConstPopups import add_server_started_popupbox, remove_server_started_popupbox, add_chat, \
-    add_game_over_player_died_popupbox, add_game_over_player_base_destroyed_popupbox
+    add_game_over_player_died_popupbox, add_game_over_player_base_destroyed_popupbox, add_you_win_popupbox
 from UI.Ingame_GUI import GUI
 from UI.MenuObjects.PopupBox import PopupBox
 from Multiplayer.Senders import DataSenderServerSide, DataSenderClientSide, EVENT_SERVER_STOP, EVENT_CLIENT_PLAYER_QUIT, \
@@ -33,6 +33,8 @@ class Game:
     map_loader: MapLoader = None  # Загрузчик карт
 
     world: World = None  # Мир
+
+    mail_cycle_lock: threading.Lock()
 
     is_dedicated: bool = None  # Является ли выделенным сервером?
     is_server: bool = None
@@ -76,6 +78,7 @@ class Game:
         self.game_surface = pygame.Surface((minimal_dimention, minimal_dimention))
 
         self.any_popup_box_lock = threading.Lock()
+        self.mail_cycle_lock = threading.Lock()
 
         # Выравнивание по центру:
         self.game_rect = pygame.Rect(self.window_surface.get_width() / 2 - minimal_dimention / 2,
@@ -391,6 +394,7 @@ class Game:
 
             if self.game_started and (self.is_server or not self.multi):
                 self.world.act()
+                # Проверка на конец игры:
                 game_over_dict = self.world.check_game_over()
                 if game_over_dict is not None:
                     # Проверка на конец игры здесь.
@@ -401,16 +405,17 @@ class Game:
                         # Если получилось заспавнить врага
                         self.world.enemies_remains -= 1
                         self.world.enemy_spawn_timer.reset()
-                elif self.world.check_level_over():
-                    # Если уровень завершён.
-                    print("LEVEL END!")
+                # Если уровень завершён.
+                if self.world.check_level_over():
                     if "next_map" in self.world.world_map.properties:
                         next_map_name = self.world.world_map.properties["next_map"]
                         next_map_id = self.map_loader.get_map_id_by_name(next_map_name)
                         self.world.reload_map(next_map_id)
+                        self.world.clear_changes()  # На всякий случай очищаем изменения.
                     else:
                         # Если нет следующего уровня, выводим экран победы
-
+                        add_you_win_popupbox(self)
+                        self.game_started = False
 
                 # Изменения в мире:
                 if (changes := self.world.get_changes()).__len__() > 0 and self.multi:

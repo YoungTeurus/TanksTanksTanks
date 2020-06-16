@@ -279,7 +279,7 @@ def remove_chat(game):
     game.any_popup_box = None
 
 
-def remove_game_over_player_died_popupbox_and_return_to_menu(game):
+def remove_popupbox_and_return_to_menu(game):
     game.any_popup_box = None
     game.return_to_menu(send_to_server=False)
 
@@ -324,7 +324,7 @@ def add_game_over_player_died_popupbox(game, player_name):
                                       font_size=16, font="main_menu")
     buttontrigger_popupbox_quit_esc = ButtonTrigger(key=pygame.K_ESCAPE,
                                                     function_list=[
-                                                        remove_game_over_player_died_popupbox_and_return_to_menu],
+                                                        remove_popupbox_and_return_to_menu],
                                                     args_list=[game])
 
     popupbox.add_object(buttontrigger_popupbox_quit_esc)
@@ -380,7 +380,7 @@ def add_game_over_player_base_destroyed_popupbox(game):
                                       font_size=16, font="main_menu")
     buttontrigger_popupbox_quit_esc = ButtonTrigger(key=pygame.K_ESCAPE,
                                                     function_list=[
-                                                        remove_game_over_player_died_popupbox_and_return_to_menu],
+                                                        remove_popupbox_and_return_to_menu],
                                                     args_list=[game])
 
     popupbox.add_object(buttontrigger_popupbox_quit_esc)
@@ -405,23 +405,23 @@ def add_you_win_popupbox(game):
                                  pos=(popupbox.rect.x + popupbox.rect.w / 2,
                                       popupbox.rect.y + 15,
                                       0, 0),
-                                 text="Поздравляем!".upper(), text_color=MENU_WHITE,
+                                 text="Победа!".upper(), text_color=MENU_WHITE,
                                  font_size=20, font="main_menu")
     label_popupbox_title_shadow = Label(game.window_surface,
                                         pos=(popupbox.rect.x + popupbox.rect.w / 2 + 2,
                                              popupbox.rect.y + 17, 0, 0),
-                                        text="Game over!".upper(), text_color=BLACK,
+                                        text="Победа!".upper(), text_color=BLACK,
                                         font_size=20, font="main_menu")
     label_popupbox_title2 = Label(game.window_surface,
                                   pos=(popupbox.rect.x + popupbox.rect.w / 2,
                                        popupbox.rect.y + 45,
                                        0, 0),
-                                  text=f"База разрушена!", text_color=BUTTON_YELLOW,
+                                  text="Ваша миссия в данном регионе окончена!", text_color=BUTTON_YELLOW,
                                   font_size=28, font="main_menu")
     label_popupbox_title2_shadow = Label(game.window_surface,
                                          pos=(popupbox.rect.x + popupbox.rect.w / 2 + 2,
                                               popupbox.rect.y + 47, 0, 0),
-                                         text=f"База разрушена!", text_color=BLACK,
+                                         text="Ваша миссия в данном регионе окончена!", text_color=BLACK,
                                          font_size=28, font="main_menu")
     label_popupbox_esc = Label(game.window_surface,
                                pos=(popupbox.rect.x + popupbox.rect.w / 2,
@@ -436,7 +436,7 @@ def add_you_win_popupbox(game):
                                       font_size=16, font="main_menu")
     buttontrigger_popupbox_quit_esc = ButtonTrigger(key=pygame.K_ESCAPE,
                                                     function_list=[
-                                                        remove_game_over_player_died_popupbox_and_return_to_menu],
+                                                        remove_popupbox_and_return_to_menu],
                                                     args_list=[game])
 
     popupbox.add_object(buttontrigger_popupbox_quit_esc)

@@ -16,7 +16,7 @@ class WorldObject(Drawable):
         self.visible = True
         self.parent_world = world
         super().__init__(self.parent_world.tilesets[tileset_name])
-        if self.parent_world.is_server:
+        if self.parent_world.auto_id_set:
             self.world_id = self.parent_world.get_last_id()
             self.parent_world.objects_id_dict[self.world_id] = self
 
@@ -62,7 +62,7 @@ class WorldObject(Drawable):
         Функция, которая должна удалять объект из всех массивов, в которые он был добавлен при создании
         :return:
         """
-        if self.parent_world.is_server:
+        if self.parent_world.auto_id_set:
             if self.world_id in self.parent_world.objects_id_dict:
                 self.parent_world.objects_id_dict.pop(self.world_id)
         if self.parent_world.need_to_log_changes:  # Для сервера

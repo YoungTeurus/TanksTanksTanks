@@ -19,6 +19,17 @@ class MyUDPHandlerClientSide(socketserver.BaseRequestHandler):
     parent_game = None
     port = None
 
+    def _save_map(self, world_id: int, data_dict_world: str):
+        try:
+            os.mkdir(get_script_dir() + "\\assets\\maps\\downloaded")
+        except OSError:
+            # Если папка уже создана
+            pass
+        SERVER_MAPS[world_id] = {"path": "\\assets\\maps\\downloaded\\map{}.txt".format(world_id),
+                                 "name": "map0"}
+        with open(get_script_dir() + SERVER_MAPS[world_id]["path"], "w") as world_file:
+            world_file.write(data_dict_world)
+
     def handle(self):
         data = self.request[0].decode()  # Вытаскиваем data
         data_dict = json.loads(data)  # Делаем из этого словарь
@@ -32,20 +43,20 @@ class MyUDPHandlerClientSide(socketserver.BaseRequestHandler):
             self.parent_game.clientside_sender.connect_to_server()  # Пробуем подключиться к серверу
         elif data_dict["type"] == "load_world":
             # Если сервер сказал подгрузить карту
-            world_id = 100 + data_dict["world_id"]
-            try:
-                os.mkdir(get_script_dir() + "\\assets\\maps\\downloaded")
-            except OSError:
-                # Если папка уже создана
-                pass
-            SERVER_MAPS[world_id] = {"path": "\\assets\\maps\\downloaded\\map{}.txt".format(world_id),
-                                     "name": "map0"}
-            print(SERVER_MAPS)
-            # SERVER_MAPS[world_id] = "\\assets\\maps\\downloaded\\map{}.txt".format(world_id)
-            with open(get_script_dir() + SERVER_MAPS[world_id]["path"], "w") as world_file:
-                world_file.write(data_dict["world"])
+            world_id = data_dict["world_id"] + 100
+            self._save_map(world_id, data_dict["world"])
+
             self.parent_game.world.load_map(world_id, server_map=True)  # Грузим карту
-            self.parent_game.world.is_server = False  # Говорим миру, что он больше не сервер
+            self.parent_game.world.auto_id_set = False  # Говорим миру, что он больше не сервер
+            self.parent_game.clientside_sender.send_event(EVENT_CLIENT_READY)  # Говорим серверу, что мы готовы
+        elif data_dict["type"] == "reload_world":
+            # Если сервер сказал подгрузить новую карту
+            world_id = 100 + data_dict["world_id"]
+            self._save_map(world_id, data_dict["world"])
+
+            self.parent_game.world.auto_id_set = True
+            self.parent_game.world.reload_map(world_id, server_map=True)  # Грузим карту
+            self.parent_game.world.auto_id_set = False  # Говорим миру, что он больше не сервер
             self.parent_game.clientside_sender.send_event(EVENT_CLIENT_READY)  # Говорим серверу, что мы готовы
         elif data_dict["type"] == "changes":
             # Если сервер прислал текущие изменения
