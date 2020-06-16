@@ -107,9 +107,153 @@ class Menu:
             self.result["result"] = "quit"
 
         def add_quit_popup():
+            # Всплывающее окно "Вы это серьёзно?" при выходе:
+            popup_size = (350, 120)  # Вспомогательные переменные
+            popup_pos = (self.size[0] / 2 - popup_size[0] / 2, self.size[1] / 2 - popup_size[1] / 2)
+
+            popupbox_quit = PopupBox(self.window_surface,
+                                     pos=(popup_pos[0], popup_pos[1], popup_size[0], popup_size[1]),
+                                     color=MAIN_MENU_BACKGROUND_COLOR)
+            label_popupbox_quit_title = Label(self.window_surface,
+                                              pos=(popup_pos[0] + popup_size[0] / 2,
+                                                   popup_pos[1] + popup_size[1] / 5,
+                                                   AUTO_W, AUTO_H),
+                                              text="Вы это серьёзно?", text_color=MENU_WHITE,
+                                              font_size=FONT_SIZE, font="main_menu")
+            label_popupbox_quit_title_shadow = Label(self.window_surface,
+                                                     pos=(popup_pos[0] + popup_size[0] / 2 + 2,
+                                                          popup_pos[1] + popup_size[1] / 5 + 2,
+                                                          AUTO_W, AUTO_H),
+                                                     text="Вы это серьёзно?", text_color=BLACK,
+                                                     font_size=FONT_SIZE, font="main_menu")
+            buttontrigger_popupbox_quit_esc = ButtonTrigger(key=pygame.K_ESCAPE,
+                                                            function_list=[self.sound_loader.play_sound,
+                                                                           remove_quit_popup],
+                                                            args_list=["Press", None])
+            button_popupbox_quit_yes = Button(self.window_surface,
+                                              pos=(popup_pos[0] + popup_size[0] / 4,
+                                                   popup_pos[1] + popup_size[1] / 4 * 3,
+                                                   0, 0), text="Да",
+                                              transparent=True, text_color=BUTTON_YELLOW,
+                                              selected_text_color=BUTTON_SELECTED_YELLOW,
+                                              font_size=FONT_SIZE, font="main_menu",
+                                              function_onClick_list=[self.sound_loader.play_sound, quit_game],
+                                              args_list=["Press", None],
+                                              function_onHover=self.sound_loader.play_sound, arg_onHover="Select")
+            label_popupbox_quit_yes_shadow = Label(self.window_surface,
+                                                   pos=(popup_pos[0] + popup_size[0] / 4 + 2,
+                                                        popup_pos[1] + popup_size[1] / 4 * 3 + 2,
+                                                        0, 0),
+                                                   text="Да", text_color=BLACK, font_size=FONT_SIZE, font="main_menu")
+            button_popupbox_quit_no = Button(self.window_surface,
+                                             pos=(popup_pos[0] + popup_size[0] / 4 * 3,
+                                                  popup_pos[1] + popup_size[1] / 4 * 3,
+                                                  0, 0), text="Нет",
+                                             transparent=True, text_color=BUTTON_YELLOW,
+                                             selected_text_color=BUTTON_SELECTED_YELLOW,
+                                             font_size=FONT_SIZE, font="main_menu",
+                                             function_onClick_list=[self.sound_loader.play_sound, remove_quit_popup],
+                                             args_list=["Press", None],
+                                             function_onHover=self.sound_loader.play_sound, arg_onHover="Select")
+            label_popupbox_quit_no_shadow = Label(self.window_surface,
+                                                  pos=(popup_pos[0] + popup_size[0] / 4 * 3 + 2,
+                                                       popup_pos[1] + popup_size[1] / 4 * 3 + 2,
+                                                       0, 0),
+                                                  text="Нет", text_color=BLACK, font_size=FONT_SIZE, font="main_menu")
+            popupbox_quit.add_object(buttontrigger_popupbox_quit_esc)
+            popupbox_quit.add_object(label_popupbox_quit_yes_shadow)
+            popupbox_quit.add_object(button_popupbox_quit_yes)
+            popupbox_quit.add_object(label_popupbox_quit_no_shadow)
+            popupbox_quit.add_object(button_popupbox_quit_no)
+            popupbox_quit.add_object(label_popupbox_quit_title_shadow)
+            popupbox_quit.add_object(label_popupbox_quit_title)
+
             self.any_popup = popupbox_quit
 
         def remove_quit_popup():
+            self.any_popup = None
+
+        def add_help_popup():
+            help_popup = PopupBox(self.window_surface, fill=False, darken_background=True)
+
+            label_start_solo_help = Label(self.window_surface,
+                                          pos=(self.size[0] / 2 - BUTTON_WIDTH / 2, self.size[1] / 10 * 1.5,
+                                               BUTTON_WIDTH, BUTTON_HEIGHT),
+                                          text="Начните игру в одиночку с самого начала или любого уровня",
+                                          font="main_menu", font_size=int(FONT_SIZE * 0.75), text_color=MENU_WHITE)
+            label_start_solo_help_shadow = Label(self.window_surface,
+                                                 pos=(
+                                                 self.size[0] / 2 - BUTTON_WIDTH / 2 + 2, self.size[1] / 10 * 1.5 + 2,
+                                                 BUTTON_WIDTH, BUTTON_HEIGHT),
+                                                 text="Начните игру в одиночку с самого начала или любого уровня",
+                                                 font="main_menu", font_size=int(FONT_SIZE * 0.75), text_color=BLACK)
+
+            label_start_multi_help = Label(self.window_surface,
+                                           pos=(self.size[0] / 2 - BUTTON_WIDTH / 2, self.size[1] / 10 * 2.5,
+                                                BUTTON_WIDTH, BUTTON_HEIGHT),
+                                           text="Позовите друзей и сыграйте вместе на выделенном сервере",
+                                           font="main_menu", font_size=int(FONT_SIZE * 0.75), text_color=MENU_WHITE)
+            label_start_multi_help_shadow = Label(self.window_surface,
+                                                 pos=(
+                                                     self.size[0] / 2 - BUTTON_WIDTH / 2 + 2,
+                                                     self.size[1] / 10 * 2.5 + 2,
+                                                     BUTTON_WIDTH, BUTTON_HEIGHT),
+                                                 text="Позовите друзей и сыграйте вместе на выделенном сервере",
+                                                 font="main_menu", font_size=int(FONT_SIZE * 0.75), text_color=BLACK)
+
+            label_start_settings_help = Label(self.window_surface,
+                                              pos=(self.size[0] / 2 - BUTTON_WIDTH / 2, self.size[1] / 10 * 3.5,
+                                                   BUTTON_WIDTH, BUTTON_HEIGHT),
+                                              text="Выберите себе ник, установите IP для игры по сети или"
+                                                   " выключите звук (не круто)",
+                                              font="main_menu", font_size=int(FONT_SIZE * 0.75), text_color=MENU_WHITE)
+            label_start_settings_help_shadow = Label(self.window_surface,
+                                                  pos=(
+                                                      self.size[0] / 2 - BUTTON_WIDTH / 2 + 2,
+                                                      self.size[1] / 10 * 3.5 + 2,
+                                                      BUTTON_WIDTH, BUTTON_HEIGHT),
+                                                  text="Выберите себе ник, установите IP для игры по сети или"
+                                                   " выключите звук (не круто)",
+                                                  font="main_menu", font_size=int(FONT_SIZE * 0.75), text_color=BLACK)
+
+            label_how_to_close = Label(self.window_surface,
+                                              pos=(self.size[0] / 2 - BUTTON_WIDTH / 2, self.size[1] / 10 * 6.5,
+                                                   BUTTON_WIDTH, BUTTON_HEIGHT),
+                                              text="Щелкните в любом месте, чтобы закрыть...",
+                                              font="main_menu", font_size=int(FONT_SIZE * 0.5),
+                                       text_color=BUTTON_YELLOW)
+            label_how_to_close_shadow = Label(self.window_surface,
+                                                  pos=(
+                                                      self.size[0] / 2 - BUTTON_WIDTH / 2 + 2,
+                                                      self.size[1] / 10 * 6.5 + 2,
+                                                      BUTTON_WIDTH, BUTTON_HEIGHT),
+                                                  text="Щелкните в любом месте, чтобы закрыть...",
+                                                  font="main_menu", font_size=int(FONT_SIZE * 0.5), text_color=BLACK)
+
+            button_close = Button(self.window_surface, transparent=True, pos=(0, 0, self.size[0], self.size[1]),
+                                  auto_adjust=False, text="", function_onClick_list=[self.sound_loader.play_sound,
+                                                                                     remove_help_popup],
+                                  args_list=["Press", None])
+
+            buttontrigger_popupbox_quit_esc = ButtonTrigger(key=pygame.K_ESCAPE,
+                                                            function_list=[self.sound_loader.play_sound,
+                                                                           remove_help_popup],
+                                                            args_list=["Press", None])
+
+            help_popup.add_object(label_start_solo_help_shadow)
+            help_popup.add_object(label_start_solo_help)
+            help_popup.add_object(label_start_multi_help_shadow)
+            help_popup.add_object(label_start_multi_help)
+            help_popup.add_object(label_start_settings_help_shadow)
+            help_popup.add_object(label_start_settings_help)
+            help_popup.add_object(label_how_to_close_shadow)
+            help_popup.add_object(label_how_to_close)
+            help_popup.add_object(button_close)
+            help_popup.add_object(buttontrigger_popupbox_quit_esc)
+
+            self.any_popup = help_popup
+
+        def remove_help_popup():
             self.any_popup = None
 
         self.objects.clear()
@@ -174,10 +318,25 @@ class Menu:
             self.size[0] / 2 - BUTTON_WIDTH / 2 + 2, self.size[1] / 10 * 8 + 2, BUTTON_WIDTH, BUTTON_HEIGHT),
                                   text="Выйти из игры",
                                   text_color=BLACK, font_size=FONT_SIZE, font="main_menu")
+
+        button_help = Button(self.window_surface, pos=(
+            self.size[0] * 0.85 - BUTTON_WIDTH / 2, self.size[1] / 10 * 9, BUTTON_WIDTH, BUTTON_HEIGHT),
+                             text="Помощь",
+                             transparent=True, text_color=BUTTON_YELLOW,
+                             selected_text_color=BUTTON_SELECTED_YELLOW,
+                             font_size=FONT_SIZE, font="main_menu",
+                             function_onClick_list=[self.sound_loader.play_sound, add_help_popup],
+                             args_list=["Press", None],
+                             function_onHover=self.sound_loader.play_sound, arg_onHover="Select")
+        label_help_shadow = Label(self.window_surface, pos=(
+            self.size[0] * 0.85 - BUTTON_WIDTH / 2 + 2, self.size[1] / 10 * 9 + 2, BUTTON_WIDTH, BUTTON_HEIGHT),
+                                  text="Помощь",
+                                  text_color=BLACK, font_size=FONT_SIZE, font="main_menu")
+
         image_title = MenuImage(self.window_surface, pos=(self.size[0] / 4, self.size[1] / 10 * 1.5, 164, 164),
                                 image=self.image_loader.get_image_by_name("main_icon"), shadow=True,
                                 alignment=ALIGNMENT_CENTER)
-        
+
         label_title = Label(self.window_surface, pos=(self.size[0] / 2, self.size[1] / 10 * 1, AUTO_W, AUTO_H),
                             text="TANK! TANK! TANK!",
                             text_color=MENU_WHITE, font_size=TITLE_FONT_SIZE, font="main_menu")
@@ -185,65 +344,6 @@ class Menu:
                                                              AUTO_W, AUTO_H),
                                    text="TANK! TANK! TANK!",
                                    text_color=BLACK, font_size=TITLE_FONT_SIZE, font="main_menu")
-
-        # Всплывающее окно "Вы это серьёзно?" при выходе:
-        popup_size = (350, 120)  # Вспомогательные переменные
-        popup_pos = (self.size[0] / 2 - popup_size[0] / 2, self.size[1] / 2 - popup_size[1] / 2)
-
-        popupbox_quit = PopupBox(self.window_surface, pos=(popup_pos[0], popup_pos[1], popup_size[0], popup_size[1]),
-                                 color=MAIN_MENU_BACKGROUND_COLOR)
-        label_popupbox_quit_title = Label(self.window_surface,
-                                          pos=(popup_pos[0] + popup_size[0] / 2,
-                                               popup_pos[1] + popup_size[1] / 5,
-                                               AUTO_W, AUTO_H),
-                                          text="Вы это серьёзно?", text_color=MENU_WHITE,
-                                          font_size=FONT_SIZE, font="main_menu")
-        label_popupbox_quit_title_shadow = Label(self.window_surface,
-                                                 pos=(popup_pos[0] + popup_size[0] / 2 + 2,
-                                                      popup_pos[1] + popup_size[1] / 5 + 2,
-                                                      AUTO_W, AUTO_H),
-                                                 text="Вы это серьёзно?", text_color=BLACK,
-                                                 font_size=FONT_SIZE, font="main_menu")
-        buttontrigger_popupbox_quit_esc = ButtonTrigger(key=pygame.K_ESCAPE,
-                                                        function_list=[self.sound_loader.play_sound, remove_quit_popup],
-                                                        args_list=["Press", None])
-        button_popupbox_quit_yes = Button(self.window_surface,
-                                          pos=(popup_pos[0] + popup_size[0] / 4,
-                                               popup_pos[1] + popup_size[1] / 4 * 3,
-                                               0, 0), text="Да",
-                                          transparent=True, text_color=BUTTON_YELLOW,
-                                          selected_text_color=BUTTON_SELECTED_YELLOW,
-                                          font_size=FONT_SIZE, font="main_menu",
-                                          function_onClick_list=[self.sound_loader.play_sound, quit_game],
-                                          args_list=["Press", None],
-                                          function_onHover=self.sound_loader.play_sound, arg_onHover="Select")
-        label_popupbox_quit_yes_shadow = Label(self.window_surface,
-                                               pos=(popup_pos[0] + popup_size[0] / 4 + 2,
-                                                    popup_pos[1] + popup_size[1] / 4 * 3 + 2,
-                                                    0, 0),
-                                               text="Да", text_color=BLACK, font_size=FONT_SIZE, font="main_menu")
-        button_popupbox_quit_no = Button(self.window_surface,
-                                         pos=(popup_pos[0] + popup_size[0] / 4 * 3,
-                                              popup_pos[1] + popup_size[1] / 4 * 3,
-                                              0, 0), text="Нет",
-                                         transparent=True, text_color=BUTTON_YELLOW,
-                                         selected_text_color=BUTTON_SELECTED_YELLOW,
-                                         font_size=FONT_SIZE, font="main_menu",
-                                         function_onClick_list=[self.sound_loader.play_sound, remove_quit_popup],
-                                         args_list=["Press", None],
-                                         function_onHover=self.sound_loader.play_sound, arg_onHover="Select")
-        label_popupbox_quit_no_shadow = Label(self.window_surface,
-                                              pos=(popup_pos[0] + popup_size[0] / 4 * 3 + 2,
-                                                   popup_pos[1] + popup_size[1] / 4 * 3 + 2,
-                                                   0, 0),
-                                              text="Нет", text_color=BLACK, font_size=FONT_SIZE, font="main_menu")
-        popupbox_quit.add_object(buttontrigger_popupbox_quit_esc)
-        popupbox_quit.add_object(label_popupbox_quit_yes_shadow)
-        popupbox_quit.add_object(button_popupbox_quit_yes)
-        popupbox_quit.add_object(label_popupbox_quit_no_shadow)
-        popupbox_quit.add_object(button_popupbox_quit_no)
-        popupbox_quit.add_object(label_popupbox_quit_title_shadow)
-        popupbox_quit.add_object(label_popupbox_quit_title)
 
         self.objects.append(self.background)
         self.objects.append(image_title)
@@ -256,6 +356,8 @@ class Menu:
         self.objects.append(buttontrigger_esc)
         self.objects.append(label_quit_shadow)
         self.objects.append(button_quit)
+        self.objects.append(label_help_shadow)
+        self.objects.append(button_help)
         self.objects.append(label_title_shadow)
         self.objects.append(label_title)
 
@@ -275,7 +377,6 @@ class Menu:
 
         self.objects.clear()
 
-        
         button_start_new = Button(self.window_surface, pos=(
             self.size[0] / 2 - BUTTON_WIDTH / 2, self.size[1] / 10 * 2, BUTTON_WIDTH, BUTTON_HEIGHT),
                                   text="Начать новую",
@@ -349,7 +450,6 @@ class Menu:
         map_loader: MapLoader = MapLoader()  # Подгрузка карт с диска
         map_loader.load_maps()
 
-        
         label_menu_name = Label(self.window_surface, pos=(self.size[0] / 2, self.size[1] / 10 * 1, AUTO_W, AUTO_H),
                                 text="ВЫБРАТЬ УРОВЕНЬ",
                                 text_color=MENU_WHITE, font_size=TITLE_FONT_SIZE, font="main_menu")
@@ -417,8 +517,6 @@ class Menu:
         """
 
         self.objects.clear()
-
-        
 
         button_connect_to = Button(self.window_surface, pos=(
             self.size[0] / 2 - BUTTON_WIDTH / 2, self.size[1] / 10 * 2, BUTTON_WIDTH, BUTTON_HEIGHT),
@@ -635,8 +733,6 @@ class Menu:
         servers_frame_pos = (self.size[0] / 10, self.size[1] / 5)
         servers_frame_size = (self.size[0] / 10 * 8, self.size[1] / 5 * 2)
 
-        
-
         label_no_servers_found = Label(self.window_surface, pos=(self.size[0] / 2 - BUTTON_WIDTH / 2,
                                                                  self.size[1] / 5 * 1.5 - BUTTON_HEIGHT,
                                                                  BUTTON_WIDTH, BUTTON_HEIGHT),
@@ -718,8 +814,6 @@ class Menu:
                 self.objects.append(label_wrong_ip)
 
         self.objects.clear()
-
-        
 
         label_wrong_ip = Label(self.window_surface, pos=(self.size[0] / 2 - BUTTON_WIDTH / 2,
                                                          self.size[1] / 10 * 4,
@@ -840,8 +934,6 @@ class Menu:
                 label_dedicated_shadow.set_text("Выделенный: нет")
 
         self.objects.clear()
-
-        
 
         label_wrong_ip = Label(self.window_surface, pos=(self.size[0] / 2 - BUTTON_WIDTH / 2,
                                                          self.size[1] / 10 * 3.9, BUTTON_WIDTH, BUTTON_HEIGHT),
@@ -964,8 +1056,6 @@ class Menu:
         map_loader: MapLoader = MapLoader()  # Подгрузка карт с диска
         map_loader.load_maps()
 
-        
-
         label_menu_name = Label(self.window_surface, pos=(self.size[0] / 2, self.size[1] / 10 * 1, AUTO_W, AUTO_H),
                                 text="ВЫБРАТЬ УРОВЕНЬ",
                                 text_color=MENU_WHITE, font_size=TITLE_FONT_SIZE, font="main_menu")
@@ -1021,8 +1111,6 @@ class Menu:
         Загружает элементы подменю "Настройки"
         """
         self.objects.clear()
-
-        
 
         button_sound_settings = Button(self.window_surface, pos=(
             self.size[0] / 2 - BUTTON_WIDTH / 2, self.size[1] / 10 * 2, BUTTON_WIDTH, BUTTON_HEIGHT), text="Звук",
@@ -1090,7 +1178,6 @@ class Menu:
         """
         self.objects.clear()
 
-        
         label_menu_name = Label(self.window_surface, pos=(self.size[0] / 2, self.size[1] / 10 * 1, AUTO_W, AUTO_H),
                                 text="НАСТРОЙКИ ЗВУКА",
                                 text_color=MENU_WHITE, font_size=TITLE_FONT_SIZE, font="main_menu")
@@ -1124,7 +1211,6 @@ class Menu:
         """
         self.objects.clear()
 
-        
         button_ip_settings = Button(self.window_surface, pos=(
             self.size[0] / 2 - BUTTON_WIDTH / 2, self.size[1] / 10 * 2, BUTTON_WIDTH, BUTTON_HEIGHT),
                                     text="IP адрес клиента",
@@ -1230,8 +1316,6 @@ class Menu:
 
         self.objects.clear()
 
-        
-
         label_wrong_ip = Label(self.window_surface, pos=(self.size[0] / 2 - BUTTON_WIDTH / 2,
                                                          self.size[1] / 10 * 5, BUTTON_WIDTH, BUTTON_HEIGHT,
                                                          BUTTON_WIDTH, BUTTON_HEIGHT),
@@ -1335,8 +1419,6 @@ class Menu:
                 self.objects.append(label_empty_name)
 
         self.objects.clear()
-
-        
 
         label_empty_name = Label(self.window_surface, pos=(self.size[0] / 2 - BUTTON_WIDTH / 2,
                                                            self.size[1] / 10 * 5, BUTTON_WIDTH, BUTTON_HEIGHT,
