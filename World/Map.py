@@ -16,15 +16,15 @@ class Map:
 
     map_id = None
 
-    text_map = []  # Здесь хранится карта в виде числовоых значения
-    player_spawn_places = []
-    enemy_spawn_places = []
-    player_bases: List[WorldTile] = []  # Базы игрока
+    text_map: list = None  # Здесь хранится карта в виде числовоых значения
+    player_spawn_places: list = None
+    enemy_spawn_places: list = None
+    player_bases: List[WorldTile] = None  # Базы игрока
 
     size_w = None
     size_h = None
 
-    object_map: list = []  # Двумерный массив для хранения всех тайлов карты (для синхронизации)
+    object_map: list = None  # Двумерный массив для хранения всех тайлов карты (для синхронизации)
 
     property_map: bool = False  # Если данный флаг = True, данная карта не должна загружать мир,
     # она используется только для подгрузки свойств
@@ -32,6 +32,11 @@ class Map:
     # Возможные properties: title, max_players
 
     def __init__(self, world):
+        self.object_map = []
+        self.text_map: list = []
+        self.player_spawn_places: list = []
+        self.enemy_spawn_places: list = []
+        self.player_bases: List[WorldTile] = []
         # Использование None в качестве World будет подгружать только свойства карты
         if world is None:
             self.property_map = True

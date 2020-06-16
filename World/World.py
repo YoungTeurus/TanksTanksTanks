@@ -25,19 +25,19 @@ class World:
     parent_game = None  # Объект класса Game
 
     camera: Camera = None  # Камера
-    players: List[PlayerTank] = []  # Игрок
+    players: List[PlayerTank] = None  # Игрок
     parent_surface: Surface = None  # Та поверхность, на которой будет происходить отрисовка всего мира
     parent_image_loader: ImageLoader = None
 
     tilesets: Dict[str, Tileset] = None  # Словарь всех используемых тайлсетов
 
-    all_tanks: List[Tank] = []  # Все танки, которые необходимо отрисовывать
-    all_bullets = []  # Все пули, которые необходимо отрисовывать
-    all_tiles = []  # Все тайлы, которые необходимо отрисовывать (тайлы заносятся сюда в .set_tile() )
-    collisionable_objects = []  # Все объекты, с которыми нужно проверять столкновение
-    actable_object = []  # Все объекты, для которых нужно вызывать Act() каждый раз
+    all_tanks: List[Tank] = None  # Все танки, которые необходимо отрисовывать
+    all_bullets: list = None  # Все пули, которые необходимо отрисовывать
+    all_tiles: list = None  # Все тайлы, которые необходимо отрисовывать (тайлы заносятся сюда в .set_tile() )
+    collisionable_objects: list = None  # Все объекты, с которыми нужно проверять столкновение
+    actable_object: list = None  # Все объекты, для которых нужно вызывать Act() каждый раз
 
-    all_drawable_client = []  # Все объекты, которые нужно отрисовать на стороне клиента
+    all_drawable_client: list = None  # Все объекты, которые нужно отрисовать на стороне клиента
 
     enemy_spawn_timer = None  # Таймер для спавна нового врага
     current_amount_of_enemies = None  # Количество врагов на поле в данный момент
@@ -47,12 +47,20 @@ class World:
 
     is_server = None
     need_to_log_changes = None  # Нужно ли отслеживать изменения. Только в мультиплеере.
-    changes = []  # Различия, произошедшие за текущий такт игры. Содержит команды, которые необходимо выполнить.
-    last_id = None  # Последний свободный id
+    changes: list = None  # Различия, произошедшие за текущий такт игры. Содержит команды, которые необходимо выполнить.
+    last_id: int = None  # Последний свободный id
 
     objects_id_dict: Dict[int, RotatableWorldObject] = None  # Словарь ВСЕХ объектов по их ID
 
     def __init__(self, parent_game, parent_surface, image_loader: ImageLoader, is_server):
+        self.all_drawable_client = []
+        self.all_tanks: List[Tank] = []
+        self.all_bullets = []
+        self.all_tiles = []
+        self.collisionable_objects = []
+        self.actable_object = []
+        self.players = []
+        self.changes = []
         self.parent_game = parent_game
         self.parent_surface = parent_surface
         self.parent_image_loader = image_loader

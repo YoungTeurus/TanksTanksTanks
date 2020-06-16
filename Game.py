@@ -10,7 +10,7 @@ from Consts import targetFPS, DARK_GREY, BLACK, MOVE_RIGHT, SHOOT, MOVE_LEFT, MO
 from Files import ImageLoader, SoundLoader
 from Multiplayer.ChatHistory import ChatHistory
 from UI.ConstPopups import add_server_started_popupbox, remove_server_started_popupbox, add_chat, \
-    add_game_over_player_died_popupbox
+    add_game_over_player_died_popupbox, add_game_over_player_base_destroyed_popupbox
 from UI.Ingame_GUI import GUI
 from UI.MenuObjects.PopupBox import PopupBox
 from Multiplayer.Senders import DataSenderServerSide, DataSenderClientSide, EVENT_SERVER_STOP, EVENT_CLIENT_PLAYER_QUIT, \
@@ -428,7 +428,7 @@ class Game:
         if game_over_dict["type"] == "player_died":
             add_game_over_player_died_popupbox(self, game_over_dict["player_name"])
         elif game_over_dict["type"] == "base_destroyed":
-            pass
+            add_game_over_player_base_destroyed_popupbox(self)
 
     def stop_game(self, send_to_server: bool = True):
         """
