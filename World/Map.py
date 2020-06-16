@@ -114,7 +114,7 @@ class Map:
             self.size_w = None
             self.size_h = None
 
-            self.load_from_file(map_dict[map_id])
+            self.load_from_file(map_dict[map_id]["path"])
         else:
             logging.error("There was an attempt to load a world by id but it does not exist: {}".format(map_id))
 

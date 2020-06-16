@@ -1,13 +1,13 @@
 import os
 import sys
 import inspect
-from typing import Dict, Optional
+from typing import Dict, Optional, List
 
 import pygame
 from pygame.mixer import Sound
 from pygame.surface import Surface
 
-from Consts import SOUNDS_VOLUME
+from Consts import SOUNDS_VOLUME, MAPS
 
 
 class ImageLoader:
@@ -80,6 +80,31 @@ class SoundLoader:
         sn = self.get_sound_by_name(name)
         if sn is not None:
             sn.play()
+
+
+class MapLoader:
+    """
+    Класс, подгружающий карты в массив MAPS заполняя его
+    """
+    def __init__(self):
+        path_to_maps = get_script_dir() + "\\assets\\maps\\"
+
+        maps_files_list: List[str] = os.listdir(path_to_maps)
+        for (i, map_file_name) in enumerate(maps_files_list):
+            MAPS[i] = {
+                "path": f"\\assets\\maps\\{map_file_name}",
+                "name": f"{map_file_name.split('.')[0]}"
+            }
+
+    def get_map_id_by_name(self, name: str) -> Optional[int]:
+        """
+        Возвращает карту, если карта с таким именем файла была загружена.
+        :param name: Имя необходимой карты.
+        :return: Запись карты.
+        """
+        for map_id in MAPS:
+            if MAPS[map_id]["name"] == name:
+                return map_id
 
 
 script_dir = None

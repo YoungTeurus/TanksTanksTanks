@@ -63,7 +63,7 @@ class DataSenderServerSide:
         data_dict = dict()
         data_dict["type"] = "load_world"
         data_dict["world_id"] = world_id
-        data_dict["world"] = open(get_script_dir() + MAPS[world_id], "r").read()
+        data_dict["world"] = open(get_script_dir() + MAPS[world_id]["path"], "r").read()
         data = json.dumps(data_dict)
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.sendto(data.encode(), (host, port))
