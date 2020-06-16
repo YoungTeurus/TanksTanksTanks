@@ -323,6 +323,7 @@ class EnemyTank(Tank):
 
     def destroy(self, cinematic: bool = False):
         super().destroy(cinematic)
+        remove_if_exists_in(self, self.parent_world.all_enemies)
         self.parent_world.current_amount_of_enemies -= 1
 
     def setup_in_world(self, x, y):
@@ -330,9 +331,10 @@ class EnemyTank(Tank):
         self.set_image("PLAYER_TANK")
         # self.set_image("ENEMY_TANK_0")
         self.image.add_timer(TANK_DEFAULT_DELAY_BETWEEN_FRAMES)
-        # self.last_direction = "DOWN"
         self.set_angle("DOWN")
         self.last_direction = "DOWN"
+
+        self.parent_world.all_enemies.append(self)
 
         self.add_change_to_world()
 

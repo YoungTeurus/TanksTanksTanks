@@ -401,6 +401,16 @@ class Game:
                         # Если получилось заспавнить врага
                         self.world.enemies_remains -= 1
                         self.world.enemy_spawn_timer.reset()
+                elif self.world.check_level_over():
+                    # Если уровень завершён.
+                    print("LEVEL END!")
+                    if "next_map" in self.world.world_map.properties:
+                        next_map_name = self.world.world_map.properties["next_map"]
+                        next_map_id = self.map_loader.get_map_id_by_name(next_map_name)
+                        self.world.reload_map(next_map_id)
+                    else:
+                        # Если нет следующего уровня, выводим экран победы
+
 
                 # Изменения в мире:
                 if (changes := self.world.get_changes()).__len__() > 0 and self.multi:

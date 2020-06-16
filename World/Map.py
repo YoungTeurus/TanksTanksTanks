@@ -45,6 +45,7 @@ class Map:
         self.properties = dict()
 
     def load_from_file(self, filename: str) -> None:
+        self.properties.clear()
         try:
             with open(get_script_dir() + filename, "r", encoding='utf-8') as file:
                 rows = 0

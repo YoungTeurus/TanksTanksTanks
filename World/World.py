@@ -1,5 +1,5 @@
 from distutils.util import strtobool
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Union
 
 from pygame.surface import Surface
 
@@ -15,6 +15,7 @@ import random
 from World.Objects.Collisionable import remove_if_exists_in
 from World.Objects.RotatableWorldObject import RotatableWorldObject
 from World.Objects.Tank import PlayerTank, EnemyTank, Bullet, Tank
+from World.Objects.WorldTile import WorldTile
 from World.Timer import Timer
 
 
@@ -32,6 +33,7 @@ class World:
     tilesets: Dict[str, Tileset] = None  # Словарь всех используемых тайлсетов
 
     all_tanks: List[Tank] = None  # Все танки, которые необходимо отрисовывать
+    all_enemies: List[EnemyTank] = None  # Все вражеские танки
     all_bullets: list = None  # Все пули, которые необходимо отрисовывать
     all_tiles: list = None  # Все тайлы, которые необходимо отрисовывать (тайлы заносятся сюда в .set_tile() )
     collisionable_objects: list = None  # Все объекты, с которыми нужно проверять столкновение
@@ -50,11 +52,12 @@ class World:
     changes: list = None  # Различия, произошедшие за текущий такт игры. Содержит команды, которые необходимо выполнить.
     last_id: int = None  # Последний свободный id
 
-    objects_id_dict: Dict[int, RotatableWorldObject] = None  # Словарь ВСЕХ объектов по их ID
+    objects_id_dict: Dict[int, Union[RotatableWorldObject, WorldTile]] = None  # Словарь ВСЕХ объектов по их ID
 
     def __init__(self, parent_game, parent_surface, image_loader: ImageLoader, is_server):
         self.all_drawable_client = []
         self.all_tanks: List[Tank] = []
+        self.all_enemies = []
         self.all_bullets = []
         self.all_tiles = []
         self.collisionable_objects = []
@@ -114,6 +117,26 @@ class World:
         self.world_map.create_object_map()
         self.world_map.check()
 
+    def reload_map(self, map_id, server_map: bool = False):
+        num_of_players = self.players.__len__()
+
+        self.objects_id_dict.clear()
+        self.all_enemies.clear()
+        self.all_tanks.clear()
+        self.all_drawable_client.clear()
+        self.all_bullets.clear()
+        self.all_tiles.clear()
+        self.actable_object.clear()
+        self.collisionable_objects.clear()
+        self.players.clear()
+
+        self.last_id = 0
+        self.enemies_remains = DEFAULT_ENEMIES_ON_LEVEL
+
+        self.load_map(map_id, server_map)
+        for i in range(num_of_players):
+            self.spawn_player()
+
     def spawn_player(self, player_id=None, start_lifes: int = MAX_PLAYER_TANK_HP,
                      send_ids_to_players: bool = False):
         """
@@ -165,6 +188,11 @@ class World:
             obj.act()
 
         self.enemy_spawn_timer.tick()
+
+    def check_level_over(self) -> bool:
+        if len(self.all_enemies) <= 0 and self.enemies_remains <= 0:
+            return True
+        return False
 
     def check_game_over(self) -> Optional[dict]:
         """
@@ -300,7 +328,7 @@ class World:
             self.objects_id_dict[world_id].get_hit(bullet_direction)
         elif arguments[0] == "change_color":
             world_id = int(arguments[1])
-            color = [int(arguments[2]), int(arguments[3]), int(arguments[4])]  # RGB цвет
+            color = (int(arguments[2]), int(arguments[3]), int(arguments[4]))  # RGB цвет
             self.objects_id_dict[world_id].add_color(color)
         elif arguments[0] == "visible":
             world_id = int(arguments[1])
