@@ -21,6 +21,7 @@ class GUI(PopupBox):
     parent_game = None  # Игра, в которой отображается данный GUI
     chatlog: PopupBox = None  # Чатлог
 
+    current_lifes: int = None  # Количество жизней у игрока.
     lifes: List[MenuImage] = None  # Жизни игрока
 
     is_chatlog_folded: bool = None  # Свёрнут ли чатлог?
@@ -42,6 +43,7 @@ class GUI(PopupBox):
 
         self.is_chatlog_folded = True
 
+        self.current_lifes = MAX_PLAYER_TANK_HP  # Начальные жизни игрока
         self.lifes = []
         for i in range(MAX_PLAYER_TANK_HP):
             image_life = MenuImage(parent_game.window_surface, (chatlog_x + 48*i, chatlog_y - 64, 48, 48),
@@ -100,11 +102,15 @@ class GUI(PopupBox):
         Устанавливает количество видимых значков жизни.
         :param new_lifes: Целочисленное значение от 0 до MAX_PLAYER_TANK_HP.
         """
-        lifes = max(min(MAX_PLAYER_TANK_HP, new_lifes), 0)  # 0 <= new_lifes <= MAX_PLAYER_TANK_HP
-        for life in self.lifes[lifes:]:
+        self.current_lifes = max(min(MAX_PLAYER_TANK_HP, new_lifes), 0)  # 0 <= new_lifes <= MAX_PLAYER_TANK_HP
+        for life in self.lifes[self.current_lifes:]:
             life.active = False
-        for life in self.lifes[:lifes]:
+        for life in self.lifes[:self.current_lifes]:
             life.active = True
+
+    def decrease_lifes(self):
+        new_lifes = max(min(MAX_PLAYER_TANK_HP, self.current_lifes - 1), 0)
+        self.set_lifes(new_lifes)
 
     def draw(self):
         if self.is_chatlog_folded:
@@ -117,3 +123,9 @@ class GUI(PopupBox):
 
     def update(self):
         self.update_chatlog()  # Апдейт чатлога
+
+        if not self.parent_game.multi:
+            # Обновление жизней в одиночке
+            current_player_lifes = self.parent_game.world.objects_id_dict[self.parent_game.client_world_object_id].lifes
+            if self.current_lifes != current_player_lifes:
+                self.set_lifes(current_player_lifes)

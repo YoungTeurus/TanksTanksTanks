@@ -4,7 +4,8 @@ import random
 from Consts import TANK_DEFAULT_HP, EPSILON, TANK_DEFAULT_DELAY_BEFORE_FIRE, TANK_DEFAULT_DELAY_BETWEEN_FRAMES, \
     DEFAULT_DELAY_BETWEEN_ENEMY_TRY_TO_ROTATE, DEFAULT_DELAY_BETWEEN_ENEMY_TRY_TO_SHOOT, \
     DEFAULT_DELAY_BETWEEN_ENEMY_TRY_TO_CHANGE_STATE, MOVE_STRING, TILESET_WORLD, \
-    TILESET_EXPLOSION
+    TILESET_EXPLOSION, MAX_PLAYER_TANK_HP
+from Multiplayer.Senders import EVENT_PLAYER_LOSE_LIFE
 from World.Objects.RotatableWorldObject import RotatableWorldObject
 from World.Timer import Timer
 from Consts import TANK_DEFAULT_SPEED_PER_SECOND, sprite_w, sprite_h
@@ -229,14 +230,28 @@ class Vector2:
 # TODO: разнести эти классы в разные места. Как-то.
 
 class PlayerTank(Tank):
+    player_id: int = None  # Ай-ди игрока
     lifes: int = None  # Количество жизней игрока
     last_pressed_direction: str = None  # Последнее направление, в которое двигались
 
-    def __init__(self, world):
+    def __init__(self, world, player_id: int, start_lifes: int = MAX_PLAYER_TANK_HP):
         super().__init__(world)
+        self.player_id = player_id
+        self.lifes = start_lifes  # Начальное количество жизней у игрока
 
     def decrease_life(self):
         self.lifes = max(0, self.lifes - 1)
+
+        if self.parent_world.parent_game.multi and self.parent_world.parent_game.is_server:
+            # Если мы сервер...
+            self.parent_world.parent_game.serverside_sender.send_event(EVENT_PLAYER_LOSE_LIFE, send_to=self.player_id)
+
+        self.destroy(cinematic=True)
+        if self.lifes > 0:
+            self.parent_world.spawn_player(self.player_id, self.lifes, send_ids_to_players=True)
+        else:
+            # Game Over
+            pass
 
     def act(self):
         super().act()
@@ -252,22 +267,15 @@ class PlayerTank(Tank):
         self.fire_timer.set(0)
         self.last_direction = "UP"
 
-        self.parent_world.players.append(self)
+        self.parent_world.players.insert(self.player_id, self)
+        # self.parent_world.players.append(self)
 
         self.add_change_to_world()
 
-        # if self.parent_world.need_to_log_changes:  # Для сервера
-        #     self.parent_world.changes.append(CREATE_STRING.format(
-        #         object_type="RotatableWorldObject",
-        #         x=self.object_rect.x,
-        #         y=self.object_rect.y,
-        #         tileset_name=self.parent_tileset.name,
-        #         width=self.object_rect.width,
-        #         height=self.object_rect.height,
-        #         image_name=self.image_name,
-        #         start_angle=self.current_angle,
-        #         world_id=self.world_id
-        #     ))
+    def decrease_hp(self, dmg):
+        self.current_hp -= dmg
+        if self.current_hp <= 0:
+            self.decrease_life()
 
 
 class EnemyTank(Tank):
@@ -428,7 +436,7 @@ class EnemyTank(Tank):
     def get_optimal_angle_for_tile(self, tile_x, tile_y):
         """
         Возвращает направление, на которое нужно повернуться, чтобы добраться до нужного тайла
-        :return:
+        :return: Одно из слов "LEFT", "RIGHT", "UP", "DOWN".
         """
         tank_x, tank_y = self.get_world_pos()
         x_difference = tank_x - tile_x

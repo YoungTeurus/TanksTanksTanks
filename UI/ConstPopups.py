@@ -15,7 +15,6 @@ from UI.MenuObjects.TextBox import TextBox
 
 
 def add_disconnected_from_server_popupbox(game):
-    game.any_popup_box = None
     # Всплывающее окно "Сервер закрыт":
     popupbox = PopupBox(game.window_surface, pos=(game.window_surface.get_width() / 2 - 100,
                                                   game.window_surface.get_height() / 2 - 50, 200, 100),
@@ -66,7 +65,9 @@ def add_disconnected_from_server_popupbox(game):
     popupbox.add_object(label_popupbox_esc_shadow)
     popupbox.add_object(label_popupbox_esc)
 
-    game.any_popup_box = popupbox
+    with game.any_popup_box_lock:
+        game.any_popup_box = None
+        game.any_popup_box = popupbox
 
 
 def remove_disconnected_from_server_popupbox_and_return_to_menu(game):
@@ -76,7 +77,6 @@ def remove_disconnected_from_server_popupbox_and_return_to_menu(game):
 
 # Всплывающее окошко "Ожидайте начала игры"
 def add_wait_for_start_popupbox(game):
-    game.any_popup_box = None
     # Всплывающее окно "Ожидайте начала игры":
     popupbox = PopupBox(game.window_surface, pos=(game.window_surface.get_width() / 2 - 150,
                                                   game.window_surface.get_height() / 2 - 75, 300, 150),
@@ -127,7 +127,9 @@ def add_wait_for_start_popupbox(game):
     popupbox.add_object(label_popupbox_esc_shadow)
     popupbox.add_object(label_popupbox_esc)
 
-    game.any_popup_box = popupbox
+    with game.any_popup_box_lock:
+        game.any_popup_box = None
+        game.any_popup_box = popupbox
 
 
 def remove_wait_popupbox_for_start_popupbox(game):
@@ -141,7 +143,6 @@ def remove_wait_popupbox_and_return_to_menu(game):
 
 # Всплывающее окошко "Сервер запущен"
 def add_server_started_popupbox(game):
-    game.any_popup_box = None
     # Всплывающее окно "Сервер закрыт":
     popupbox = PopupBox(game.window_surface, pos=(game.window_surface.get_width() / 2 - 100,
                                                   game.window_surface.get_height() / 2 - 50, 200, 100),
@@ -192,7 +193,9 @@ def add_server_started_popupbox(game):
     popupbox.add_object(label_popupbox_esc_shadow)
     popupbox.add_object(label_popupbox_esc)
 
-    game.any_popup_box = popupbox
+    with game.any_popup_box_lock:
+        game.any_popup_box = None
+        game.any_popup_box = popupbox
 
 
 def remove_server_started_popupbox_and_return_to_menu(game):
@@ -227,8 +230,6 @@ def add_chat(game):
             message_sent_state.message_sent = True
 
     mss = MessageSentState()
-
-    game.any_popup_box = None
 
     popupbox = PopupBox(game.window_surface, pos=(0, 0, 0, 0),
                         fill=False, darken_background=True)
@@ -269,7 +270,9 @@ def add_chat(game):
     popupbox.add_object(button_send_message_shadow)
     popupbox.add_object(button_send_message)
 
-    game.any_popup_box = popupbox
+    with game.any_popup_box_lock:
+        game.any_popup_box = None
+        game.any_popup_box = popupbox
 
 
 def remove_chat(game):

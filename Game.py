@@ -47,6 +47,7 @@ class Game:
     server_ip: str = None  # Адрес, на котором расположен сервер
 
     any_popup_box: PopupBox = None  # Любой PopupBox должен быть здесь
+    any_popup_box_lock: threading.Lock = None  # Lock для критической секции
     gui: GUI = None  # Весь GUI игры находится здесь.
     need_to_return_to_menu: bool = False  # Установка этого флага позволяет вернуться в меню после завершения игры
 
@@ -72,6 +73,8 @@ class Game:
                                 self.window_surface.get_height())  # Наименьшая сторона окна
         self.game_surface = pygame.Surface((minimal_dimention, minimal_dimention))
 
+        self.any_popup_box_lock = threading.Lock()
+
         # Выравнивание по центру:
         self.game_rect = pygame.Rect(self.window_surface.get_width() / 2 - minimal_dimention / 2,
                                      self.window_surface.get_height() / 2 - minimal_dimention / 2,
@@ -89,7 +92,7 @@ class Game:
         self.multi = multi
         self.is_dedicated = dedicated
 
-        self.world = World(self.game_surface, self.image_loader, True)
+        self.world = World(self, self.game_surface, self.image_loader, True)
 
         if start_map is not None:
             start_map_id = start_map.map_id
@@ -161,7 +164,6 @@ class Game:
         # Как только к нам подключилост достаточное количество игроков, спавним их и центруем камеру
         for (i, player) in enumerate(self.serverside_sender.clients):
             self.world.spawn_player(i)
-            self.world.players[i].add_color(PLAYER_TANKS_COLORS[i])
 
         self.send_changes_and_clear()  # Отправляем только сообщение о создании танков игроков
 
@@ -345,8 +347,9 @@ class Game:
                 if event.type == pygame.QUIT:
                     self.stop_game()
                 # Обработка всплывающих окон:
-                if self.any_popup_box is not None:
-                    self.any_popup_box.handle_event(event)
+                with self.any_popup_box_lock:
+                    if self.any_popup_box is not None:
+                        self.any_popup_box.handle_event(event)
             if self.need_to_quit:
                 self.stop_game()
             # keyboard_pressed = pygame.key.get_pressed()
@@ -408,9 +411,10 @@ class Game:
                 self.gui.update()
 
             # Отрисовка и обновление popupBox-а:
-            if self.any_popup_box is not None:
-                self.any_popup_box.draw()
-                self.any_popup_box.update()
+            with self.any_popup_box_lock:
+                if self.any_popup_box is not None:
+                    self.any_popup_box.draw()
+                    self.any_popup_box.update()
 
             pygame.display.update()
 

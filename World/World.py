@@ -2,10 +2,11 @@ from typing import List, Dict
 
 from pygame.surface import Surface
 
-from Consts import DEFAULT_DELAY_BETWEEN_ENEMY_SPAWN, MAX_ENEMIES_ON_ONE_MOMENT, DEFAULT_ENEMIES_ON_LEVEL,\
-    START_MAP_ID, TILESETS
+from Consts import DEFAULT_DELAY_BETWEEN_ENEMY_SPAWN, MAX_ENEMIES_ON_ONE_MOMENT, DEFAULT_ENEMIES_ON_LEVEL, \
+    START_MAP_ID, TILESETS, PLAYER_TANKS_COLORS, MAX_PLAYER_TANK_HP
 from Files import ImageLoader
 from Images.Tileset import Tileset
+from Multiplayer.Senders import EVENT_SERVER_SEND_PLAYERS_TANKS_IDS
 from World.Camera import Camera
 from World.Map import Map
 import random
@@ -20,6 +21,8 @@ class World:
     """
     Класс, содеражащий в себе информацию об отображаемой карте и всех объектах на ней.
     """
+    parent_game = None  # Объект класса Game
+
     camera: Camera = None  # Камера
     players: List[PlayerTank] = []  # Игрок
     parent_surface: Surface = None  # Та поверхность, на которой будет происходить отрисовка всего мира
@@ -48,7 +51,8 @@ class World:
 
     objects_id_dict: dict = None  # Словарь ВСЕХ объектов по их ID
 
-    def __init__(self, parent_surface, image_loader: ImageLoader, is_server):
+    def __init__(self, parent_game, parent_surface, image_loader: ImageLoader, is_server):
+        self.parent_game = parent_game
         self.parent_surface = parent_surface
         self.parent_image_loader = image_loader
 
@@ -98,9 +102,12 @@ class World:
         self.world_map.create_object_map()
         self.world_map.check()
 
-    def spawn_player(self, player_id=None):
+    def spawn_player(self, player_id=None, start_lifes: int = MAX_PLAYER_TANK_HP,
+                     send_ids_to_players: bool = False):
         """
         Спавнит игрока под айди id на одной из точек спавна
+        :param send_ids_to_players: Отправить ли игрокам новые id их танков? Нужно для перерождения.
+        :param start_lifes: Начальное количество жизней у танка.
         :param player_id: Айди игрока (для мультиплеера)
         :return:
         """
@@ -109,8 +116,18 @@ class World:
         place_to_spawn = self.world_map.player_spawn_places[player_id]
         # place_to_spawn = random.choice(self.world_map.player_spawn_places)
         (place_to_spawn_x, place_to_spawn_y) = place_to_spawn.get_world_pos()
-        new_player = PlayerTank(self)
+        new_player = PlayerTank(self, player_id, start_lifes)
         new_player.setup_in_world(place_to_spawn_x, place_to_spawn_y)
+        new_player.add_color(PLAYER_TANKS_COLORS[player_id])
+
+        if not self.parent_game.multi:
+            self.parent_game.client_world_object_id = new_player.world_id
+
+        if send_ids_to_players:
+            id_players_ip_combo: dict = dict()
+            for (i, client) in enumerate(self.parent_game.serverside_sender.clients):
+                id_players_ip_combo[client.ip_port_combo] = self.players[client.player_id].world_id
+            self.parent_game.serverside_sender.send_event(EVENT_SERVER_SEND_PLAYERS_TANKS_IDS, id_players_ip_combo)
 
     def draw(self):
         # Сперва отрисовываем танки и пули
