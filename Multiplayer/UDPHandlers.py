@@ -8,7 +8,7 @@ from UI.ConstPopups import add_disconnected_from_server_popupbox, remove_wait_po
     add_wait_for_start_popupbox
 from Multiplayer.Senders import EVENT_SERVER_STOP, EVENT_CLIENT_PLAYER_QUIT, EVENT_SERVER_GAME_STARTED, \
     EVENT_CLIENT_CONNECTED, EVENT_CLIENT_READY, Client, EVENT_CLIENT_SEND_CHAT_MESSAGE, EVENT_SERVER_SEND_CHAT_MESSAGE, \
-    EVENT_SERVER_SEND_PLAYERS_TANKS_IDS, EVENT_PLAYER_LOSE_LIFE
+    EVENT_SERVER_SEND_PLAYERS_TANKS_IDS, EVENT_PLAYER_LOSE_LIFE, EVENT_GAME_OVER
 
 
 class MyUDPHandlerClientSide(socketserver.BaseRequestHandler):
@@ -85,6 +85,9 @@ class MyUDPHandlerClientSide(socketserver.BaseRequestHandler):
             elif data_dict["event_type"] == EVENT_PLAYER_LOSE_LIFE:
                 # Если пришло сообщение, что мы потеряли жизнь
                 self.parent_game.gui.decrease_lifes()
+            elif data_dict["event_type"] == EVENT_GAME_OVER:
+                # Если пришло сообщение, что игра закончилась.
+                self.parent_game.game_over(data_dict["event_data"])
 
 
 class MyUDPHandlerServerSide(socketserver.BaseRequestHandler):

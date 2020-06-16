@@ -1,4 +1,5 @@
-from typing import List, Dict
+from distutils.util import strtobool
+from typing import List, Dict, Optional
 
 from pygame.surface import Surface
 
@@ -49,7 +50,7 @@ class World:
     changes = []  # Различия, произошедшие за текущий такт игры. Содержит команды, которые необходимо выполнить.
     last_id = None  # Последний свободный id
 
-    objects_id_dict: dict = None  # Словарь ВСЕХ объектов по их ID
+    objects_id_dict: Dict[int, RotatableWorldObject] = None  # Словарь ВСЕХ объектов по их ID
 
     def __init__(self, parent_game, parent_surface, image_loader: ImageLoader, is_server):
         self.parent_game = parent_game
@@ -119,15 +120,19 @@ class World:
         new_player = PlayerTank(self, player_id, start_lifes)
         new_player.setup_in_world(place_to_spawn_x, place_to_spawn_y)
         new_player.add_color(PLAYER_TANKS_COLORS[player_id])
+        if new_player.lifes <= 0:
+            new_player.set_visible(False)
 
         if not self.parent_game.multi:
             self.parent_game.client_world_object_id = new_player.world_id
 
-        if send_ids_to_players:
+        if send_ids_to_players and self.parent_game.multi:
+            # Срабатывает при перерождении.
             id_players_ip_combo: dict = dict()
             for (i, client) in enumerate(self.parent_game.serverside_sender.clients):
                 id_players_ip_combo[client.ip_port_combo] = self.players[client.player_id].world_id
-            self.parent_game.serverside_sender.send_event(EVENT_SERVER_SEND_PLAYERS_TANKS_IDS, id_players_ip_combo)
+            self.parent_game.serverside_sender.send_event(EVENT_SERVER_SEND_PLAYERS_TANKS_IDS, id_players_ip_combo,
+                                                          send_to_player_id=player_id)
 
     def draw(self):
         # Сперва отрисовываем танки и пули
@@ -149,6 +154,35 @@ class World:
             obj.act()
 
         self.enemy_spawn_timer.tick()
+
+    def check_game_over(self) -> Optional[dict]:
+        """
+        Проверяет, наступило ли условие конца игры, и если наступило - возвращает словарь, который
+         содержит информацию о конце игры.
+        :return:
+        """
+        for player in self.players:
+            if player.lifes == 0:
+                if self.parent_game.multi:
+                    # Если это сервер и мультиплеерная игра
+                    # Получаем игрока:
+                    died_client = self.parent_game.serverside_sender.get_client_by_player_id(player.player_id)
+                    return {
+                        "type": "player_died",
+                        "player_name": died_client.player_name,
+                    }
+                else:
+                    # Если это одиночка
+                    return {
+                        "type": "player_died",
+                        "player_name": "",
+                    }
+        for base in self.world_map.player_bases:
+            if base.player_base_hp <= 0:
+                return {
+                    "type": "base_destroyed"
+                }
+        return None
 
     def create_enemy(self):
         """
@@ -191,12 +225,6 @@ class World:
         except IndexError:
             # Видимо, игрока уже убили
             pass
-
-    def check_if_player_is_alive(self):
-        return not self.players[0].is_destroyed
-
-    def check_if_base_is_alive(self):
-        return self.world_map.player_bases.__len__() > 0
 
     def set_ready_for_server(self):
         """
@@ -263,3 +291,9 @@ class World:
             world_id = int(arguments[1])
             color = [int(arguments[2]), int(arguments[3]), int(arguments[4])]  # RGB цвет
             self.objects_id_dict[world_id].add_color(color)
+        elif arguments[0] == "visible":
+            world_id = int(arguments[1])
+            is_visible = bool(strtobool(arguments[2]))
+            # is_visible = bool(arguments[2])
+
+            self.objects_id_dict[world_id].set_visible(is_visible)

@@ -277,3 +277,64 @@ def add_chat(game):
 
 def remove_chat(game):
     game.any_popup_box = None
+
+
+def remove_game_over_player_died_popupbox_and_return_to_menu(game):
+    game.any_popup_box = None
+    game.return_to_menu(send_to_server=False)
+
+
+def add_game_over_player_died_popupbox(game, player_name):
+    # Всплывающее окно "Игра закончена Игрок # потерял все жизни.":
+    popupbox = PopupBox(game.window_surface, pos=(game.window_surface.get_width() / 2 - 100,
+                                                  game.window_surface.get_height() / 2 - 50, 200, 100),
+                        color=MAIN_MENU_BACKGROUND_COLOR)
+    label_popupbox_title = Label(game.window_surface,
+                                 pos=(popupbox.rect.x + popupbox.rect.w / 2,
+                                      popupbox.rect.y + 15,
+                                      0, 0),
+                                 text="Game over!".upper(), text_color=MENU_WHITE,
+                                 font_size=20, font="main_menu")
+    label_popupbox_title_shadow = Label(game.window_surface,
+                                        pos=(popupbox.rect.x + popupbox.rect.w / 2 + 2,
+                                             popupbox.rect.y + 17, 0, 0),
+                                        text="Game over!".upper(), text_color=BLACK,
+                                        font_size=20, font="main_menu")
+    label_popupbox_title2 = Label(game.window_surface,
+                                  pos=(popupbox.rect.x + popupbox.rect.w / 2,
+                                       popupbox.rect.y + 45,
+                                       0, 0),
+                                  text=f"Игрок {player_name} потерял все доступные жизни!", text_color=BUTTON_YELLOW,
+                                  font_size=28, font="main_menu")
+    label_popupbox_title2_shadow = Label(game.window_surface,
+                                         pos=(popupbox.rect.x + popupbox.rect.w / 2 + 2,
+                                              popupbox.rect.y + 47, 0, 0),
+                                         text=f"Игрок {player_name} потерял все доступные жизни!", text_color=BLACK,
+                                         font_size=28, font="main_menu")
+    label_popupbox_esc = Label(game.window_surface,
+                               pos=(popupbox.rect.x + popupbox.rect.w / 2,
+                                    popupbox.rect.y + 85,
+                                    0, 0),
+                               text="Нажмите ESC, чтобы вернуться в меню", text_color=BUTTON_YELLOW,
+                               font_size=16, font="main_menu")
+    label_popupbox_esc_shadow = Label(game.window_surface,
+                                      pos=(popupbox.rect.x + popupbox.rect.w / 2 + 2,
+                                           popupbox.rect.y + 87, 0, 0),
+                                      text="Нажмите ESC, чтобы вернуться в меню", text_color=BLACK,
+                                      font_size=16, font="main_menu")
+    buttontrigger_popupbox_quit_esc = ButtonTrigger(key=pygame.K_ESCAPE,
+                                                    function_list=[
+                                                        remove_game_over_player_died_popupbox_and_return_to_menu],
+                                                    args_list=[game])
+
+    popupbox.add_object(buttontrigger_popupbox_quit_esc)
+    popupbox.add_object(label_popupbox_title_shadow)
+    popupbox.add_object(label_popupbox_title)
+    popupbox.add_object(label_popupbox_title2_shadow)
+    popupbox.add_object(label_popupbox_title2)
+    popupbox.add_object(label_popupbox_esc_shadow)
+    popupbox.add_object(label_popupbox_esc)
+
+    with game.any_popup_box_lock:
+        game.any_popup_box = None
+        game.any_popup_box = popupbox

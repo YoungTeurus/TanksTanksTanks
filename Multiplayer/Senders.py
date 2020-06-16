@@ -14,6 +14,7 @@ EVENT_CLIENT_SEND_CHAT_MESSAGE = "EVENT_CLIENT_SEND_CHAT_MESSAGE"
 EVENT_SERVER_SEND_CHAT_MESSAGE = "EVENT_SERVER_SEND_CHAT_MESSAGE"
 EVENT_SERVER_SEND_PLAYERS_TANKS_IDS = "EVENT_SERVER_SEND_PLAYERS_TANKS_IDS"
 EVENT_PLAYER_LOSE_LIFE = "EVENT_PLAYER_LOSE_LIFE"
+EVENT_GAME_OVER = "EVENT_GAME_OVER"
 
 
 class Client:
@@ -86,18 +87,14 @@ class DataSenderServerSide:
             if SOCKET_DEBUG:
                 print("Sent:     {}".format(data))
 
-    def send_event(self, event_type: str, event_data: object = None, send_to: int = None):
+    def send_event(self, event_type: str, event_data: object = None, send_to_player_id: int = None):
         """
         Отправляет клиентам какой-то event-сигнал.
         Если send_to содержит player_id, то сингал будет отправлен только указанному игроку.
         """
         send_to_array = self.clients
-        if send_to is not None:
-            send_to_array = []
-            for i in self.clients:
-                if i.player_id == send_to:
-                    send_to_array.append(i)
-                    break
+        if send_to_player_id is not None:
+            send_to_array = [self.get_client_by_player_id(send_to_player_id)]
         for client in send_to_array:
             host, port = client.ip_port_combo.split(":")
             data_dict = dict()
@@ -110,6 +107,12 @@ class DataSenderServerSide:
             sock.sendto(data.encode(), (host, int(port)))
             if SOCKET_DEBUG:
                 print("Sent:     {}".format(data))
+
+    def get_client_by_player_id(self, player_id: int) -> Optional[Client]:
+        for client in self.clients:
+            if client.player_id == player_id:
+                return client
+        return None
 
     def get_client_by_ip_port_combo(self, ip_port_combo: str) -> Optional[Client]:
         for client in self.clients:

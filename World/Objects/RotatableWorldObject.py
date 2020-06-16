@@ -61,27 +61,29 @@ class RotatableWorldObject(WorldObject):
         :param camera: Камера, относительно которой нужно отрисовывать объект
         :return:
         """
-        if self.image is not None:
-            surface_to_draw = self.image.get_current()
-            rect_to_draw = Rect.copy(self.object_rect)  # TODO: подумать, можно ли избежать здесь ненужного копирования
-            if self.image.get_size() != self.object_rect.size:
-                # Если размер изображения не совпадает с размером объекта
-                surface_to_draw = transform.scale(surface_to_draw,
-                                                  (self.object_rect.width, self.object_rect.height))
-            if self.current_angle != "UP":
-                surface_to_draw = transform.rotate(surface_to_draw, ANGLE[self.current_angle])
-            if camera is not None:
-                rect_to_draw.x += camera.get_coords()[0]
-                rect_to_draw.y += camera.get_coords()[1]
-            self.parent_world.parent_surface.blit(surface_to_draw, rect_to_draw)
-            if self.need_to_animate:
-                self.image.next()
+        # Внимание! Меняя что-то здесь, не забывай поменять данную функцию в WorldObject!
+        if self.visible:
+            if self.image is not None:
+                surface_to_draw = self.image.get_current()
+                rect_to_draw = Rect.copy(self.object_rect)  # TODO: подумать, можно ли избежать здесь ненужного копирования
+                if self.image.get_size() != self.object_rect.size:
+                    # Если размер изображения не совпадает с размером объекта
+                    surface_to_draw = transform.scale(surface_to_draw,
+                                                      (self.object_rect.width, self.object_rect.height))
+                if self.current_angle != "UP":
+                    surface_to_draw = transform.rotate(surface_to_draw, ANGLE[self.current_angle])
+                if camera is not None:
+                    rect_to_draw.x += camera.get_coords()[0]
+                    rect_to_draw.y += camera.get_coords()[1]
+                self.parent_world.parent_surface.blit(surface_to_draw, rect_to_draw)
+                if self.need_to_animate:
+                    self.image.next()
 
-            # Тестовое:
-            if ID_DEBUG:
-                self.test_text = self.test_font.render("id={}".format(self.world_id), 0, (255, 255, 255))
-                self.parent_world.parent_surface.blit(self.test_text, (self.object_rect.x + camera.get_coords()[0],
-                                                                       self.object_rect.y + camera.get_coords()[1]))
+                # Тестовое:
+                if ID_DEBUG:
+                    self.test_text = self.test_font.render("id={}".format(self.world_id), 0, (255, 255, 255))
+                    self.parent_world.parent_surface.blit(self.test_text, (self.object_rect.x + camera.get_coords()[0],
+                                                                           self.object_rect.y + camera.get_coords()[1]))
 
     def add_color(self, color: tuple) -> None:
         """

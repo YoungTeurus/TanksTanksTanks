@@ -9,11 +9,12 @@ from Consts import targetFPS, DARK_GREY, BLACK, MOVE_RIGHT, SHOOT, MOVE_LEFT, MO
     CHANGES_DEBUG, CHAT_BUTTON, FOLD_UNFOLD_CHATLOG, START_MAP_ID, PLAYER_TANKS_COLORS
 from Files import ImageLoader, SoundLoader
 from Multiplayer.ChatHistory import ChatHistory
-from UI.ConstPopups import add_server_started_popupbox, remove_server_started_popupbox, add_chat
+from UI.ConstPopups import add_server_started_popupbox, remove_server_started_popupbox, add_chat, \
+    add_game_over_player_died_popupbox
 from UI.Ingame_GUI import GUI
 from UI.MenuObjects.PopupBox import PopupBox
 from Multiplayer.Senders import DataSenderServerSide, DataSenderClientSide, EVENT_SERVER_STOP, EVENT_CLIENT_PLAYER_QUIT, \
-    EVENT_SERVER_GAME_STARTED, EVENT_CLIENT_SEND_CHAT_MESSAGE, EVENT_SERVER_SEND_PLAYERS_TANKS_IDS
+    EVENT_SERVER_GAME_STARTED, EVENT_CLIENT_SEND_CHAT_MESSAGE, EVENT_SERVER_SEND_PLAYERS_TANKS_IDS, EVENT_GAME_OVER
 from Multiplayer.UDPHandlers import MyUDPHandlerClientSide, MyUDPHandlerServerSide
 from World.Map import Map
 from World.World import World
@@ -367,18 +368,16 @@ class Game:
                 # TODO: подумать, куда засунуть это V V V
                 if self.multi and not self.is_server:
                     # Центируемся на своём танке
-                    self.world.camera.smart_center_on(self.world.objects_id_dict[self.client_world_object_id])
+                    try:
+                        self.world.camera.smart_center_on(self.world.objects_id_dict[self.client_world_object_id])
+                    except KeyError:
+                        # Не можем сцентрироваться - видимо, танка уже нет.
+                        pass
 
             # Попытка подключиться к серверу при запуске клиента:
             if not self.is_server and not self.is_connected and self.multi and not self.has_already_tried_to_connect:
                 self.clientside_sender.ask_for_ok(self.connect_to_ip)
                 self.has_already_tried_to_connect = True
-
-            # if not self.world.check_if_player_is_alive():
-            #     self.game_over(0)
-
-            # if not self.world.check_if_base_is_alive():
-            #     self.game_over(1)
 
             # if self.game_started and (not self.multi or not self.is_server or not self.is_dedicated):
             if self.game_started:
@@ -390,6 +389,10 @@ class Game:
 
             if self.game_started and (self.is_server or not self.multi):
                 self.world.act()
+                game_over_dict = self.world.check_game_over()
+                if game_over_dict is not None:
+                    # Проверка на конец игры здесь.
+                    self.game_over(game_over_dict)
                 # Спавн врагов:
                 if self.world.enemy_spawn_timer.is_ready() and self.world.enemies_remains > 0:
                     if self.world.create_enemy():
@@ -418,13 +421,14 @@ class Game:
 
             pygame.display.update()
 
-    def game_over(self, game_over_id):
-        game_overs = [
-            "Game over! Your tank was destroyed!",
-            "Game over! Your base was destroyed!"
-        ]
-        print(game_overs[game_over_id])
-        self.game_running = False
+    def game_over(self, game_over_dict: dict):
+        if self.multi and self.is_server:
+            self.serverside_sender.send_event(EVENT_GAME_OVER, game_over_dict)
+            self.stop_game(send_to_server=False)
+        if game_over_dict["type"] == "player_died":
+            add_game_over_player_died_popupbox(self, game_over_dict["player_name"])
+        elif game_over_dict["type"] == "base_destroyed":
+            pass
 
     def stop_game(self, send_to_server: bool = True):
         """

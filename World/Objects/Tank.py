@@ -244,14 +244,10 @@ class PlayerTank(Tank):
 
         if self.parent_world.parent_game.multi and self.parent_world.parent_game.is_server:
             # Если мы сервер...
-            self.parent_world.parent_game.serverside_sender.send_event(EVENT_PLAYER_LOSE_LIFE, send_to=self.player_id)
+            self.parent_world.parent_game.serverside_sender.send_event(EVENT_PLAYER_LOSE_LIFE, send_to_player_id=self.player_id)
 
         self.destroy(cinematic=True)
-        if self.lifes > 0:
-            self.parent_world.spawn_player(self.player_id, self.lifes, send_ids_to_players=True)
-        else:
-            # Game Over
-            pass
+        self.parent_world.spawn_player(self.player_id, self.lifes, send_ids_to_players=True)
 
     def act(self):
         super().act()

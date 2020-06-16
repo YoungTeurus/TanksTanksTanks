@@ -88,7 +88,7 @@ TILES = {
     "GRAY_BRICK": [(1, 1)],
     "WATER": [(2, 1), (3, 1)],
     "BUSH": [(0, 2)],
-    "BASE": [(1, 2), (0, 3), (1, 3)],
+    "BASE": [(1, 2), (0, 3), (1, 3), (2, 3)],
     "BULLET": [(2, 2)],
     "EXPLOSION": [(0, 0), (1, 0), (2, 0), (3, 0), (4, 0), (5, 0), (6, 0), (7, 0)]
 }
@@ -108,6 +108,7 @@ CHANGE_COLOR_STRING = "change_color {world_id} {R} {G} {B}"
 MOVE_STRING = "move {world_id} {x} {y} {frame} {angle}"
 DESTROY_STRING = "destroy {object_type} {world_id}"
 GETHIT_STRING = "gethit {world_id} {bullet_direction}"
+VISIBLE_STRING = "visible {world_id} {bool}"
 
 # Для мультиплеера:
 # CLIENT_IP = "127.0.0.1"

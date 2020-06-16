@@ -78,9 +78,9 @@ class WorldTile(Collisionable):
         if self.is_destroyable:
             if self.tile_id == 5:  # Если это база
                 self.player_base_hp -= 1
-                if self.player_base_hp <= 0:
-                    self.destroy()
-                    return
+                # if self.player_base_hp <= 0:
+                #     self.destroy()
+                #     return
                 self.image.next()
                 return
             if direction_of_bullet == "UP":

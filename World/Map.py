@@ -19,7 +19,7 @@ class Map:
     text_map = []  # Здесь хранится карта в виде числовоых значения
     player_spawn_places = []
     enemy_spawn_places = []
-    player_bases = []  # Базы игрока
+    player_bases: List[WorldTile] = []  # Базы игрока
 
     size_w = None
     size_h = None

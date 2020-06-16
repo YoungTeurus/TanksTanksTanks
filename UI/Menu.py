@@ -39,8 +39,7 @@ def get_and_check_port(ip: str):
             sock.bind((ip, port))
         except OSError:
             continue
-        finally:
-            sock.close()
+        sock.close()
         break
     return port
 
