@@ -70,6 +70,8 @@ class Menu:
     sound_loader: SoundLoader = None
     map_loader: Files.MapLoader = None
 
+    background: MenuBackgroundImage = None  # Общий бэкграунд для всех штук
+
     # любой event и при этом отрисовываться последним.
 
     def __init__(self, window_surface: Surface, image_loader: ImageLoader, sound_loader: SoundLoader,
@@ -89,6 +91,9 @@ class Menu:
         self.image_loader = image_loader
         self.sound_loader = sound_loader
         self.map_loader = map_loader
+
+        self.background = MenuBackgroundImage(self.window_surface, size=(self.size[0], self.size[1]), speed=0.5,
+                                              image=self.image_loader.get_image_by_name("back_lines"))
 
         self.load_title_group()
 
@@ -172,8 +177,7 @@ class Menu:
         image_title = MenuImage(self.window_surface, pos=(self.size[0] / 4, self.size[1] / 10 * 1.5, 164, 164),
                                 image=self.image_loader.get_image_by_name("main_icon"), shadow=True,
                                 alignment=ALIGNMENT_CENTER)
-        image_backfill = MenuBackgroundImage(self.window_surface, size=(self.size[0], self.size[1]), speed=0.5,
-                                             image=self.image_loader.get_image_by_name("back_lines"))
+        
         label_title = Label(self.window_surface, pos=(self.size[0] / 2, self.size[1] / 10 * 1, AUTO_W, AUTO_H),
                             text="TANK! TANK! TANK!",
                             text_color=MENU_WHITE, font_size=TITLE_FONT_SIZE, font="main_menu")
@@ -241,7 +245,7 @@ class Menu:
         popupbox_quit.add_object(label_popupbox_quit_title_shadow)
         popupbox_quit.add_object(label_popupbox_quit_title)
 
-        self.objects.append(image_backfill)
+        self.objects.append(self.background)
         self.objects.append(image_title)
         self.objects.append(label_start_solo_shadow)
         self.objects.append(button_start_solo)
@@ -271,8 +275,7 @@ class Menu:
 
         self.objects.clear()
 
-        image_backfill = MenuBackgroundImage(self.window_surface, size=(self.size[0], self.size[1]), speed=0.5,
-                                             image=self.image_loader.get_image_by_name("back_lines"))
+        
         button_start_new = Button(self.window_surface, pos=(
             self.size[0] / 2 - BUTTON_WIDTH / 2, self.size[1] / 10 * 2, BUTTON_WIDTH, BUTTON_HEIGHT),
                                   text="Начать новую",
@@ -322,7 +325,7 @@ class Menu:
                                          BUTTON_WIDTH, BUTTON_HEIGHT), text="Назад",
                                     text_color=BLACK, font_size=FONT_SIZE, font="main_menu")
 
-        self.objects.append(image_backfill)
+        self.objects.append(self.background)
         self.objects.append(label_start_new_shadow)
         self.objects.append(button_start_new)
         self.objects.append(label_select_level_shadow)
@@ -346,8 +349,7 @@ class Menu:
         map_loader: MapLoader = MapLoader()  # Подгрузка карт с диска
         map_loader.load_maps()
 
-        image_backfill = MenuBackgroundImage(self.window_surface, size=(self.size[0], self.size[1]), speed=0.5,
-                                             image=self.image_loader.get_image_by_name("back_lines"))
+        
         label_menu_name = Label(self.window_surface, pos=(self.size[0] / 2, self.size[1] / 10 * 1, AUTO_W, AUTO_H),
                                 text="ВЫБРАТЬ УРОВЕНЬ",
                                 text_color=MENU_WHITE, font_size=TITLE_FONT_SIZE, font="main_menu")
@@ -369,7 +371,7 @@ class Menu:
             self.size[0] / 5 - BUTTON_WIDTH + 2, self.size[1] / 10 * 8 + 2, BUTTON_WIDTH, BUTTON_HEIGHT), text="Назад",
                                     text_color=BLACK, font_size=FONT_SIZE, font="main_menu")
 
-        self.objects.append(image_backfill)
+        self.objects.append(self.background)
 
         for (i, _map) in enumerate(map_loader.get_maps()):
             x = self.size[0] / 2 - BUTTON_WIDTH / 2
@@ -416,8 +418,7 @@ class Menu:
 
         self.objects.clear()
 
-        image_backfill = MenuBackgroundImage(self.window_surface, size=(self.size[0], self.size[1]), speed=0.5,
-                                             image=self.image_loader.get_image_by_name("back_lines"))
+        
 
         button_connect_to = Button(self.window_surface, pos=(
             self.size[0] / 2 - BUTTON_WIDTH / 2, self.size[1] / 10 * 2, BUTTON_WIDTH, BUTTON_HEIGHT),
@@ -438,7 +439,8 @@ class Menu:
                                       transparent=True, text_color=BUTTON_YELLOW,
                                       selected_text_color=BUTTON_SELECTED_YELLOW,
                                       font_size=FONT_SIZE, font="main_menu",
-                                      function_onClick_list=[self.sound_loader.play_sound, self.load_create_server_group],
+                                      function_onClick_list=[self.sound_loader.play_sound,
+                                                             self.load_create_server_group],
                                       args_list=["Press", None],
                                       function_onHover=self.sound_loader.play_sound, arg_onHover="Select")
         label_create_server_shadow = Label(self.window_surface, pos=(
@@ -451,7 +453,8 @@ class Menu:
                                        transparent=True, text_color=BUTTON_YELLOW,
                                        selected_text_color=BUTTON_SELECTED_YELLOW,
                                        font_size=FONT_SIZE, font="main_menu",
-                                       function_onClick_list=[self.sound_loader.play_sound, self.load_direct_connect_group],
+                                       function_onClick_list=[self.sound_loader.play_sound,
+                                                              self.load_direct_connect_group],
                                        args_list=["Press", None],
                                        function_onHover=self.sound_loader.play_sound, arg_onHover="Select")
         label_direct_connect_shadow = Label(self.window_surface, pos=(
@@ -480,7 +483,7 @@ class Menu:
                                        text="СОВМЕСТНАЯ ИГРА",
                                        text_color=BLACK, font_size=TITLE_FONT_SIZE, font="main_menu")
 
-        self.objects.append(image_backfill)
+        self.objects.append(self.background)
         self.objects.append(label_create_server_shadow)
         self.objects.append(button_create_server)
         self.objects.append(label_direct_connect_shadow)
@@ -632,8 +635,7 @@ class Menu:
         servers_frame_pos = (self.size[0] / 10, self.size[1] / 5)
         servers_frame_size = (self.size[0] / 10 * 8, self.size[1] / 5 * 2)
 
-        image_backfill = MenuBackgroundImage(self.window_surface, size=(self.size[0], self.size[1]), speed=0.5,
-                                             image=self.image_loader.get_image_by_name("back_lines"))
+        
 
         label_no_servers_found = Label(self.window_surface, pos=(self.size[0] / 2 - BUTTON_WIDTH / 2,
                                                                  self.size[1] / 5 * 1.5 - BUTTON_HEIGHT,
@@ -686,7 +688,7 @@ class Menu:
         timer_test = Timer(target_millis=500, function_onTarget=check_server_finder,
                            function_args=None, start_of_init=False)
 
-        self.objects.append(image_backfill)
+        self.objects.append(self.background)
 
         self.objects.append(timer_test)
         self.objects.append(menurect_servers_frame)
@@ -717,8 +719,7 @@ class Menu:
 
         self.objects.clear()
 
-        image_backfill = MenuBackgroundImage(self.window_surface, size=(self.size[0], self.size[1]), speed=0.5,
-                                             image=self.image_loader.get_image_by_name("back_lines"))
+        
 
         label_wrong_ip = Label(self.window_surface, pos=(self.size[0] / 2 - BUTTON_WIDTH / 2,
                                                          self.size[1] / 10 * 4,
@@ -775,7 +776,7 @@ class Menu:
                                        text="ПРЯМОЕ ПОДКЛЮЧЕНИЕ",
                                        text_color=BLACK, font_size=TITLE_FONT_SIZE, font="main_menu")
 
-        self.objects.append(image_backfill)
+        self.objects.append(self.background)
 
         self.objects.append(label_connect_shadow)
         self.objects.append(button_connect)
@@ -840,8 +841,7 @@ class Menu:
 
         self.objects.clear()
 
-        image_backfill = MenuBackgroundImage(self.window_surface, size=(self.size[0], self.size[1]), speed=0.5,
-                                             image=self.image_loader.get_image_by_name("back_lines"))
+        
 
         label_wrong_ip = Label(self.window_surface, pos=(self.size[0] / 2 - BUTTON_WIDTH / 2,
                                                          self.size[1] / 10 * 3.9, BUTTON_WIDTH, BUTTON_HEIGHT),
@@ -933,7 +933,7 @@ class Menu:
 
         update_dedicated_label()
 
-        self.objects.append(image_backfill)
+        self.objects.append(self.background)
 
         self.objects.append(label_connect_shadow)
         self.objects.append(button_connect)
@@ -964,8 +964,7 @@ class Menu:
         map_loader: MapLoader = MapLoader()  # Подгрузка карт с диска
         map_loader.load_maps()
 
-        image_backfill = MenuBackgroundImage(self.window_surface, size=(self.size[0], self.size[1]), speed=0.5,
-                                             image=self.image_loader.get_image_by_name("back_lines"))
+        
 
         label_menu_name = Label(self.window_surface, pos=(self.size[0] / 2, self.size[1] / 10 * 1, AUTO_W, AUTO_H),
                                 text="ВЫБРАТЬ УРОВЕНЬ",
@@ -990,7 +989,7 @@ class Menu:
                                     text="Назад",
                                     text_color=BLACK, font_size=FONT_SIZE, font="main_menu")
 
-        self.objects.append(image_backfill)
+        self.objects.append(self.background)
         for (i, _map) in enumerate(map_loader.get_maps()):
             x = self.size[0] / 2 - BUTTON_WIDTH / 2
             y = self.size[1] / 10 * (2 + i)
@@ -1023,15 +1022,15 @@ class Menu:
         """
         self.objects.clear()
 
-        image_backfill = MenuBackgroundImage(self.window_surface, size=(self.size[0], self.size[1]), speed=0.5,
-                                             image=self.image_loader.get_image_by_name("back_lines"))
+        
 
         button_sound_settings = Button(self.window_surface, pos=(
             self.size[0] / 2 - BUTTON_WIDTH / 2, self.size[1] / 10 * 2, BUTTON_WIDTH, BUTTON_HEIGHT), text="Звук",
                                        transparent=True, text_color=BUTTON_YELLOW,
                                        selected_text_color=BUTTON_SELECTED_YELLOW,
                                        font_size=FONT_SIZE, font="main_menu",
-                                       function_onClick_list=[self.sound_loader.play_sound, self.load_sound_settings_group],
+                                       function_onClick_list=[self.sound_loader.play_sound,
+                                                              self.load_sound_settings_group],
                                        args_list=["Press", None],
                                        function_onHover=self.sound_loader.play_sound, arg_onHover="Select")
         label_sound_settings_shadow = Label(self.window_surface, pos=(
@@ -1044,7 +1043,8 @@ class Menu:
                                        transparent=True, text_color=BUTTON_YELLOW,
                                        selected_text_color=BUTTON_SELECTED_YELLOW,
                                        font_size=FONT_SIZE, font="main_menu",
-                                       function_onClick_list=[self.sound_loader.play_sound, self.load_multi_settings_group],
+                                       function_onClick_list=[self.sound_loader.play_sound,
+                                                              self.load_multi_settings_group],
                                        args_list=["Press", None],
                                        function_onHover=self.sound_loader.play_sound, arg_onHover="Select")
         label_multi_settings_shadow = Label(self.window_surface, pos=(
@@ -1072,7 +1072,7 @@ class Menu:
             self.size[0] / 5 - BUTTON_WIDTH + 2, self.size[1] / 10 * 8 + 2, BUTTON_WIDTH, BUTTON_HEIGHT), text="Назад",
                                     text_color=BLACK, font_size=FONT_SIZE, font="main_menu")
 
-        self.objects.append(image_backfill)
+        self.objects.append(self.background)
 
         self.objects.append(label_sound_settings_shadow)
         self.objects.append(button_sound_settings)
@@ -1090,8 +1090,7 @@ class Menu:
         """
         self.objects.clear()
 
-        image_backfill = MenuBackgroundImage(self.window_surface, size=(self.size[0], self.size[1]), speed=0.5,
-                                             image=self.image_loader.get_image_by_name("back_lines"))
+        
         label_menu_name = Label(self.window_surface, pos=(self.size[0] / 2, self.size[1] / 10 * 1, AUTO_W, AUTO_H),
                                 text="НАСТРОЙКИ ЗВУКА",
                                 text_color=MENU_WHITE, font_size=TITLE_FONT_SIZE, font="main_menu")
@@ -1112,7 +1111,7 @@ class Menu:
         label_return_shadow = Label(self.window_surface, pos=(
             self.size[0] / 5 - BUTTON_WIDTH + 2, self.size[1] / 10 * 8 + 2, BUTTON_WIDTH, BUTTON_HEIGHT), text="Назад",
                                     text_color=BLACK, font_size=FONT_SIZE, font="main_menu")
-        self.objects.append(image_backfill)
+        self.objects.append(self.background)
         self.objects.append(label_return_shadow)
         self.objects.append(button_return)
         self.objects.append(label_menu_name_shadow)
@@ -1125,8 +1124,7 @@ class Menu:
         """
         self.objects.clear()
 
-        image_backfill = MenuBackgroundImage(self.window_surface, size=(self.size[0], self.size[1]), speed=0.5,
-                                             image=self.image_loader.get_image_by_name("back_lines"))
+        
         button_ip_settings = Button(self.window_surface, pos=(
             self.size[0] / 2 - BUTTON_WIDTH / 2, self.size[1] / 10 * 2, BUTTON_WIDTH, BUTTON_HEIGHT),
                                     text="IP адрес клиента",
@@ -1146,7 +1144,8 @@ class Menu:
                                       transparent=True, text_color=BUTTON_YELLOW,
                                       selected_text_color=BUTTON_SELECTED_YELLOW,
                                       font_size=FONT_SIZE, font="main_menu",
-                                      function_onClick_list=[self.sound_loader.play_sound, self.load_name_settings_group],
+                                      function_onClick_list=[self.sound_loader.play_sound,
+                                                             self.load_name_settings_group],
                                       args_list=["Press", None],
                                       function_onHover=self.sound_loader.play_sound, arg_onHover="Select")
         label_name_settings_shadow = Label(self.window_surface, pos=(
@@ -1174,7 +1173,7 @@ class Menu:
             self.size[0] / 5 - BUTTON_WIDTH + 2, self.size[1] / 10 * 8 + 2, BUTTON_WIDTH, BUTTON_HEIGHT), text="Назад",
                                     text_color=BLACK, font_size=FONT_SIZE, font="main_menu")
 
-        self.objects.append(image_backfill)
+        self.objects.append(self.background)
         self.objects.append(label_ip_settings_shadow)
         self.objects.append(button_ip_settings)
         self.objects.append(label_name_settings_shadow)
@@ -1231,8 +1230,7 @@ class Menu:
 
         self.objects.clear()
 
-        image_backfill = MenuBackgroundImage(self.window_surface, size=(self.size[0], self.size[1]), speed=0.5,
-                                             image=self.image_loader.get_image_by_name("back_lines"))
+        
 
         label_wrong_ip = Label(self.window_surface, pos=(self.size[0] / 2 - BUTTON_WIDTH / 2,
                                                          self.size[1] / 10 * 5, BUTTON_WIDTH, BUTTON_HEIGHT,
@@ -1301,7 +1299,7 @@ class Menu:
             self.size[0] / 5 - BUTTON_WIDTH + 2, self.size[1] / 10 * 8 + 2, BUTTON_WIDTH, BUTTON_HEIGHT), text="Назад",
                                     text_color=BLACK, font_size=FONT_SIZE, font="main_menu")
 
-        self.objects.append(image_backfill)
+        self.objects.append(self.background)
         self.objects.append(label_is_local_shadow)
         self.objects.append(button_is_local)
         self.objects.append(label_return_shadow)
@@ -1338,8 +1336,7 @@ class Menu:
 
         self.objects.clear()
 
-        image_backfill = MenuBackgroundImage(self.window_surface, size=(self.size[0], self.size[1]), speed=0.5,
-                                             image=self.image_loader.get_image_by_name("back_lines"))
+        
 
         label_empty_name = Label(self.window_surface, pos=(self.size[0] / 2 - BUTTON_WIDTH / 2,
                                                            self.size[1] / 10 * 5, BUTTON_WIDTH, BUTTON_HEIGHT,
@@ -1399,7 +1396,7 @@ class Menu:
             self.size[0] / 5 - BUTTON_WIDTH + 2, self.size[1] / 10 * 8 + 2, BUTTON_WIDTH, BUTTON_HEIGHT), text="Назад",
                                     text_color=BLACK, font_size=FONT_SIZE, font="main_menu")
 
-        self.objects.append(image_backfill)
+        self.objects.append(self.background)
 
         self.objects.append(label_client_name_shadow)
         self.objects.append(label_client_name)
