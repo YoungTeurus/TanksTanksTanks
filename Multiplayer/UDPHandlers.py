@@ -5,10 +5,10 @@ import socketserver
 from Consts import SOCKET_DEBUG, SERVER_MAPS
 from Files import get_script_dir
 from UI.ConstPopups import add_disconnected_from_server_popupbox, remove_wait_popupbox_for_start_popupbox, \
-    add_wait_for_start_popupbox
+    add_wait_for_start_popupbox, add_you_win_popupbox
 from Multiplayer.Senders import EVENT_SERVER_STOP, EVENT_CLIENT_PLAYER_QUIT, EVENT_SERVER_GAME_STARTED, \
     EVENT_CLIENT_CONNECTED, EVENT_CLIENT_READY, Client, EVENT_CLIENT_SEND_CHAT_MESSAGE, EVENT_SERVER_SEND_CHAT_MESSAGE, \
-    EVENT_SERVER_SEND_PLAYERS_TANKS_IDS, EVENT_PLAYER_LOSE_LIFE, EVENT_GAME_OVER
+    EVENT_SERVER_SEND_PLAYERS_TANKS_IDS, EVENT_PLAYER_LOSE_LIFE, EVENT_GAME_OVER, EVENT_GAME_WIN
 
 
 class MyUDPHandlerClientSide(socketserver.BaseRequestHandler):
@@ -46,18 +46,20 @@ class MyUDPHandlerClientSide(socketserver.BaseRequestHandler):
             world_id = data_dict["world_id"] + 100
             self._save_map(world_id, data_dict["world"])
 
-            self.parent_game.world.load_map(world_id, server_map=True)  # Грузим карту
-            self.parent_game.world.auto_id_set = False  # Говорим миру, что он больше не сервер
-            self.parent_game.clientside_sender.send_event(EVENT_CLIENT_READY)  # Говорим серверу, что мы готовы
+            with self.parent_game.main_cycle_lock:
+                self.parent_game.world.load_map(world_id, server_map=True)  # Грузим карту
+                self.parent_game.world.auto_id_set = False  # Говорим миру, что он больше не сервер
+                self.parent_game.clientside_sender.send_event(EVENT_CLIENT_READY)  # Говорим серверу, что мы готовы
         elif data_dict["type"] == "reload_world":
             # Если сервер сказал подгрузить новую карту
             world_id = 100 + data_dict["world_id"]
             self._save_map(world_id, data_dict["world"])
 
-            self.parent_game.world.auto_id_set = True
-            self.parent_game.world.reload_map(world_id, server_map=True)  # Грузим карту
-            self.parent_game.world.auto_id_set = False  # Говорим миру, что он больше не сервер
-            self.parent_game.clientside_sender.send_event(EVENT_CLIENT_READY)  # Говорим серверу, что мы готовы
+            with self.parent_game.main_cycle_lock:
+                self.parent_game.world.auto_id_set = True
+                self.parent_game.world.reload_map(world_id, server_map=True)  # Грузим карту
+                self.parent_game.world.auto_id_set = False  # Говорим миру, что он больше не сервер
+                self.parent_game.clientside_sender.send_event(EVENT_CLIENT_READY)  # Говорим серверу, что мы готовы
         elif data_dict["type"] == "changes":
             # Если сервер прислал текущие изменения
             self.parent_game.world.process_many_changes(data_dict["changes"])
@@ -102,6 +104,9 @@ class MyUDPHandlerClientSide(socketserver.BaseRequestHandler):
             elif data_dict["event_type"] == EVENT_GAME_OVER:
                 # Если пришло сообщение, что игра закончилась.
                 self.parent_game.game_over(data_dict["event_data"])
+            elif data_dict["event_type"] == EVENT_GAME_WIN:
+                # Если пришло сообщение, что мы выиграли.
+                add_you_win_popupbox(self.parent_game)
 
 
 class MyUDPHandlerServerSide(socketserver.BaseRequestHandler):

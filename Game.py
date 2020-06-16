@@ -14,7 +14,8 @@ from UI.ConstPopups import add_server_started_popupbox, remove_server_started_po
 from UI.Ingame_GUI import GUI
 from UI.MenuObjects.PopupBox import PopupBox
 from Multiplayer.Senders import DataSenderServerSide, DataSenderClientSide, EVENT_SERVER_STOP, EVENT_CLIENT_PLAYER_QUIT, \
-    EVENT_SERVER_GAME_STARTED, EVENT_CLIENT_SEND_CHAT_MESSAGE, EVENT_SERVER_SEND_PLAYERS_TANKS_IDS, EVENT_GAME_OVER
+    EVENT_SERVER_GAME_STARTED, EVENT_CLIENT_SEND_CHAT_MESSAGE, EVENT_SERVER_SEND_PLAYERS_TANKS_IDS, EVENT_GAME_OVER, \
+    EVENT_GAME_WIN
 from Multiplayer.UDPHandlers import MyUDPHandlerClientSide, MyUDPHandlerServerSide
 from World.Map import Map
 from World.World import World
@@ -34,7 +35,7 @@ class Game:
 
     world: World = None  # Мир
 
-    mail_cycle_lock: threading.Lock()
+    main_cycle_lock: threading.Lock()
 
     is_dedicated: bool = None  # Является ли выделенным сервером?
     is_server: bool = None
@@ -78,7 +79,7 @@ class Game:
         self.game_surface = pygame.Surface((minimal_dimention, minimal_dimention))
 
         self.any_popup_box_lock = threading.Lock()
-        self.mail_cycle_lock = threading.Lock()
+        self.main_cycle_lock = threading.Lock()
 
         # Выравнивание по центру:
         self.game_rect = pygame.Rect(self.window_surface.get_width() / 2 - minimal_dimention / 2,
@@ -344,99 +345,106 @@ class Game:
         Главный цикл - здесь происходит отрисовка объектов, обработка событий и все проверки.
         """
         while self.game_running:
-            self.clock.tick(targetFPS)  # Требуемый FPS и соответствующая задержка
-            self.window_surface.fill(DARK_GREY)
-            self.game_surface.fill(BLACK)
-
-            # Обработка событий:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
+            with self.main_cycle_lock:
+                self.clock.tick(targetFPS)  # Требуемый FPS и соответствующая задержка
+                self.window_surface.fill(DARK_GREY)
+                self.game_surface.fill(BLACK)
+    
+                # Обработка событий:
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        self.stop_game()
+                    # Обработка всплывающих окон:
+                    with self.any_popup_box_lock:
+                        if self.any_popup_box is not None:
+                            self.any_popup_box.handle_event(event)
+                if self.need_to_quit:
                     self.stop_game()
-                # Обработка всплывающих окон:
+                # keyboard_pressed = pygame.key.get_pressed()
+    
+                if self.is_server and not self.game_started:
+                    if not self.server_waiting_started:
+                        add_server_started_popupbox(self)
+                        self.server_waiting_started = True
+                    # Пока сервер не стартанул
+                    self.wait_for_players(int(self.world.world_map.properties["max_players"]))
+    
+                if self.game_started:
+                    self.process_inputs()
+    
+                    # TODO: подумать, куда засунуть это V V V
+                    if self.multi and not self.is_server:
+                        # Центируемся на своём танке
+                        try:
+                            self.world.camera.smart_center_on(self.world.objects_id_dict[self.client_world_object_id])
+                        except KeyError:
+                            # Не можем сцентрироваться - видимо, танка уже нет.
+                            pass
+    
+                # Попытка подключиться к серверу при запуске клиента:
+                if not self.is_server and not self.is_connected and self.multi and not self.has_already_tried_to_connect:
+                    self.clientside_sender.ask_for_ok(self.connect_to_ip)
+                    self.has_already_tried_to_connect = True
+    
+                # if self.game_started and (not self.multi or not self.is_server or not self.is_dedicated):
+                if self.game_started:
+                    # Отрисовка происходит только, когда игра началась И
+                    #  либо игра одиночная
+                    #  либо игра - клиент
+                    #  либо игра - не выделенный сервер
+                    self.world.draw()
+    
+                if self.game_started and (self.is_server or not self.multi):
+                    self.world.act()
+                    # Проверка на конец игры:
+                    game_over_dict = self.world.check_game_over()
+                    if game_over_dict is not None:
+                        # Проверка на конец игры здесь.
+                        self.game_over(game_over_dict)
+                    # Спавн врагов:
+                    if self.world.enemy_spawn_timer.is_ready() and self.world.enemies_remains > 0:
+                        if self.world.create_enemy():
+                            # Если получилось заспавнить врага
+                            self.world.enemies_remains -= 1
+                            self.world.enemy_spawn_timer.reset()
+                    # Если уровень завершён.
+                    if self.world.check_level_over():
+                        if "next_map" in self.world.world_map.properties:
+                            next_map_name = self.world.world_map.properties["next_map"]
+                            next_map_id = self.map_loader.get_map_id_by_name(next_map_name)
+                            self.world.reload_map(next_map_id)
+                            self.world.clear_changes()  # На всякий случай очищаем изменения.
+                        else:
+                            # Если нет следующего уровня, выводим экран победы
+                            if self.is_server and self.multi:
+                                # ...либо клиентам.
+                                self.serverside_sender.send_event(EVENT_GAME_WIN)
+                                self.stop_game(send_to_server=False)
+                            else:
+                                # ...либо себе.
+                                add_you_win_popupbox(self)
+                                self.game_started = False
+    
+                    # Изменения в мире:
+                    if (changes := self.world.get_changes()).__len__() > 0 and self.multi:
+                        if CHANGES_DEBUG:
+                            print(changes)
+                        self.serverside_sender.send_changes()
+                    self.world.clear_changes()
+    
+                self.window_surface.blit(self.game_surface, self.game_rect)
+    
+                if self.game_started and self.gui is not None:
+                    self.gui.draw()
+                    self.gui.update()
+    
+                # Отрисовка и обновление popupBox-а:
                 with self.any_popup_box_lock:
                     if self.any_popup_box is not None:
-                        self.any_popup_box.handle_event(event)
-            if self.need_to_quit:
-                self.stop_game()
-            # keyboard_pressed = pygame.key.get_pressed()
-
-            if self.is_server and not self.game_started:
-                if not self.server_waiting_started:
-                    add_server_started_popupbox(self)
-                    self.server_waiting_started = True
-                # Пока сервер не стартанул
-                self.wait_for_players(int(self.world.world_map.properties["max_players"]))
-
-            if self.game_started:
-                self.process_inputs()
-
-                # TODO: подумать, куда засунуть это V V V
-                if self.multi and not self.is_server:
-                    # Центируемся на своём танке
-                    try:
-                        self.world.camera.smart_center_on(self.world.objects_id_dict[self.client_world_object_id])
-                    except KeyError:
-                        # Не можем сцентрироваться - видимо, танка уже нет.
-                        pass
-
-            # Попытка подключиться к серверу при запуске клиента:
-            if not self.is_server and not self.is_connected and self.multi and not self.has_already_tried_to_connect:
-                self.clientside_sender.ask_for_ok(self.connect_to_ip)
-                self.has_already_tried_to_connect = True
-
-            # if self.game_started and (not self.multi or not self.is_server or not self.is_dedicated):
-            if self.game_started:
-                # Отрисовка происходит только, когда игра началась И
-                #  либо игра одиночная
-                #  либо игра - клиент
-                #  либо игра - не выделенный сервер
-                self.world.draw()
-
-            if self.game_started and (self.is_server or not self.multi):
-                self.world.act()
-                # Проверка на конец игры:
-                game_over_dict = self.world.check_game_over()
-                if game_over_dict is not None:
-                    # Проверка на конец игры здесь.
-                    self.game_over(game_over_dict)
-                # Спавн врагов:
-                if self.world.enemy_spawn_timer.is_ready() and self.world.enemies_remains > 0:
-                    if self.world.create_enemy():
-                        # Если получилось заспавнить врага
-                        self.world.enemies_remains -= 1
-                        self.world.enemy_spawn_timer.reset()
-                # Если уровень завершён.
-                if self.world.check_level_over():
-                    if "next_map" in self.world.world_map.properties:
-                        next_map_name = self.world.world_map.properties["next_map"]
-                        next_map_id = self.map_loader.get_map_id_by_name(next_map_name)
-                        self.world.reload_map(next_map_id)
-                        self.world.clear_changes()  # На всякий случай очищаем изменения.
-                    else:
-                        # Если нет следующего уровня, выводим экран победы
-                        add_you_win_popupbox(self)
-                        self.game_started = False
-
-                # Изменения в мире:
-                if (changes := self.world.get_changes()).__len__() > 0 and self.multi:
-                    if CHANGES_DEBUG:
-                        print(changes)
-                    self.serverside_sender.send_changes()
-                self.world.clear_changes()
-
-            self.window_surface.blit(self.game_surface, self.game_rect)
-
-            if self.game_started and self.gui is not None:
-                self.gui.draw()
-                self.gui.update()
-
-            # Отрисовка и обновление popupBox-а:
-            with self.any_popup_box_lock:
-                if self.any_popup_box is not None:
-                    self.any_popup_box.draw()
-                    self.any_popup_box.update()
-
-            pygame.display.update()
+                        self.any_popup_box.draw()
+                        self.any_popup_box.update()
+    
+                pygame.display.update()
 
     def game_over(self, game_over_dict: dict):
         if self.multi and self.is_server:
