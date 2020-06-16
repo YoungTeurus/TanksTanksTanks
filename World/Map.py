@@ -96,6 +96,7 @@ class Map:
     def load_by_id(self, map_id: int, server_map: bool = False) -> None:
         """
         Загрузка мира по ID.
+        :param server_map: Если True, то карта грузится из папки downloades.
         :param map_id: ID мира из Consts.
         """
         self.map_id = map_id

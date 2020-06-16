@@ -6,8 +6,9 @@ from typing import List
 import pygame
 from pygame.surface import Surface
 
+import Files
 from Consts import targetFPS, BLACK, BUTTON_SELECTED_YELLOW, MENU_WHITE, BUTTON_YELLOW, \
-    MAIN_MENU_BACKGROUND_COLOR, MAIN_MENU_DARK_BACKGROUND_COLOR, START_MAP_ID
+    MAIN_MENU_BACKGROUND_COLOR, MAIN_MENU_DARK_BACKGROUND_COLOR, START_MAP_NAME
 from Files import ImageLoader, SoundLoader
 from UI.MenuBackgroundImage import MenuBackgroundImage
 from UI.MenuObjects.Button import Button
@@ -67,10 +68,12 @@ class Menu:
 
     image_loader: ImageLoader = None
     sound_loader: SoundLoader = None
+    map_loader: Files.MapLoader = None
 
     # любой event и при этом отрисовываться последним.
 
-    def __init__(self, window_surface: Surface, image_loader: ImageLoader, sound_loader: SoundLoader):
+    def __init__(self, window_surface: Surface, image_loader: ImageLoader, sound_loader: SoundLoader,
+                 map_loader: Files.MapLoader):
         self.window_surface = window_surface  # Основная поверхность
         self.size = (self.window_surface.get_width(), self.window_surface.get_height())
 
@@ -85,6 +88,7 @@ class Menu:
 
         self.image_loader = image_loader
         self.sound_loader = sound_loader
+        self.map_loader = map_loader
 
         self.load_title_group()
 
@@ -791,7 +795,7 @@ class Menu:
         """
         if "server_map" not in self.result:
             current_map: Map = Map(None)
-            current_map.load_by_id(START_MAP_ID)
+            current_map.load_by_id(self.map_loader.get_map_id_by_name(START_MAP_NAME))
             self.result["server_map"] = current_map
         else:
             current_map = self.result["server_map"]

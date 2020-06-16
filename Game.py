@@ -6,8 +6,8 @@ import pygame
 from pygame.surface import Surface
 
 from Consts import targetFPS, DARK_GREY, BLACK, MOVE_RIGHT, SHOOT, MOVE_LEFT, MOVE_DOWN, MOVE_UP, \
-    CHANGES_DEBUG, CHAT_BUTTON, FOLD_UNFOLD_CHATLOG, START_MAP_ID, PLAYER_TANKS_COLORS
-from Files import ImageLoader, SoundLoader
+    CHANGES_DEBUG, CHAT_BUTTON, FOLD_UNFOLD_CHATLOG, PLAYER_TANKS_COLORS, START_MAP_NAME
+from Files import ImageLoader, SoundLoader, MapLoader
 from Multiplayer.ChatHistory import ChatHistory
 from UI.ConstPopups import add_server_started_popupbox, remove_server_started_popupbox, add_chat, \
     add_game_over_player_died_popupbox, add_game_over_player_base_destroyed_popupbox
@@ -30,6 +30,7 @@ class Game:
 
     image_loader: ImageLoader = None  # Загрузчик изображений
     sound_loader: SoundLoader = None  # Загрузчик звуков
+    map_loader: MapLoader = None  # Загрузчик карт
 
     world: World = None  # Мир
 
@@ -59,7 +60,7 @@ class Game:
     need_to_quit: bool = False  # Флаг необходимости выхода из игры TODO: попытаться избавиться от этого?
 
     def __init__(self, window_surface, is_server, multi, image_loader: ImageLoader, sound_loader: SoundLoader,
-                 start_map: Map = None,
+                 map_loader: MapLoader, start_map: Map = None,
                  connect_to_ip: str = None, server_ip: str = None, client_ip: str = None,
                  client_port: int = None, dedicated: bool = False, client_name: str = None) -> None:
         """
@@ -84,6 +85,7 @@ class Game:
         self.clock = pygame.time.Clock()
         self.image_loader = image_loader
         self.sound_loader = sound_loader
+        self.map_loader = map_loader
 
         self.chat_history = ChatHistory()
 
@@ -98,7 +100,7 @@ class Game:
         if start_map is not None:
             start_map_id = start_map.map_id
         else:
-            start_map_id = START_MAP_ID  # Стартовый ID карты
+            start_map_id = self.map_loader.get_map_id_by_name(START_MAP_NAME)  # Стартовый ID карты
 
         if self.is_server and multi:
             # Запуск сервера для мультиплеера
@@ -108,7 +110,7 @@ class Game:
             self.world.set_ready_for_server()
             self.serverside_sender = DataSenderServerSide(self)
             self.create_serverside_server()
-            self.world.load_world_map(start_map_id)
+            self.world.load_world_map_by_map_id(start_map_id)
             self.world.clear_changes()
             self.server_waiting_started = False  # Флаг, который принимает значение True после первой
             # попытки ожидания клиентов.
@@ -131,7 +133,7 @@ class Game:
         elif not multi:
             # Запуск одиночки
             self.gui = GUI(self)
-            self.world.load_world_map(start_map_id)
+            self.world.load_world_map_by_map_id(start_map_id)
             self.world.spawn_player()
             self.world.players[0].add_color(PLAYER_TANKS_COLORS[0])
             self.world.center_camera_on_player()

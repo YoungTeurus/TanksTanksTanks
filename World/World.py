@@ -4,7 +4,7 @@ from typing import List, Dict, Optional
 from pygame.surface import Surface
 
 from Consts import DEFAULT_DELAY_BETWEEN_ENEMY_SPAWN, MAX_ENEMIES_ON_ONE_MOMENT, DEFAULT_ENEMIES_ON_LEVEL, \
-    START_MAP_ID, TILESETS, PLAYER_TANKS_COLORS, MAX_PLAYER_TANK_HP
+    TILESETS, PLAYER_TANKS_COLORS, MAX_PLAYER_TANK_HP, START_MAP_NAME
 from Files import ImageLoader
 from Images.Tileset import Tileset
 from Multiplayer.Senders import EVENT_SERVER_SEND_PLAYERS_TANKS_IDS
@@ -94,13 +94,16 @@ class World:
                                    self.parent_image_loader.get_image_by_name(tileset_name))
             self.tilesets[tileset_name] = temp_tileset
 
-    def load_world_map(self, map_id: int = None):
-        if map_id is not None:
-            self.load_map(map_id)
+    def load_world_map_by_map_name(self, map_name: str = None):
+        if map_name is not None:
+            self.load_map(self.parent_game.map_loader.get_map_id_by_name(map_name))
         else:
-            self.load_map(START_MAP_ID)  # На всякий случай
+            self.load_map(self.parent_game.map_loader.get_map_id_by_name(START_MAP_NAME))  # На всякий случай
         # self.spawn_player()
         # self.center_camera_on_player()
+
+    def load_world_map_by_map_id(self, map_id: int):
+        self.load_map(map_id)
 
     def get_last_id(self):
         self.last_id += 1

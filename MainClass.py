@@ -2,7 +2,7 @@ import pygame
 from pygame.surface import Surface
 
 from Consts import window_w, window_h
-from Files import ImageLoader, SoundLoader
+from Files import ImageLoader, SoundLoader, MapLoader
 from Game import Game
 from UI.Menu import Menu
 
@@ -13,6 +13,7 @@ class MainClass:
     """
     image_loader: ImageLoader = None  # Загрузчик текстур
     sound_loader: SoundLoader = None  # Загрузчик музыки и звуков
+    map_loader: MapLoader = None  # Загрузчик карт
 
     game: Game = None  # Игра
     menu: Menu = None  # Меню
@@ -31,12 +32,14 @@ class MainClass:
 
         self.image_loader = ImageLoader()
         self.sound_loader = SoundLoader()
+        self.map_loader = MapLoader()
 
         pygame.display.set_icon(self.image_loader.get_image_by_name("icon"))  # Установка иконки игры
 
     def run(self):
         while True:
-            menu = Menu(self.window_surface, self.image_loader, self.sound_loader)
+            menu = Menu(self.window_surface, self.image_loader, self.sound_loader,
+                        self.map_loader)
             result = menu.main_cycle()
             if result["result"] == "start":
                 if result["multi"]:
@@ -47,19 +50,22 @@ class MainClass:
                                     multi=True, connect_to_ip=result["server_ip"],
                                     client_ip=result["client_ip"], client_port=result["client_port"],
                                     client_name=result["client_name"],
-                                    image_loader=self.image_loader, sound_loader=self.sound_loader)  # Создание игры
+                                    image_loader=self.image_loader, sound_loader=self.sound_loader,
+                                    map_loader=self.map_loader)  # Создание игры
                     else:
                         # Если запускается сервер
                         game = Game(self.window_surface, is_server=True,
                                     multi=True, server_ip=result["server_ip"],
                                     dedicated=result["dedicated"],
                                     start_map=result["server_map"],
-                                    image_loader=self.image_loader, sound_loader=self.sound_loader)  # Создание игры
+                                    image_loader=self.image_loader, sound_loader=self.sound_loader,
+                                    map_loader=self.map_loader)  # Создание игры
                 else:
                     # Если одиночная игра
                     game = Game(self.window_surface, is_server=False, multi=False,
                                 start_map=result["client_map"],
-                                image_loader=self.image_loader, sound_loader=self.sound_loader)  # Создание игры
+                                image_loader=self.image_loader, sound_loader=self.sound_loader,
+                                map_loader=self.map_loader)  # Создание игры
             elif result["result"] == "quit":
                 return
             else:

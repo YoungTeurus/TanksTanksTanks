@@ -38,8 +38,11 @@ class MyUDPHandlerClientSide(socketserver.BaseRequestHandler):
             except OSError:
                 # Если папка уже создана
                 pass
-            SERVER_MAPS[world_id] = "\\assets\\maps\\downloaded\\map{}.txt".format(world_id)
-            with open(get_script_dir() + SERVER_MAPS[world_id], "w") as world_file:
+            SERVER_MAPS[world_id] = {"path": "\\assets\\maps\\downloaded\\map{}.txt".format(world_id),
+                                     "name": "map0"}
+            print(SERVER_MAPS)
+            # SERVER_MAPS[world_id] = "\\assets\\maps\\downloaded\\map{}.txt".format(world_id)
+            with open(get_script_dir() + SERVER_MAPS[world_id]["path"], "w") as world_file:
                 world_file.write(data_dict["world"])
             self.parent_game.world.load_map(world_id, server_map=True)  # Грузим карту
             self.parent_game.world.is_server = False  # Говорим миру, что он больше не сервер

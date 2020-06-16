@@ -91,6 +91,8 @@ class MapLoader:
 
         maps_files_list: List[str] = os.listdir(path_to_maps)
         for (i, map_file_name) in enumerate(maps_files_list):
+            if not map_file_name.endswith(".txt"):
+                continue
             MAPS[i] = {
                 "path": f"\\assets\\maps\\{map_file_name}",
                 "name": f"{map_file_name.split('.')[0]}"
