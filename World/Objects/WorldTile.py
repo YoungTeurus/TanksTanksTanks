@@ -78,10 +78,9 @@ class WorldTile(Collisionable):
         if self.is_destroyable:
             if self.tile_id == 5:  # Если это база
                 self.player_base_hp -= 1
-                # if self.player_base_hp <= 0:
-                #     self.destroy()
-                #     return
-                self.image.next()
+                if not self.image.current_frame == self.image.frames.__len__():
+                    # Если база находится на последнем кадре, то не нужно обновлять кадр.
+                    self.image.next()
                 return
             if direction_of_bullet == "UP":
                 # Если ударили снизу

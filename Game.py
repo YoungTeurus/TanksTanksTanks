@@ -60,6 +60,7 @@ class Game:
 
     chat_history: ChatHistory = None  # История чата
 
+    need_to_act: bool = True  # Флаг необходимости обновлять юниты TODO: попытаться избавиться от этого?
     need_to_quit: bool = False  # Флаг необходимости выхода из игры TODO: попытаться избавиться от этого?
 
     def __init__(self, window_surface, is_server, multi, image_loader: ImageLoader, sound_loader: SoundLoader,
@@ -362,7 +363,6 @@ class Game:
                         self.gui.handle_event(event)
                 if self.need_to_quit:
                     self.stop_game()
-                # keyboard_pressed = pygame.key.get_pressed()
     
                 if self.is_server and not self.game_started:
                     if not self.server_waiting_started:
@@ -396,7 +396,7 @@ class Game:
                     #  либо игра - не выделенный сервер
                     self.world.draw()
     
-                if self.game_started and (self.is_server or not self.multi):
+                if self.game_started and (self.is_server or not self.multi) and self.need_to_act:
                     self.world.act()
                     # Проверка на конец игры:
                     game_over_dict = self.world.check_game_over()
@@ -456,6 +456,7 @@ class Game:
             add_game_over_player_died_popupbox(self, game_over_dict["player_name"])
         elif game_over_dict["type"] == "base_destroyed":
             add_game_over_player_base_destroyed_popupbox(self)
+        self.need_to_act = False
 
     def stop_game(self, send_to_server: bool = True):
         """
