@@ -9,7 +9,7 @@ from Consts import targetFPS, DARK_GREY, BLACK, MOVE_RIGHT, SHOOT, MOVE_LEFT, MO
     CHANGES_DEBUG, CHAT_BUTTON, FOLD_UNFOLD_CHATLOG, PLAYER_TANKS_COLORS, START_MAP_NAME
 from Files import ImageLoader, SoundLoader, MapLoader
 from Multiplayer.ChatHistory import ChatHistory
-from UI.ConstPopups import add_server_started_popupbox, remove_server_started_popupbox, add_chat, \
+from UI.ConstPopups import add_server_started_popupbox, remove_server_started_popupbox, \
     add_game_over_player_died_popupbox, add_game_over_player_base_destroyed_popupbox, add_you_win_popupbox
 from UI.Ingame_GUI import GUI
 from UI.MenuObjects.PopupBox import PopupBox
@@ -259,7 +259,7 @@ class Game:
                                                                                         local_var=move_var)))
             self.button_actions[SHOOT] = ((lambda: self.clientside_sender.send_button("SHOOT")),
                                           None)
-            self.button_actions[CHAT_BUTTON] = ((lambda: add_chat(self)),
+            self.button_actions[CHAT_BUTTON] = (self.gui.show_chat_sender,
                                                 None)
             self.button_actions[FOLD_UNFOLD_CHATLOG] = (self.gui.change_chatlog_action,
                                                         self.gui.reset_button)
@@ -358,6 +358,8 @@ class Game:
                     with self.any_popup_box_lock:
                         if self.any_popup_box is not None:
                             self.any_popup_box.handle_event(event)
+                    if self.gui is not None:
+                        self.gui.handle_event(event)
                 if self.need_to_quit:
                     self.stop_game()
                 # keyboard_pressed = pygame.key.get_pressed()

@@ -4,16 +4,13 @@
 
 import pygame
 
-from Consts import BLACK, window_h, window_w, MAIN_MENU_BACKGROUND_COLOR, MENU_WHITE, BUTTON_YELLOW, GREY
-from UI.MenuObjects.Button import Button
+from Consts import BLACK, MAIN_MENU_BACKGROUND_COLOR, MENU_WHITE, BUTTON_YELLOW
 from UI.MenuObjects.ButtonTrigger import ButtonTrigger
 from UI.MenuObjects.Label import Label
 from UI.MenuObjects.PopupBox import PopupBox
 
+
 # Всплывающее окошко "Сервер закрыт"
-from UI.MenuObjects.TextBox import TextBox
-
-
 def add_disconnected_from_server_popupbox(game):
     # Всплывающее окно "Сервер закрыт":
     popupbox = PopupBox(game.window_surface, pos=(game.window_surface.get_width() / 2 - 100,
@@ -204,78 +201,6 @@ def remove_server_started_popupbox_and_return_to_menu(game):
 
 
 def remove_server_started_popupbox(game):
-    game.any_popup_box = None
-
-
-chat_textbox_width = window_w / 3  # Ширина строки для отправки сообщения
-chat_textbox_height = 40  # Высота строки для отправки сообщения
-chat_textbox_margin = 5  # Значение отступа для строки для отправки сообщения
-chat_textbox_x = 0 + chat_textbox_margin  # Положение строки для отправки сообщения по X
-chat_textbox_y = window_h - chat_textbox_height - chat_textbox_margin  # Положение строки для отправки сообщения по Y
-chat_font_size = 22
-
-
-# TODO: перенести в Ingame_GUI.
-# Всплывающее окошко "чат"
-def add_chat(game):
-    class MessageSentState:
-        message_sent = False
-
-    def send_msg(message_sent_state: MessageSentState):
-        if not message_sent_state.message_sent:
-            message = textbox_message.text_str
-            if len(message) > 0:
-                game.send_chat_message(message)
-            remove_chat(game)
-            message_sent_state.message_sent = True
-
-    mss = MessageSentState()
-
-    popupbox = PopupBox(game.window_surface, pos=(0, 0, 0, 0),
-                        fill=False, darken_background=True)
-
-    textbox_message = TextBox(game.window_surface,
-                              pos=(chat_textbox_x, chat_textbox_y,
-                                   chat_textbox_width, chat_textbox_height),
-                              empty_text="Введите сюда своё сообщение...",
-                              font="main_menu", font_size=chat_font_size,
-                              function_onEnter=send_msg,
-                              arg_onEnter=mss, active=True)
-
-    button_send_message_width = chat_textbox_width * 0.1
-    button_send_message_x = chat_textbox_x + chat_textbox_width - button_send_message_width
-
-    button_send_message_shadow = Label(game.window_surface,
-                                       pos=(button_send_message_x + 2, chat_textbox_y + 2,
-                                            button_send_message_width, chat_textbox_height),
-                                       text=">>", text_color=BLACK,
-                                       font_size=chat_font_size, font="main_menu")
-    button_send_message = Button(game.window_surface, pos=(button_send_message_x, chat_textbox_y,
-                                                           button_send_message_width, chat_textbox_height),
-                                 transparent=True, text_color=GREY, selected_text_color=MENU_WHITE,
-                                 text=">>", font_size=chat_font_size, font="main_menu",
-                                 function_onClick_list=[send_msg],
-                                 args_list=[mss])
-
-    buttontrigger_popupbox_quit_esc = ButtonTrigger(key=pygame.K_ESCAPE,
-                                                    function_list=[remove_chat],
-                                                    args_list=[game])
-    buttontrigger_send_message_enter = ButtonTrigger(key=pygame.K_RETURN,
-                                                     function_list=[send_msg],
-                                                     args_list=[mss])
-
-    popupbox.add_object(buttontrigger_popupbox_quit_esc)
-    popupbox.add_object(buttontrigger_send_message_enter)
-    popupbox.add_object(textbox_message)
-    popupbox.add_object(button_send_message_shadow)
-    popupbox.add_object(button_send_message)
-
-    with game.any_popup_box_lock:
-        game.any_popup_box = None
-        game.any_popup_box = popupbox
-
-
-def remove_chat(game):
     game.any_popup_box = None
 
 

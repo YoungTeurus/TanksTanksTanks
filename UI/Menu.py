@@ -183,8 +183,9 @@ class Menu:
                                           font="main_menu", font_size=int(FONT_SIZE * 0.75), text_color=MENU_WHITE)
             label_start_solo_help_shadow = Label(self.window_surface,
                                                  pos=(
-                                                 self.size[0] / 2 - BUTTON_WIDTH / 2 + 2, self.size[1] / 10 * 1.5 + 2,
-                                                 BUTTON_WIDTH, BUTTON_HEIGHT),
+                                                     self.size[0] / 2 - BUTTON_WIDTH / 2 + 2,
+                                                     self.size[1] / 10 * 1.5 + 2,
+                                                     BUTTON_WIDTH, BUTTON_HEIGHT),
                                                  text="Начните игру в одиночку с самого начала или любого уровня",
                                                  font="main_menu", font_size=int(FONT_SIZE * 0.75), text_color=BLACK)
 
@@ -194,12 +195,12 @@ class Menu:
                                            text="Позовите друзей и сыграйте вместе на выделенном сервере",
                                            font="main_menu", font_size=int(FONT_SIZE * 0.75), text_color=MENU_WHITE)
             label_start_multi_help_shadow = Label(self.window_surface,
-                                                 pos=(
-                                                     self.size[0] / 2 - BUTTON_WIDTH / 2 + 2,
-                                                     self.size[1] / 10 * 2.5 + 2,
-                                                     BUTTON_WIDTH, BUTTON_HEIGHT),
-                                                 text="Позовите друзей и сыграйте вместе на выделенном сервере",
-                                                 font="main_menu", font_size=int(FONT_SIZE * 0.75), text_color=BLACK)
+                                                  pos=(
+                                                      self.size[0] / 2 - BUTTON_WIDTH / 2 + 2,
+                                                      self.size[1] / 10 * 2.5 + 2,
+                                                      BUTTON_WIDTH, BUTTON_HEIGHT),
+                                                  text="Позовите друзей и сыграйте вместе на выделенном сервере",
+                                                  font="main_menu", font_size=int(FONT_SIZE * 0.75), text_color=BLACK)
 
             label_start_settings_help = Label(self.window_surface,
                                               pos=(self.size[0] / 2 - BUTTON_WIDTH / 2, self.size[1] / 10 * 3.5,
@@ -208,27 +209,28 @@ class Menu:
                                                    " выключите звук (не круто)",
                                               font="main_menu", font_size=int(FONT_SIZE * 0.75), text_color=MENU_WHITE)
             label_start_settings_help_shadow = Label(self.window_surface,
-                                                  pos=(
-                                                      self.size[0] / 2 - BUTTON_WIDTH / 2 + 2,
-                                                      self.size[1] / 10 * 3.5 + 2,
-                                                      BUTTON_WIDTH, BUTTON_HEIGHT),
-                                                  text="Выберите себе ник, установите IP для игры по сети или"
-                                                   " выключите звук (не круто)",
-                                                  font="main_menu", font_size=int(FONT_SIZE * 0.75), text_color=BLACK)
+                                                     pos=(
+                                                         self.size[0] / 2 - BUTTON_WIDTH / 2 + 2,
+                                                         self.size[1] / 10 * 3.5 + 2,
+                                                         BUTTON_WIDTH, BUTTON_HEIGHT),
+                                                     text="Выберите себе ник, установите IP для игры по сети или"
+                                                          " выключите звук (не круто)",
+                                                     font="main_menu", font_size=int(FONT_SIZE * 0.75),
+                                                     text_color=BLACK)
 
             label_how_to_close = Label(self.window_surface,
-                                              pos=(self.size[0] / 2 - BUTTON_WIDTH / 2, self.size[1] / 10 * 6.5,
-                                                   BUTTON_WIDTH, BUTTON_HEIGHT),
-                                              text="Щелкните в любом месте, чтобы закрыть...",
-                                              font="main_menu", font_size=int(FONT_SIZE * 0.5),
+                                       pos=(self.size[0] / 2 - BUTTON_WIDTH / 2, self.size[1] / 10 * 6.5,
+                                            BUTTON_WIDTH, BUTTON_HEIGHT),
+                                       text="Щелкните в любом месте, чтобы закрыть...",
+                                       font="main_menu", font_size=int(FONT_SIZE * 0.5),
                                        text_color=BUTTON_YELLOW)
             label_how_to_close_shadow = Label(self.window_surface,
-                                                  pos=(
-                                                      self.size[0] / 2 - BUTTON_WIDTH / 2 + 2,
-                                                      self.size[1] / 10 * 6.5 + 2,
-                                                      BUTTON_WIDTH, BUTTON_HEIGHT),
-                                                  text="Щелкните в любом месте, чтобы закрыть...",
-                                                  font="main_menu", font_size=int(FONT_SIZE * 0.5), text_color=BLACK)
+                                              pos=(
+                                                  self.size[0] / 2 - BUTTON_WIDTH / 2 + 2,
+                                                  self.size[1] / 10 * 6.5 + 2,
+                                                  BUTTON_WIDTH, BUTTON_HEIGHT),
+                                              text="Щелкните в любом месте, чтобы закрыть...",
+                                              font="main_menu", font_size=int(FONT_SIZE * 0.5), text_color=BLACK)
 
             button_close = Button(self.window_surface, transparent=True, pos=(0, 0, self.size[0], self.size[1]),
                                   auto_adjust=False, text="", function_onClick_list=[self.sound_loader.play_sound,
