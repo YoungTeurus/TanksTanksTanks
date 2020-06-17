@@ -139,9 +139,11 @@ class GUI(PopupBox):
 
     def hide_chat_sender(self):
         self.is_chat_sender_shown = False
+        self.blocking = False
 
     def show_chat_sender(self):
         self.is_chat_sender_shown = True
+        self.blocking = True
 
     def update_chatlog(self) -> None:
         """

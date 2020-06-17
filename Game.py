@@ -62,6 +62,8 @@ class Game:
 
     need_to_act: bool = True  # Флаг необходимости обновлять юниты TODO: попытаться избавиться от этого?
     need_to_quit: bool = False  # Флаг необходимости выхода из игры TODO: попытаться избавиться от этого?
+    # Используется в GUI v v v
+    need_to_process_inputs: bool = True  # Флаг необходимости считывать управление TODO: попытаться избавиться от этого?
 
     def __init__(self, window_surface, is_server, multi, image_loader: ImageLoader, sound_loader: SoundLoader,
                  map_loader: MapLoader, start_map: Map = None,
@@ -361,6 +363,10 @@ class Game:
                             self.any_popup_box.handle_event(event)
                     if self.gui is not None:
                         self.gui.handle_event(event)
+                        if self.gui.blocking:
+                            self.need_to_process_inputs = False
+                        else:
+                            self.need_to_process_inputs = True
                 if self.need_to_quit:
                     self.stop_game()
     
@@ -372,7 +378,8 @@ class Game:
                     self.wait_for_players(int(self.world.world_map.properties["max_players"]))
     
                 if self.game_started:
-                    self.process_inputs()
+                    if self.need_to_process_inputs:
+                        self.process_inputs()
     
                     # TODO: подумать, куда засунуть это V V V
                     if self.multi and not self.is_server:
